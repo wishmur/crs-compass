@@ -69,8 +69,8 @@
   --card-foreground: oklch(0.129 0.042 264.695);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
+  --primary: oklch(0.52 0.11 218);
+  --primary-foreground: oklch(0.99 0.005 240);
   --secondary: oklch(0.968 0.007 247.896);
   --secondary-foreground: oklch(0.208 0.042 265.755);
   --muted: oklch(0.968 0.007 247.896);
@@ -81,7 +81,7 @@
   --destructive-foreground: oklch(0.984 0.003 247.858);
   --border: oklch(0.929 0.013 255.508);
   --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
+  --ring: oklch(0.52 0.11 218);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -141,4 +141,72 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
   }
+}
+
+
+/* --- CRS Signal design tokens --- */
+:root {
+  --accent-strong: oklch(0.52 0.11 218);
+
+  --tone-general-bg: oklch(0.95 0.005 255);
+  --tone-general-fg: oklch(0.36 0.02 255);
+  --tone-cec-bg: oklch(0.94 0.03 245);
+  --tone-cec-fg: oklch(0.42 0.11 250);
+  --tone-fsw-bg: oklch(0.94 0.035 190);
+  --tone-fsw-fg: oklch(0.42 0.08 195);
+  --tone-fst-bg: oklch(0.95 0.03 175);
+  --tone-fst-fg: oklch(0.42 0.07 180);
+  --tone-pnp-bg: oklch(0.94 0.04 300);
+  --tone-pnp-fg: oklch(0.44 0.13 300);
+  --tone-category-bg: oklch(0.95 0.04 70);
+  --tone-category-fg: oklch(0.46 0.1 60);
+
+  --result-pass: oklch(0.56 0.13 150);
+  --result-fail: oklch(0.58 0.16 25);
+
+  --series-general: oklch(0.5 0.02 255);
+  --series-cec: oklch(0.55 0.13 250);
+  --series-fsw: oklch(0.55 0.1 195);
+  --series-fst: oklch(0.6 0.09 175);
+  --series-pnp: oklch(0.55 0.15 300);
+  --series-cat-1: oklch(0.62 0.14 60);
+  --series-cat-2: oklch(0.66 0.13 40);
+  --series-cat-3: oklch(0.6 0.13 85);
+  --series-cat-4: oklch(0.58 0.12 45);
+  --series-cat-5: oklch(0.64 0.12 100);
+  --series-cat-6: oklch(0.6 0.11 120);
+  --series-cat-7: oklch(0.62 0.1 25);
+  --series-cat-8: oklch(0.56 0.09 70);
+  --series-cat-9: oklch(0.66 0.1 15);
+  --series-cat-10: oklch(0.52 0.07 55);
+}
+
+@theme inline {
+  --color-result-pass: var(--result-pass);
+  --color-result-fail: var(--result-fail);
+}
+
+@utility badge-general {
+  background-color: var(--tone-general-bg);
+  color: var(--tone-general-fg);
+}
+@utility badge-cec {
+  background-color: var(--tone-cec-bg);
+  color: var(--tone-cec-fg);
+}
+@utility badge-fsw {
+  background-color: var(--tone-fsw-bg);
+  color: var(--tone-fsw-fg);
+}
+@utility badge-fst {
+  background-color: var(--tone-fst-bg);
+  color: var(--tone-fst-fg);
+}
+@utility badge-pnp {
+  background-color: var(--tone-pnp-bg);
+  color: var(--tone-pnp-fg);
+}
+@utility badge-category {
+  background-color: var(--tone-category-bg);
+  color: var(--tone-category-fg);
 }
