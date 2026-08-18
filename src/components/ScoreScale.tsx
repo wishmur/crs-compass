@@ -11,21 +11,37 @@ export function ScoreScale({ cutoffDraw, score }: { cutoffDraw: Draw; score: num
   const cutoffPct = clampPct(cutoffDraw.cutoff_score);
   const scorePct = score != null ? clampPct(score) : null;
 
+  // labels sit above the markers; markers rise 12px above the axis,
+  // so a 20px bottom offset guarantees 8px of clearance.
+  const BASE_BOTTOM = 20;
+  const collides = scorePct != null && Math.abs(scorePct - cutoffPct) < 12;
+  const scoreBottom = collides ? BASE_BOTTOM + 46 : BASE_BOTTOM;
+
   return (
-    <div className="pt-14">
+    <div className="pt-24">
       <div className="relative">
-        {/* user marker label */}
-        {scorePct != null && (
+        {/* labels */}
+        <div className="absolute inset-x-0 bottom-0 h-0">
           <div
-            className="absolute -top-11 -translate-x-1/2 text-center whitespace-nowrap"
-            style={{ left: `${scorePct}%` }}
+            className="absolute -translate-x-1/2 text-center whitespace-nowrap"
+            style={{ left: `${cutoffPct}%`, bottom: `${BASE_BOTTOM}px` }}
           >
-            <div className="text-[0.65rem] font-semibold tracking-wide text-accent-strong uppercase">
-              Your score
-            </div>
-            <div className="figure text-2xl text-accent-strong">{score}</div>
+            <div className="kicker">Cutoff</div>
+            <div className="figure text-2xl text-brand">{cutoffDraw.cutoff_score}</div>
           </div>
-        )}
+
+          {scorePct != null && (
+            <div
+              className="absolute -translate-x-1/2 text-center whitespace-nowrap"
+              style={{ left: `${scorePct}%`, bottom: `${scoreBottom}px` }}
+            >
+              <div className="kicker" style={{ color: "var(--accent)" }}>
+                Your score
+              </div>
+              <div className="figure text-2xl text-accent-strong">{score}</div>
+            </div>
+          )}
+        </div>
 
         <div className="relative h-px w-full bg-rule">
           {/* ticks */}
@@ -64,8 +80,7 @@ export function ScoreScale({ cutoffDraw, score }: { cutoffDraw: Draw; score: num
 
         <div className="mt-5 flex flex-wrap items-center gap-2">
           <RoundBadge draw={cutoffDraw} />
-          <span className="figure text-xl text-brand">{cutoffDraw.cutoff_score}</span>
-          <span className="text-xs text-muted-foreground">latest cutoff</span>
+          <span className="text-xs text-muted-foreground">latest round</span>
         </div>
       </div>
     </div>
