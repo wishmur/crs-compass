@@ -1,13 +1,15 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RoundBadge, RoundDot } from "@/components/RoundBadge";
+import { ScoreScale } from "@/components/ScoreScale";
 import { SourceLink, formatDate } from "@/components/DrawMeta";
 import { roundLabel } from "@/data/round-types";
 import { drawsQuery } from "@/lib/queries";
 import { EVENTS, capture } from "@/lib/analytics";
+
+const SCORE_KEY = "crsSignal.score";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -31,194 +33,210 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   const { data, isLoading } = useQuery(drawsQuery(8));
+  const [raw, setRaw] = useState("");
 
   useEffect(() => {
     capture(EVENTS.LANDING_VIEWED);
+    try {
+      const stored = window.localStorage.getItem(SCORE_KEY);
+      if (stored) setRaw(stored);
+    } catch {
+      /* ignore */
+    }
   }, []);
 
-  const latest = data?.[0];
-  const recent = data?.slice(1, 7) ?? [];
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      try {
+        if (raw) window.localStorage.setItem(SCORE_KEY, raw);
+      } catch {
+        /* ignore */
+      }
+    }, 500);
+    return () => window.clearTimeout(id);
+  }, [raw]);
 
-  const scale = (() => {
-    const scores = (data ?? []).map((d) => d.cutoff_score);
-    if (!scores.length) return { min: 0, max: 1, span: 1 };
-    const min = Math.min(...scores);
-    const max = Math.max(...scores);
-    const pad = Math.max(8, Math.round((max - min) * 0.15));
-    const lo = min - pad;
-    const hi = max + pad;
-    return { min: lo, max: hi, span: Math.max(1, hi - lo) };
+  const parsed = Number.parseInt(raw, 10);
+  const score = Number.isFinite(parsed) && parsed > 0 && parsed <= 1200 ? parsed : null;
+
+  const latest = data?.[0];
+  const recent = data?.slice(0, 6) ?? [];
+
+  const verdict = (() => {
+    if (!latest) return "Enter a score to see it placed on this scale.";
+    if (score == null) return "Enter a score to see it placed on this scale.";
+    const diff = score - latest.cutoff_score;
+    const type = roundLabel(latest);
+    return diff < 0
+      ? `${Math.abs(diff)} points short of the most recent ${type} cutoff.`
+      : `${diff} points above the most recent ${type} cutoff.`;
   })();
 
-  const pct = (score: number) => ((score - scale.min) / scale.span) * 100;
-
   return (
-    <div className="mx-auto max-w-5xl px-4 pt-10 pb-4 sm:pt-14">
-      {/* Primary moment — start here */}
-      <section aria-labelledby="cta-heading">
-        <p className="section-label">Start here</p>
-        <h1
-          id="cta-heading"
-          className="mt-3 max-w-2xl text-3xl leading-[1.1] font-semibold text-foreground sm:text-4xl"
-        >
-          See where your score stands
-          <span className="block text-muted-foreground">against the rounds that apply to you.</span>
-        </h1>
-        <p className="mt-4 max-w-xl text-[0.95rem] leading-relaxed text-muted-foreground">
-          Enter your CRS score and see which recent Express Entry rounds you would have cleared.
-          Not a prediction — nobody can predict future cutoffs — but what already happened is
-          usually more useful.
-        </p>
+    <div className="mx-auto max-w-6xl px-5 pt-12 pb-6">
+      {/* Hero */}
+      <section className="grid gap-12 md:grid-cols-2 md:gap-16">
+        <div>
+          <p className="kicker">Express Entry, in context</p>
+          <h1 className="display mt-4 max-w-[14ch] text-[2.75rem] leading-[1.02] font-semibold text-ink md:text-[3.5rem]">
+            See where your score stands.
+          </h1>
+          <p className="mt-5 max-w-md text-[0.95rem] leading-relaxed text-muted-foreground">
+            Type your CRS score. We place it against the most recent round instantly, and against
+            every historical round that actually applies to you on the deeper page.
+          </p>
 
-        <Link
-          to="/would-i-have-made-it"
-          className="surface surface-hover group mt-7 flex max-w-xl items-center gap-3 p-2 pl-5 ring-1 ring-primary/10 transition-all hover:-translate-y-0.5 hover:ring-primary/25"
-        >
-          <span className="flex-1 text-[0.95rem] text-muted-foreground transition-colors group-hover:text-foreground">
-            Enter your CRS score — e.g. 486
-          </span>
-          <span className="inline-flex items-center gap-2 rounded-[calc(var(--radius)-0.35rem)] bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors group-hover:bg-primary/90">
-            Check my score
-            <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
-          </span>
-        </Link>
-      </section>
-
-      {/* Latest round */}
-      <section aria-labelledby="latest-heading" className="mt-20">
-        <div className="flex items-baseline justify-between gap-4">
-          <h2 id="latest-heading" className="section-label">
-            Most recent round
-          </h2>
-          <Link
-            to="/history"
-            className="text-xs font-medium text-primary transition-opacity hover:opacity-70"
-          >
-            All history →
-          </Link>
+          <div className="mt-10 max-w-xs border-b border-rule pb-1">
+            <label htmlFor="crs-score" className="kicker block">
+              Your CRS score
+            </label>
+            <input
+              id="crs-score"
+              inputMode="numeric"
+              autoComplete="off"
+              placeholder="486"
+              value={raw}
+              onChange={(e) => setRaw(e.target.value.replace(/\D/g, "").slice(0, 4))}
+              className="figure mt-2 w-full bg-transparent text-6xl text-ink outline-none placeholder:text-rule md:text-7xl"
+            />
+          </div>
         </div>
 
+        {/* Live comparison */}
+        <div className="md:pt-2">
+          <p className="kicker">Against the latest round</p>
+          {isLoading ? (
+            <Skeleton className="mt-8 h-24 w-full" />
+          ) : !latest ? (
+            <p className="mt-6 text-sm text-muted-foreground">
+              Data not available yet — the daily refresh runs at ~9am ET.
+            </p>
+          ) : (
+            <>
+              <ScoreScale cutoffDraw={latest} score={score} />
+              <p className="mt-6 text-[0.95rem] leading-relaxed text-ink">{verdict}</p>
+              <p className="mt-4 text-sm">
+                <Link
+                  to="/would-i-have-made-it"
+                  className="text-brand underline underline-offset-4 hover:no-underline"
+                >
+                  See where you stand across every relevant round →
+                </Link>
+              </p>
+            </>
+          )}
+        </div>
+      </section>
+
+      {/* Latest draw — editorial block */}
+      <section aria-labelledby="latest-heading" className="mt-20 border-t border-rule pt-10">
+        <h2 id="latest-heading" className="kicker">
+          Latest draw
+        </h2>
+
         {isLoading ? (
-          <div className="surface mt-4 space-y-4 p-8">
-            <Skeleton className="h-16 w-56" />
-            <Skeleton className="h-4 w-full max-w-md" />
-          </div>
+          <Skeleton className="mt-6 h-28 w-72" />
         ) : !latest ? (
-          <div className="sunken mt-4 p-8 text-sm text-muted-foreground">
+          <p className="mt-4 text-sm text-muted-foreground">
             Data not available yet — the daily refresh runs at ~9am ET.
-          </div>
+          </p>
         ) : (
-          <div className="surface mt-4 overflow-hidden">
-            <div className="p-7 sm:p-9">
-              <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
-                <div className="num text-6xl leading-none font-semibold text-foreground sm:text-7xl">
-                  {latest.cutoff_score}
-                  <span className="ml-2 align-baseline text-lg font-medium text-muted-foreground sm:text-xl">
-                    CRS
-                  </span>
-                </div>
-                <RoundBadge draw={latest} size="lg" className="mb-1.5" />
+          <div className="mt-6 grid gap-10 md:grid-cols-[1fr_auto]">
+            <div>
+              <div className="flex flex-wrap items-center gap-4">
+                <span className="figure text-7xl text-ink md:text-8xl">{latest.cutoff_score}</span>
+                <RoundBadge draw={latest} size="lg" />
               </div>
-
-              {/* Where this cutoff sits against the last 8 rounds */}
-              <div className="mt-8 max-w-md">
-                <div className="score-track relative h-1.5">
-                  <span
-                    className="absolute inset-y-0 left-0 rounded-full bg-primary/25"
-                    style={{ width: `${pct(latest.cutoff_score)}%` }}
-                  />
-                  <span
-                    className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary ring-2 ring-card"
-                    style={{ left: `${pct(latest.cutoff_score)}%` }}
-                  />
-                </div>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Position among the last {data?.length ?? 0} rounds of any type
-                </p>
-              </div>
-
-              <dl className="mt-8 grid grid-cols-2 gap-x-6 gap-y-6 text-sm sm:grid-cols-4">
-                {[
-                  { t: "Date", v: formatDate(latest.draw_date) },
-                  { t: "Round", v: `#${latest.round_number}` },
-                  {
-                    t: "Invitations",
-                    v: latest.invitations_issued.toLocaleString("en-CA"),
-                  },
-                  {
-                    t: "Tie-break",
-                    v: latest.tie_break_timestamp
-                      ? new Date(latest.tie_break_timestamp).toLocaleString("en-CA")
-                      : "—",
-                  },
-                ].map((f) => (
-                  <div key={f.t}>
-                    <dt className="text-xs text-muted-foreground">{f.t}</dt>
-                    <dd className="num mt-1 font-medium text-foreground">{f.v}</dd>
-                  </div>
-                ))}
-              </dl>
+              <p className="mt-5 max-w-lg text-sm leading-relaxed text-muted-foreground">
+                The cutoff is the CRS score of the last candidate invited in this round — it only
+                means something alongside the round type above.
+              </p>
+              <p className="mt-3 text-sm text-muted-foreground">
+                Round #{latest.round_number} · {formatDate(latest.draw_date)}
+              </p>
             </div>
 
-            <div className="hairline-t bg-surface-sunken/60 px-7 py-4 text-xs sm:px-9">
-              <SourceLink url={latest.source_url} from="latest" roundNumber={latest.round_number} />
-            </div>
+            <dl className="space-y-4 text-sm md:min-w-56 md:text-right">
+              <div>
+                <dt className="kicker">Invitations issued</dt>
+                <dd className="mt-1 font-medium tabular-nums text-ink">
+                  {latest.invitations_issued.toLocaleString("en-CA")}
+                </dd>
+              </div>
+              <div>
+                <dt className="kicker">Tie-break timestamp</dt>
+                <dd className="mt-1 font-medium tabular-nums text-ink">
+                  {latest.tie_break_timestamp
+                    ? new Date(latest.tie_break_timestamp).toLocaleString("en-CA")
+                    : "—"}
+                </dd>
+              </div>
+              <div>
+                <dt className="kicker">Source</dt>
+                <dd className="mt-1 text-ink">
+                  <SourceLink
+                    url={latest.source_url}
+                    from="latest"
+                    roundNumber={latest.round_number}
+                  />
+                </dd>
+              </div>
+            </dl>
           </div>
         )}
       </section>
 
       {/* Recent rounds */}
-      <section aria-labelledby="recent-heading" className="mt-20">
-        <h2 id="recent-heading" className="section-label">
-          Recent rounds
-        </h2>
-
-        <ul className="mt-4">
-          {isLoading
-            ? Array.from({ length: 5 }).map((_, i) => (
-                <li key={i} className="py-4 first:pt-0">
-                  <Skeleton className="h-6 w-full" />
-                </li>
-              ))
-            : recent.map((d) => (
-                <li
-                  key={d.round_number}
-                  className="group -mx-3 flex items-center gap-4 rounded-lg px-3 py-3.5 transition-colors hover:bg-surface [&+li]:hairline-t"
-                >
-                  <RoundDot draw={d} />
-                  <span className="num w-24 shrink-0 text-xs text-muted-foreground">
-                    {formatDate(d.draw_date)}
-                  </span>
-                  <span className="hidden min-w-0 flex-1 truncate text-sm text-foreground sm:block">
-                    {roundLabel(d)}
-                  </span>
-                  <span className="score-track hidden h-1.5 w-32 shrink-0 md:block">
-                    <span
-                      className="block h-full rounded-full bg-primary/40 transition-all duration-300 group-hover:bg-primary/70"
-                      style={{ width: `${pct(d.cutoff_score)}%` }}
-                    />
-                  </span>
-                  <span className="num ml-auto w-16 shrink-0 text-right text-sm font-semibold text-foreground">
-                    {d.cutoff_score}
-                  </span>
-                </li>
-              ))}
-        </ul>
-
-        <p className="mt-6 text-sm">
-          <Link
-            to="/would-i-have-made-it"
-            className="inline-flex items-center gap-1.5 font-medium text-primary transition-opacity hover:opacity-70"
-          >
-            See which of these rounds you would have cleared
-            <ArrowRight className="h-3.5 w-3.5" />
+      <section aria-labelledby="recent-heading" className="mt-16 border-t border-rule pt-10">
+        <div className="flex items-baseline justify-between gap-4">
+          <h2 id="recent-heading" className="kicker">
+            Recent rounds
+          </h2>
+          <Link to="/history" className="text-xs font-medium text-brand hover:opacity-70">
+            All history →
           </Link>
-        </p>
+        </div>
+
+        <table className="mt-5 w-full text-sm">
+          <thead>
+            <tr className="border-b border-rule text-left">
+              <th className="kicker py-2 font-semibold">Date</th>
+              <th className="kicker py-2 font-semibold">Round type</th>
+              <th className="kicker py-2 text-right font-semibold">Cutoff</th>
+            </tr>
+          </thead>
+          <tbody>
+            {isLoading
+              ? Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i}>
+                    <td colSpan={3} className="py-3">
+                      <Skeleton className="h-4 w-full" />
+                    </td>
+                  </tr>
+                ))
+              : recent.map((d) => (
+                  <tr key={d.round_number} className="border-b border-rule/70">
+                    <td className="py-3 whitespace-nowrap text-muted-foreground tabular-nums">
+                      {formatDate(d.draw_date)}
+                    </td>
+                    <td className="py-3">
+                      <span className="inline-flex items-center gap-2 text-ink">
+                        <RoundDot draw={d} />
+                        {roundLabel(d)}
+                      </span>
+                    </td>
+                    <td className="py-3 text-right font-medium tabular-nums text-ink">
+                      {d.cutoff_score}
+                    </td>
+                  </tr>
+                ))}
+          </tbody>
+        </table>
       </section>
 
       {/* Explainer */}
-      <section className="sunken mt-20 max-w-3xl p-7 sm:p-9">
-        <h2 className="text-lg font-semibold text-foreground">What is Express Entry?</h2>
+      <section className="mt-16 max-w-2xl border-t border-rule pt-10">
+        <h2 className="display text-2xl font-semibold text-ink">What is Express Entry?</h2>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
           Express Entry is the system Canada uses to manage applications for several permanent
           residence programs. Candidates sit in one national pool with a Comprehensive Ranking
@@ -227,10 +245,7 @@ function Index() {
           invited — it depends on who was in the pool and how many invitations were issued.
         </p>
         <p className="mt-5 text-sm">
-          <Link
-            to="/about"
-            className="font-medium text-primary transition-opacity hover:opacity-70"
-          >
+          <Link to="/about" className="font-medium text-brand hover:opacity-70">
             More about how this works, and what it doesn&apos;t tell you →
           </Link>
         </p>
