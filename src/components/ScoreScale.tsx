@@ -11,54 +11,27 @@ export function ScoreScale({ cutoffDraw, score }: { cutoffDraw: Draw; score: num
   const cutoffPct = clampPct(cutoffDraw.cutoff_score);
   const scorePct = score != null ? clampPct(score) : null;
 
-  // labels sit above the markers; markers rise 12px above the axis,
-  // so a 20px bottom offset guarantees 8px of clearance.
-  const BASE_BOTTOM = 20;
-  const collides = scorePct != null && Math.abs(scorePct - cutoffPct) < 12;
-  const scoreBottom = collides ? BASE_BOTTOM + 46 : BASE_BOTTOM;
-
   return (
-    <div className="pt-32">
+    <div className="pt-8">
       <div className="relative">
         <div className="relative h-px w-full bg-rule">
-          {/* labels — sit above the markers with >=8px clearance */}
-          <div
-            className="absolute -translate-x-1/2 text-center whitespace-nowrap"
-            style={{ left: `${cutoffPct}%`, bottom: `${BASE_BOTTOM}px` }}
-          >
-            <div className="kicker">Cutoff</div>
-            <div className="figure text-2xl text-brand">{cutoffDraw.cutoff_score}</div>
-          </div>
-
-          {scorePct != null && (
-            <div
-              className="absolute -translate-x-1/2 text-center whitespace-nowrap"
-              style={{ left: `${scorePct}%`, bottom: `${scoreBottom}px` }}
-            >
-              <div className="kicker" style={{ color: "var(--accent)" }}>
-                Your score
-              </div>
-              <div className="figure text-2xl text-accent-strong">{score}</div>
-            </div>
-          )}
-
           {/* ticks */}
           {TICKS.map((t) => (
             <span
               key={t}
-              className="absolute top-0 h-2 w-px bg-rule"
+              className="absolute top-0 h-1.5 w-px bg-rule"
               style={{ left: `${clampPct(t)}%` }}
             />
           ))}
 
           {/* cutoff marker */}
           <span
-            className="absolute -top-3 h-6 w-0.5 bg-brand"
+            className="absolute -top-2 h-4 w-0.5 bg-brand"
             style={{ left: `${cutoffPct}%` }}
           />
           {scorePct != null && (
             <span
-              className="absolute -top-3 h-6 w-0.5"
+              className="absolute -top-2 h-4 w-0.5"
               style={{ left: `${scorePct}%`, backgroundColor: "var(--accent)" }}
             />
           )}
@@ -76,7 +49,7 @@ export function ScoreScale({ cutoffDraw, score }: { cutoffDraw: Draw; score: num
           ))}
         </div>
 
-        <div className="mt-5 flex flex-wrap items-center gap-2">
+        <div className="mt-4 flex flex-wrap items-center gap-2">
           <RoundBadge draw={cutoffDraw} />
           <span className="text-xs text-muted-foreground">latest round</span>
         </div>

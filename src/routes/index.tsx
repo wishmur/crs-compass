@@ -62,15 +62,6 @@ function Index() {
   const latest = data?.[0];
   const recent = data?.slice(0, 6) ?? [];
 
-  const verdict = (() => {
-    if (!latest) return "Enter a score to see it placed on this scale.";
-    if (score == null) return "Enter a score to see it placed on this scale.";
-    const diff = score - latest.cutoff_score;
-    const type = roundLabel(latest);
-    return diff < 0
-      ? `${Math.abs(diff)} points short of the most recent ${type} cutoff.`
-      : `${diff} points above the most recent ${type} cutoff.`;
-  })();
 
   return (
     <div className="mx-auto max-w-6xl px-5 pt-12 pb-6">
@@ -116,9 +107,40 @@ function Index() {
             </p>
           ) : (
             <>
+              <div className="mt-6 flex flex-col gap-4">
+                {score != null && (
+                  <div>
+                    <div className="kicker">Your score</div>
+                    <div className="figure text-5xl text-accent">{score}</div>
+                  </div>
+                )}
+                <div>
+                  <div className="kicker">Latest cutoff</div>
+                  <div className="figure text-5xl text-ink">{latest.cutoff_score}</div>
+                </div>
+                {score != null && (
+                  <div className="text-sm font-medium">
+                    {(() => {
+                      const diff = score - latest.cutoff_score;
+                      if (diff > 0) {
+                        return <span className="text-brand">+{diff} above cutoff</span>;
+                      }
+                      if (diff < 0) {
+                        return (
+                          <span className="text-accent">
+                            {Math.abs(diff)} below cutoff
+                          </span>
+                        );
+                      }
+                      return <span className="text-muted-foreground">At the cutoff</span>;
+                    })()}
+                  </div>
+                )}
+              </div>
+
               <ScoreScale cutoffDraw={latest} score={score} />
-              <p className="mt-6 text-[0.95rem] leading-relaxed text-ink">{verdict}</p>
-              <p className="mt-4 text-sm">
+
+              <p className="mt-6 text-sm">
                 <Link
                   to="/would-i-have-made-it"
                   className="text-brand underline underline-offset-4 hover:no-underline"
