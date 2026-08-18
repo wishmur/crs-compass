@@ -164,8 +164,7 @@ function History() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 pt-10 pb-4 sm:pt-14">
-      <p className="section-label">History</p>
-      <div className="mt-3 flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6">
         <h1 className="display text-3xl font-semibold tracking-tight sm:text-4xl">Draw history</h1>
         {!isLoading && draws.length > 0 && (
           <p className="text-sm text-muted-foreground tabular-nums">
