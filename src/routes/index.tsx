@@ -5,12 +5,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { RoundBadge } from "@/components/RoundBadge";
 import { ScoreScale } from "@/components/ScoreScale";
 import { formatDate } from "@/components/DrawMeta";
-import { CardCarousel } from "@/components/CardCarousel";
-import { SecondaryLink } from "@/components/CTA";
+import { EligibilityInputs } from "@/components/EligibilityInputs";
+import { RecentRelevantDraws } from "@/components/RecentRelevantDraws";
 import { PersonalScoreSection } from "@/components/PersonalScoreSection";
-import { type Draw } from "@/data/round-types";
 import { drawsQuery } from "@/lib/queries";
 import { EVENTS, capture } from "@/lib/analytics";
+import { useCrsProfile } from "@/lib/useCrsProfile";
 
 const SCORE_KEY = "crsSignal.score";
 
@@ -34,28 +34,10 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-function DrawTile({ draw }: { draw: Draw }) {
-  return (
-    <article className="flex h-[13rem] min-w-[15rem] flex-col justify-between rounded-[var(--radius)] border border-[var(--rule)] bg-[var(--card)] p-5 md:snap-start">
-      <div>
-        <p className="text-xs text-muted-foreground tabular-nums">{formatDate(draw.draw_date)}</p>
-        <div className="mt-2">
-          <RoundBadge draw={draw} />
-        </div>
-      </div>
-      <div>
-        <div className="figure text-[2.75rem] leading-none text-ink">{draw.cutoff_score}</div>
-        <p className="mt-2 text-xs text-muted-foreground tabular-nums">
-          {draw.invitations_issued.toLocaleString("en-CA")} invitations
-        </p>
-      </div>
-    </article>
-  );
-}
-
 function Index() {
   const { data, isLoading } = useQuery(drawsQuery(8));
   const [raw, setRaw] = useState("");
+  const { elig, setElig, hasEligibility } = useCrsProfile();
 
   useEffect(() => {
     capture(EVENTS.LANDING_VIEWED);
@@ -82,7 +64,6 @@ function Index() {
   const score = Number.isFinite(parsed) && parsed > 0 && parsed <= 1200 ? parsed : null;
 
   const latest = data?.[0];
-  const recent = data?.slice(0, 8) ?? [];
 
   return (
     <div className="mx-auto max-w-6xl px-5 pt-8 pb-6">
@@ -151,9 +132,14 @@ function Index() {
                   >
                     Your score
                   </label>
+                  {/* Boxed input — visually distinguishes user-editable score from the
+                      static LATEST CUTOFF number to its left. */}
                   <div
-                    className="mt-1 border-b pb-1"
-                    style={{ borderColor: "rgba(246,241,232,0.35)" }}
+                    className="mt-2 rounded-[var(--radius)] border px-4 py-2.5 transition-colors focus-within:border-[var(--accent-soft)]"
+                    style={{
+                      borderColor: "rgba(246,241,232,0.28)",
+                      backgroundColor: "rgba(246,241,232,0.06)",
+                    }}
                   >
                     <input
                       id="crs-score"
@@ -202,43 +188,14 @@ function Index() {
         </div>
       </section>
 
-      {/* Personalized "where you stand" — the core value of the product,
-          inlined here so users answer the primary question without leaving Home.
-          Score is read directly from the hero input above via the shared state. */}
-      <PersonalScoreSection score={score} />
-
-      {/* Recent draws */}
-      <section aria-labelledby="recent-heading" className="mt-14">
-        <div className="flex flex-wrap items-baseline justify-between gap-3">
-          <h2 id="recent-heading" className="kicker">
-            Recent draws
-          </h2>
-          <SecondaryLink to="/history">View full history →</SecondaryLink>
-        </div>
-
-        {isLoading ? (
-          <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-44 w-full" />
-            ))}
-          </div>
-        ) : recent.length === 0 ? (
-          <p className="mt-4 text-sm text-muted-foreground">
-            Data not available yet — the daily refresh runs at ~9am ET.
-          </p>
-        ) : (
-          <div className="mt-5">
-            <CardCarousel ariaLabel="Recent Express Entry rounds">
-              {recent.map((d) => (
-                <div key={d.round_number} className="w-[15rem] shrink-0 snap-start">
-                  <DrawTile draw={d} />
-                </div>
-              ))}
-            </CardCarousel>
-          </div>
-        )}
-      </section>
-
+      {/* Progressive answer to "where do I stand?":
+            1. eligibility inputs (chips)
+            2. recent draws filtered by that eligibility
+            3. paginated "what the history says" against the user's score
+          Score flows from the hero above; eligibility is shared across all three via useCrsProfile. */}
+      <EligibilityInputs elig={elig} setElig={setElig} />
+      <RecentRelevantDraws elig={elig} hasEligibility={hasEligibility} />
+      <PersonalScoreSection score={score} elig={elig} />
     </div>
   );
 }
