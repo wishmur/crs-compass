@@ -180,8 +180,8 @@ function Wihbi() {
         </p>
 
         {/* Step 1 */}
-        <Card className="mt-8">
-          <CardContent className="p-6">
+        <Card className="mt-9 border-0 shadow-[var(--shadow-soft)]">
+          <CardContent className="p-6 sm:p-7">
             <h2 className="section-label">
               Step 1 — Your CRS score
             </h2>
@@ -191,6 +191,7 @@ function Wihbi() {
               </Label>
               <Input
                 id="score"
+                className="num h-11 text-lg"
                 type="number"
                 min={0}
                 max={1200}
@@ -207,8 +208,8 @@ function Wihbi() {
         </Card>
 
         {/* Step 2 */}
-        <Card className="mt-6">
-          <CardContent className="p-6">
+        <Card className="mt-5 border-0 shadow-[var(--shadow-soft)]">
+          <CardContent className="p-6 sm:p-7">
             <h2 className="section-label">
               Step 2 — What actually applies to you?
             </h2>
@@ -299,8 +300,8 @@ function Wihbi() {
         </Card>
 
         {/* Step 3 */}
-        <Card className="mt-6">
-          <CardContent className="p-6">
+        <Card className="mt-5 border-0 shadow-[var(--shadow-soft)]">
+          <CardContent className="p-6 sm:p-7">
             <h2 className="section-label">
               Step 3 — Result
             </h2>
@@ -321,13 +322,15 @@ function Wihbi() {
               </p>
             ) : (
               <div className="mt-3">
-                <p className="text-base">
-                  You would have cleared{" "}
-                  <strong>
-                    {cleared} of {total}
-                  </strong>{" "}
-                  relevant rounds since {formatDate(since)}.
-                </p>
+                <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
+                  <p className="num text-5xl leading-none font-semibold text-foreground">
+                    {cleared}
+                    <span className="text-2xl font-medium text-muted-foreground"> / {total}</span>
+                  </p>
+                  <p className="mb-1 text-sm text-muted-foreground">
+                    relevant rounds cleared since {formatDate(since)}
+                  </p>
+                </div>
 
                 <div className="mt-5 flex flex-wrap gap-2">
                   {lastTwelve.map((r) => (
@@ -335,7 +338,7 @@ function Wihbi() {
                       <TooltipTrigger asChild>
                         <span
                           tabIndex={0}
-                          className="h-8 w-8 rounded-full"
+                          className="h-8 w-8 rounded-lg transition-transform duration-150 hover:scale-110"
                           style={{
                             backgroundColor: r.would_have_cleared
                               ? "var(--result-pass-bg)"
