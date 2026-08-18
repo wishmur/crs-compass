@@ -75,16 +75,19 @@ function Index() {
   return (
     <div className="mx-auto max-w-6xl px-5 pt-12 pb-6">
       {/* Hero */}
-      <section className="grid gap-12 md:grid-cols-2 md:gap-16">
+      <section
+        className="grid gap-12 rounded-2xl border border-rule p-7 md:grid-cols-2 md:gap-16 md:p-12"
+        style={{ backgroundColor: "color-mix(in oklab, var(--brand-soft) 40%, transparent)" }}
+      >
         <div>
           <p className="kicker">Express Entry, in context</p>
           <h1 className="display mt-4 max-w-[14ch] text-[2.75rem] leading-[1.02] font-semibold text-ink md:text-[3.5rem]">
             See where your score stands.
           </h1>
           <p className="mt-5 max-w-md text-[0.95rem] leading-relaxed text-muted-foreground">
-            Type your CRS score. We place it against the most recent round instantly, and against
-            every historical round that actually applies to you on the deeper page.
+            Type your CRS score to place it against the most recent round.
           </p>
+
 
           <div className="mt-10 max-w-xs border-b border-rule pb-1">
             <label htmlFor="crs-score" className="kicker block">
@@ -120,7 +123,7 @@ function Index() {
                   to="/would-i-have-made-it"
                   className="text-brand underline underline-offset-4 hover:no-underline"
                 >
-                  See where you stand across every relevant round →
+                  See every relevant round →
                 </Link>
               </p>
             </>
@@ -148,8 +151,7 @@ function Index() {
                 <RoundBadge draw={latest} size="lg" />
               </div>
               <p className="mt-5 max-w-lg text-sm leading-relaxed text-muted-foreground">
-                The cutoff is the CRS score of the last candidate invited in this round — it only
-                means something alongside the round type above.
+                The cutoff is the score of the last candidate invited in this round.
               </p>
               <p className="mt-3 text-sm text-muted-foreground">
                 Round #{latest.round_number} · {formatDate(latest.draw_date)}
