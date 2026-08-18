@@ -192,6 +192,15 @@ function Wihbi() {
     [results],
   );
 
+  const [tablePage, setTablePage] = useState(1);
+  const tablePageCount = Math.max(1, Math.ceil(tableRows.length / TABLE_PAGE_SIZE));
+  const currentTablePage = Math.min(tablePage, tablePageCount);
+  const pagedRows = tableRows.slice(
+    (currentTablePage - 1) * TABLE_PAGE_SIZE,
+    currentTablePage * TABLE_PAGE_SIZE,
+  );
+
+
   const sixMonthsAgo = useMemo(() => monthsAgo(6), []);
   const clearedRecently = (results ?? []).some(
     (r) => r.would_have_cleared && r.draw_date >= sixMonthsAgo,
