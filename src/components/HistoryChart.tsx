@@ -54,9 +54,9 @@ export function HistoryChart({ draws }: { draws: Draw[] }) {
   if (!data.length) return null;
 
   return (
-    <div className="rounded-lg border border-border p-4">
+    <div className="surface p-5 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase">
+        <h2 className="section-label">
           Cutoffs, last 3 years
         </h2>
         <div className="flex items-center gap-2">

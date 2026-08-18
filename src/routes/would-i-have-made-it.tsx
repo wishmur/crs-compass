@@ -171,9 +171,10 @@ function Wihbi() {
 
   return (
     <TooltipProvider>
-      <div className="mx-auto max-w-3xl px-4 py-10">
-        <h1 className="text-3xl font-bold tracking-tight">Would I have been invited?</h1>
-        <p className="mt-2 text-muted-foreground">
+      <div className="mx-auto max-w-3xl px-4 pt-10 pb-4 sm:pt-14">
+        <p className="section-label">Your position</p>
+        <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Would I have been invited?</h1>
+        <p className="mt-3 text-[0.95rem] leading-relaxed text-muted-foreground">
           Enter a CRS score you already know, tell us which rounds actually apply to you, and see
           what the history says.
         </p>
@@ -181,7 +182,7 @@ function Wihbi() {
         {/* Step 1 */}
         <Card className="mt-8">
           <CardContent className="p-6">
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase">
+            <h2 className="section-label">
               Step 1 — Your CRS score
             </h2>
             <div className="mt-3 max-w-40">
@@ -208,7 +209,7 @@ function Wihbi() {
         {/* Step 2 */}
         <Card className="mt-6">
           <CardContent className="p-6">
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase">
+            <h2 className="section-label">
               Step 2 — What actually applies to you?
             </h2>
             <p className="mt-2 text-sm text-muted-foreground">
@@ -300,7 +301,7 @@ function Wihbi() {
         {/* Step 3 */}
         <Card className="mt-6">
           <CardContent className="p-6">
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase">
+            <h2 className="section-label">
               Step 3 — Result
             </h2>
 
@@ -355,7 +356,7 @@ function Wihbi() {
                 </p>
 
                 {!clearedRecently && (
-                  <p className="mt-5 rounded-md border border-border bg-muted/50 p-4 text-sm">
+                  <p className="mt-5 rounded-lg border-l-2 border-primary/40 bg-surface-sunken p-4 text-sm leading-relaxed">
                     No relevant rounds have been within your reach in the last 6 months.
                     {topUncheckedFamilies.length > 0 && (
                       <>
@@ -374,7 +375,7 @@ function Wihbi() {
                     .map((r) => (
                       <li
                         key={r.round_number}
-                        className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border p-3 text-sm"
+                        className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-surface-sunken px-4 py-3 text-sm transition-colors hover:bg-accent"
                       >
                         <span className="flex flex-wrap items-center gap-3">
                           <span className="text-muted-foreground">{formatDate(r.draw_date)}</span>
