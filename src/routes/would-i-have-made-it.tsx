@@ -226,7 +226,8 @@ function Wihbi() {
 
   return (
     <TooltipProvider>
-      <div className="mx-auto w-full max-w-[800px] px-4 pt-8 pb-16 sm:pt-10">
+      <div className="mx-auto max-w-6xl px-5 pt-8 pb-16 sm:pt-10">
+      <div className="mx-auto w-full max-w-[800px]">
         {/* Header */}
         <p className="kicker">Your position</p>
         <h1 className="display mt-2 text-[1.75rem] font-semibold leading-[1.15] tracking-tight text-ink sm:text-[2.125rem]">
@@ -510,6 +511,7 @@ function Wihbi() {
 
         {/* PostHog survey target */}
         <div id="wihbi-survey-slot" className="mt-8" />
+      </div>
       </div>
     </TooltipProvider>
   );

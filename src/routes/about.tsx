@@ -28,11 +28,12 @@ function About() {
   }, []);
 
   return (
-    <article className="mx-auto max-w-2xl px-4 pt-10 pb-4 sm:pt-14">
-      <p className="section-label">About</p>
-      <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">About CRS Compass</h1>
+    <div className="mx-auto max-w-6xl px-5 pt-10 pb-6 sm:pt-14">
+      <article className="mx-auto max-w-3xl">
+      <p className="kicker">About</p>
+      <h1 className="display mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">About CRS Compass</h1>
 
-      <h2 className="mt-12 text-lg font-semibold">What Express Entry is</h2>
+      <h2 className="display mt-12 text-xl font-semibold text-ink">What Express Entry is</h2>
       <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
         Express Entry is how Canada manages applications for three federal permanent residence
         programs: the Canadian Experience Class, the Federal Skilled Worker Program and the Federal
@@ -50,7 +51,7 @@ function About() {
         the last candidate invited — an outcome, not a rule.
       </p>
 
-      <h2 className="mt-12 text-lg font-semibold">
+      <h2 className="display mt-12 text-xl font-semibold text-ink">
         Why cutoffs mean different things in different rounds
       </h2>
       <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
@@ -67,27 +68,27 @@ function About() {
         personal results unless you say you hold a nomination.
       </p>
 
-      <h2 className="mt-12 text-lg font-semibold">There is no cutoff &ldquo;for Ontario&rdquo;</h2>
+      <h2 className="display mt-12 text-xl font-semibold text-ink">There is no cutoff &ldquo;for Ontario&rdquo;</h2>
       <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
         There is no such thing as a cutoff for Ontario — or any other province — in federal Express
         Entry. The pool is national. Provinces only enter the picture through their separate
         Provincial Nominee Programs, which are out of scope for this site.
       </p>
 
-      <h2 className="mt-12 text-lg font-semibold">Nobody can predict the next cutoff</h2>
+      <h2 className="display mt-12 text-xl font-semibold text-ink">Nobody can predict the next cutoff</h2>
       <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
         Including us. The cutoff is determined <em>after</em> IRCC decides how many people to invite
         and from which group. Anyone selling you a forecast is selling you a guess dressed up as
         data.
       </p>
 
-      <h2 className="mt-12 text-lg font-semibold">Disclaimer</h2>
+      <h2 className="display mt-12 text-xl font-semibold text-ink">Disclaimer</h2>
       <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
         This site is not immigration advice. Data comes from IRCC and may be delayed or incomplete.
         Always verify with the official Canadian government resources before making decisions.
       </p>
 
-      <h2 className="mt-12 text-lg font-semibold">Credits and sources</h2>
+      <h2 className="display mt-12 text-xl font-semibold text-ink">Credits and sources</h2>
       <ul className="mt-2 space-y-1 text-sm">
         <li>
           <a
@@ -112,7 +113,7 @@ function About() {
         <li>
           <a
             className="text-primary underline underline-offset-4 hover:no-underline"
-            href="https://github.com/wishmur/crs-signal"
+            href="https://github.com/wishmur/crs-compass"
             target="_blank"
             rel="noreferrer noopener"
           >
@@ -120,6 +121,7 @@ function About() {
           </a>
         </li>
       </ul>
-    </article>
+      </article>
+    </div>
   );
 }
