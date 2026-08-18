@@ -257,7 +257,7 @@ function History() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((d: Draw) => (
+                {pageRows.map((d: Draw) => (
                   <TableRow key={d.round_number}>
                     <TableCell className="num whitespace-nowrap text-muted-foreground">{formatDate(d.draw_date)}</TableCell>
                     <TableCell>
