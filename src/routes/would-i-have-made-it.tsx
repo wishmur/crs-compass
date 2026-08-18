@@ -10,10 +10,18 @@ import {
 } from "@/components/ui/tooltip";
 import { FilterChip } from "@/components/FilterChip";
 import { RoundBadge } from "@/components/RoundBadge";
-import { formatDate } from "@/components/DrawMeta";
+import { formatDate, SourceLink } from "@/components/DrawMeta";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { relevantDrawsQuery, drawsQuery } from "@/lib/queries";
 import { EVENTS, capture } from "@/lib/analytics";
-import { CATEGORIES, roundLabel, type Program } from "@/data/round-types";
+import { CATEGORIES, roundLabel, type Program, type RelevantDraw } from "@/data/round-types";
 
 export const Route = createFileRoute("/would-i-have-made-it")({
   head: () => ({
@@ -56,6 +64,33 @@ const PROGRAM_CHIPS: { value: Program | null; label: string }[] = [
   { value: "FST", label: "Federal Skilled Trades (FST)" },
   { value: "PNP", label: "I hold a provincial nomination (PNP)" },
 ];
+
+function ResultPill({ draw, score }: { draw: RelevantDraw; score: number }) {
+  const atCutoff = score === draw.cutoff_score;
+  const label = atCutoff
+    ? "At cutoff · tie-break applies"
+    : draw.would_have_cleared
+      ? "Cleared"
+      : "Not cleared";
+  const bg = atCutoff
+    ? "var(--muted)"
+    : draw.would_have_cleared
+      ? "var(--brand-soft)"
+      : "var(--accent-soft)";
+  const fg = atCutoff
+    ? "var(--muted-foreground)"
+    : draw.would_have_cleared
+      ? "var(--brand)"
+      : "var(--accent)";
+  return (
+    <span
+      className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap"
+      style={{ backgroundColor: bg, color: fg }}
+    >
+      {label}
+    </span>
+  );
+}
 
 function Wihbi() {
   const [hydrated, setHydrated] = useState(false);
@@ -149,6 +184,11 @@ function Wihbi() {
         .sort((a, b) => b.draw_date.localeCompare(a.draw_date))
         .slice(0, 20)
         .reverse(),
+    [results],
+  );
+
+  const tableRows = useMemo(
+    () => [...(results ?? [])].sort((a, b) => b.draw_date.localeCompare(a.draw_date)),
     [results],
   );
 
