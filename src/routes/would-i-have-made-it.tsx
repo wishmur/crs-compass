@@ -10,10 +10,18 @@ import {
 } from "@/components/ui/tooltip";
 import { FilterChip } from "@/components/FilterChip";
 import { RoundBadge } from "@/components/RoundBadge";
-import { formatDate } from "@/components/DrawMeta";
+import { formatDate, SourceLink } from "@/components/DrawMeta";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { relevantDrawsQuery, drawsQuery } from "@/lib/queries";
 import { EVENTS, capture } from "@/lib/analytics";
-import { CATEGORIES, roundLabel, type Program } from "@/data/round-types";
+import { CATEGORIES, roundLabel, type Program, type RelevantDraw } from "@/data/round-types";
 
 export const Route = createFileRoute("/would-i-have-made-it")({
   head: () => ({
@@ -56,6 +64,33 @@ const PROGRAM_CHIPS: { value: Program | null; label: string }[] = [
   { value: "FST", label: "Federal Skilled Trades (FST)" },
   { value: "PNP", label: "I hold a provincial nomination (PNP)" },
 ];
+
+function ResultPill({ draw, score }: { draw: RelevantDraw; score: number }) {
+  const atCutoff = score === draw.cutoff_score;
+  const label = atCutoff
+    ? "At cutoff · tie-break applies"
+    : draw.would_have_cleared
+      ? "Cleared"
+      : "Not cleared";
+  const bg = atCutoff
+    ? "var(--muted)"
+    : draw.would_have_cleared
+      ? "var(--brand-soft)"
+      : "var(--accent-soft)";
+  const fg = atCutoff
+    ? "var(--muted-foreground)"
+    : draw.would_have_cleared
+      ? "var(--brand)"
+      : "var(--accent)";
+  return (
+    <span
+      className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap"
+      style={{ backgroundColor: bg, color: fg }}
+    >
+      {label}
+    </span>
+  );
+}
 
 function Wihbi() {
   const [hydrated, setHydrated] = useState(false);
@@ -149,6 +184,11 @@ function Wihbi() {
         .sort((a, b) => b.draw_date.localeCompare(a.draw_date))
         .slice(0, 20)
         .reverse(),
+    [results],
+  );
+
+  const tableRows = useMemo(
+    () => [...(results ?? [])].sort((a, b) => b.draw_date.localeCompare(a.draw_date)),
     [results],
   );
 
@@ -363,6 +403,87 @@ function Wihbi() {
             </>
           )}
         </div>
+
+        {/* Relevant round history */}
+        {validScore && !isLoading && total > 0 && (
+          <section className="mt-12">
+            <p className="kicker">Relevant round history</p>
+            <h2 className="display mt-2 text-[1.35rem] leading-[1.2] text-ink">
+              Every relevant round in this window
+            </h2>
+
+            {/* Desktop table */}
+            <div className="surface mt-5 hidden overflow-hidden p-2 md:block">
+              <Table>
+                <caption className="sr-only">
+                  Express Entry rounds relevant to your eligibility selections
+                </caption>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead scope="col">Date</TableHead>
+                    <TableHead scope="col">Round</TableHead>
+                    <TableHead scope="col" className="text-right">
+                      Invitations
+                    </TableHead>
+                    <TableHead scope="col" className="text-right">
+                      Cutoff
+                    </TableHead>
+                    <TableHead scope="col">Result</TableHead>
+                    <TableHead scope="col">Source</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {tableRows.map((d) => (
+                    <TableRow key={d.round_number}>
+                      <TableCell className="num whitespace-nowrap text-muted-foreground">
+                        {formatDate(d.draw_date)}
+                      </TableCell>
+                      <TableCell>
+                        <RoundBadge draw={d} />
+                      </TableCell>
+                      <TableCell className="num text-right text-muted-foreground">
+                        {d.invitations_issued.toLocaleString("en-CA")}
+                      </TableCell>
+                      <TableCell className="num text-right font-semibold">
+                        {d.cutoff_score}
+                      </TableCell>
+                      <TableCell>
+                        <ResultPill draw={d} score={numericScore} />
+                      </TableCell>
+                      <TableCell className="text-xs">
+                        <SourceLink
+                          url={d.source_url}
+                          from="wihbi"
+                          roundNumber={d.round_number}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Mobile cards */}
+            <ul className="mt-5 space-y-3 md:hidden">
+              {tableRows.map((d) => (
+                <li key={d.round_number} className="surface p-4">
+                  <div className="flex items-center justify-between gap-2 text-sm">
+                    <span className="text-muted-foreground">{formatDate(d.draw_date)}</span>
+                    <span className="num font-semibold">{d.cutoff_score} CRS</span>
+                  </div>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <RoundBadge draw={d} />
+                    <ResultPill draw={d} score={numericScore} />
+                  </div>
+                  <div className="mt-2 flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                    <span>{d.invitations_issued.toLocaleString("en-CA")} invitations</span>
+                    <SourceLink url={d.source_url} from="wihbi" roundNumber={d.round_number} />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {/* PostHog survey target */}
         <div id="wihbi-survey-slot" className="mt-8" />
