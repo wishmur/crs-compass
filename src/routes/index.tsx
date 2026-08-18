@@ -62,15 +62,6 @@ function Index() {
   const latest = data?.[0];
   const recent = data?.slice(0, 6) ?? [];
 
-  const verdict = (() => {
-    if (!latest) return "Enter a score to see it placed on this scale.";
-    if (score == null) return "Enter a score to see it placed on this scale.";
-    const diff = score - latest.cutoff_score;
-    const type = roundLabel(latest);
-    return diff < 0
-      ? `${Math.abs(diff)} points short of the most recent ${type} cutoff.`
-      : `${diff} points above the most recent ${type} cutoff.`;
-  })();
 
   return (
     <div className="mx-auto max-w-6xl px-5 pt-12 pb-6">
