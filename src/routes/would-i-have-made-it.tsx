@@ -68,7 +68,10 @@ function Wihbi() {
       const s = localStorage.getItem(SCORE_KEY);
       if (s) setScore(s);
       const e = localStorage.getItem(ELIG_KEY);
-      if (e) setElig({ program: null, categories: [], ...(JSON.parse(e) as Eligibility) });
+      if (e) {
+        const parsed = JSON.parse(e) as Partial<Eligibility>;
+        setElig({ program: parsed.program ?? null, categories: parsed.categories ?? [] });
+      }
     } catch {
       /* ignore */
     }

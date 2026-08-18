@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as HistoryRouteImport } from './routes/history'
+import { Route as WouldIHaveMadeItRouteImport } from './routes/would-i-have-made-it'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -28,35 +29,44 @@ const HistoryRoute = HistoryRouteImport.update({
   path: '/history',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WouldIHaveMadeItRoute = WouldIHaveMadeItRouteImport.update({
+  id: '/would-i-have-made-it',
+  path: '/would-i-have-made-it',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/history': typeof HistoryRoute
+  '/would-i-have-made-it': typeof WouldIHaveMadeItRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/history': typeof HistoryRoute
+  '/would-i-have-made-it': typeof WouldIHaveMadeItRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/history': typeof HistoryRoute
+  '/would-i-have-made-it': typeof WouldIHaveMadeItRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about' | '/history'
+  fullPaths: '/' | '/about' | '/history' | '/would-i-have-made-it'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/history'
-  id: '__root__' | '/' | '/about' | '/history'
+  to: '/' | '/about' | '/history' | '/would-i-have-made-it'
+  id: '__root__' | '/' | '/about' | '/history' | '/would-i-have-made-it'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   HistoryRoute: typeof HistoryRoute
+  WouldIHaveMadeItRoute: typeof WouldIHaveMadeItRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -82,6 +92,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HistoryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/would-i-have-made-it': {
+      id: '/would-i-have-made-it'
+      path: '/would-i-have-made-it'
+      fullPath: '/would-i-have-made-it'
+      preLoaderRoute: typeof WouldIHaveMadeItRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -89,6 +106,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   HistoryRoute: HistoryRoute,
+  WouldIHaveMadeItRoute: WouldIHaveMadeItRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
