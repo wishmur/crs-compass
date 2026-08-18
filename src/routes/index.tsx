@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RoundBadge } from "@/components/RoundBadge";
 import { ScoreScale } from "@/components/ScoreScale";
 import { formatDate } from "@/components/DrawMeta";
+import { CardCarousel } from "@/components/CardCarousel";
+import { PrimaryCTA, SecondaryLink } from "@/components/CTA";
 import { badgeTone, type Draw } from "@/data/round-types";
 import { drawsQuery } from "@/lib/queries";
 import { EVENTS, capture } from "@/lib/analytics";
@@ -218,9 +220,7 @@ function Index() {
           <h2 id="recent-heading" className="kicker">
             Recent draws
           </h2>
-          <Link to="/history" className="text-sm font-medium text-brand hover:opacity-70">
-            View full history →
-          </Link>
+          <SecondaryLink to="/history">View full history →</SecondaryLink>
         </div>
 
         {isLoading ? (
@@ -234,40 +234,32 @@ function Index() {
             Data not available yet — the daily refresh runs at ~9am ET.
           </p>
         ) : (
-          <div
-            className="mt-5 -mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-2 [scrollbar-width:thin]"
-            role="group"
-            aria-label="Recent Express Entry rounds"
-          >
-            {recent.map((d) => (
-              <div key={d.round_number} className="w-[15rem] shrink-0">
-                <DrawTile draw={d} />
-              </div>
-            ))}
+          <div className="mt-5">
+            <CardCarousel ariaLabel="Recent Express Entry rounds">
+              {recent.map((d) => (
+                <div key={d.round_number} className="w-[15rem] shrink-0 snap-start">
+                  <DrawTile draw={d} />
+                </div>
+              ))}
+            </CardCarousel>
           </div>
         )}
       </section>
 
-      {/* Personalized CTA — inline, no container */}
-      <section className="mt-12 flex flex-wrap items-baseline gap-x-3 gap-y-1 border-t border-[var(--rule)] pt-6">
+      {/* Primary CTA — one clear action */}
+      <section className="mt-12 border-t border-[var(--rule)] pt-8">
         <p className="text-[0.95rem] text-ink">
-          Want to see which of these you would have cleared?
+          See which of these your score would have cleared.
         </p>
-        <Link
-          to="/would-i-have-made-it"
-          className="text-[0.95rem] font-medium text-brand hover:opacity-70"
-        >
-          Check My Score →
-        </Link>
+        <div className="mt-4">
+          <PrimaryCTA to="/would-i-have-made-it">Check my score →</PrimaryCTA>
+        </div>
       </section>
 
-      {/* Footer link */}
-      <p className="mt-12 border-t border-[var(--rule)] pt-6 text-center text-sm text-muted-foreground">
-        New to Express Entry?{" "}
-        <Link to="/about" className="underline underline-offset-4 hover:text-ink">
-          Learn how it works →
-        </Link>
-      </p>
+      {/* Footer strip — quiet secondary link */}
+      <div className="mt-12 flex justify-end border-t border-[var(--rule)] pt-5">
+        <SecondaryLink to="/about">Learn how Express Entry works →</SecondaryLink>
+      </div>
     </div>
   );
 }

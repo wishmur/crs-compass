@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { EVENTS, capture } from "@/lib/analytics";
+import { SecondaryLink } from "@/components/CTA";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
@@ -29,7 +30,7 @@ function About() {
 
   return (
     <div className="mx-auto max-w-6xl px-5 pt-10 pb-6 sm:pt-14">
-      <article className="mx-auto max-w-3xl">
+      <article className="mx-auto max-w-4xl">
       <p className="kicker">About</p>
       <h1 className="display mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">About CRS Compass</h1>
 
@@ -89,36 +90,27 @@ function About() {
       </p>
 
       <h2 className="display mt-12 text-xl font-semibold text-ink">Credits and sources</h2>
-      <ul className="mt-2 space-y-1 text-sm">
+      <ul className="mt-3 space-y-2">
         <li>
-          <a
-            className="text-primary underline underline-offset-4 hover:no-underline"
+          <SecondaryLink
             href="https://www.canada.ca/en/immigration-refugees-citizenship/corporate/mandate/policies-operational-instructions-agreements/ministerial-instructions/express-entry-rounds.html"
             target="_blank"
-            rel="noreferrer noopener"
           >
-            IRCC — official rounds of invitations
-          </a>
+            IRCC — official rounds of invitations →
+          </SecondaryLink>
         </li>
         <li>
-          <a
-            className="text-primary underline underline-offset-4 hover:no-underline"
+          <SecondaryLink
             href="https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/submit-profile/rounds-invitations/category-based-selection.html"
             target="_blank"
-            rel="noreferrer noopener"
           >
-            IRCC — category-based selection criteria
-          </a>
+            IRCC — category-based selection criteria →
+          </SecondaryLink>
         </li>
         <li>
-          <a
-            className="text-primary underline underline-offset-4 hover:no-underline"
-            href="https://github.com/wishmur/crs-compass"
-            target="_blank"
-            rel="noreferrer noopener"
-          >
-            Source code on GitHub
-          </a>
+          <SecondaryLink href="https://github.com/wishmur/crs-compass" target="_blank">
+            Source code on GitHub →
+          </SecondaryLink>
         </li>
       </ul>
       </article>

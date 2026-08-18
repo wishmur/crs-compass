@@ -16,6 +16,7 @@ import { ChipGroup, FilterChip } from "@/components/FilterChip";
 import { RoundBadge } from "@/components/RoundBadge";
 import { SourceLink, formatDate } from "@/components/DrawMeta";
 import { HistoryChart } from "@/components/HistoryChart";
+import { SecondaryLink } from "@/components/CTA";
 import { drawsQuery } from "@/lib/queries";
 import { EVENTS, capture } from "@/lib/analytics";
 import {
@@ -166,25 +167,26 @@ function History() {
     <div className="mx-auto max-w-6xl px-5 pt-10 pb-6 sm:pt-14">
       <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6">
         <h1 className="display text-3xl font-semibold tracking-tight sm:text-4xl">Draw history</h1>
-        <Link
-          to="/would-i-have-made-it"
-          className="text-sm font-medium text-brand hover:opacity-70 sm:order-last"
-        >
-          Check My Score →
-        </Link>
-        {!isLoading && draws.length > 0 && (
-          <p className="text-sm text-muted-foreground tabular-nums">
-            {draws.length.toLocaleString("en-CA")} draws since 2015
-          </p>
-        )}
+        <div className="flex items-baseline gap-6 sm:order-last">
+          {!isLoading && draws.length > 0 && (
+            <p className="text-sm text-muted-foreground tabular-nums">
+              {draws.length.toLocaleString("en-CA")} draws since 2015
+            </p>
+          )}
+          <SecondaryLink to="/would-i-have-made-it">Check my score →</SecondaryLink>
+        </div>
       </div>
 
       <div className="mt-8 border-t border-[var(--rule)] pt-5">
         <div className="flex items-baseline justify-between gap-4">
-          <p className="text-sm text-muted-foreground">
-            Showing {filtered.length.toLocaleString("en-CA")} of{" "}
-            {draws.length.toLocaleString("en-CA")} rounds
-          </p>
+          {isLoading ? (
+            <Skeleton className="h-4 w-40" />
+          ) : (
+            <p className="text-sm text-muted-foreground tabular-nums">
+              Showing {filtered.length.toLocaleString("en-CA")} of{" "}
+              {draws.length.toLocaleString("en-CA")} rounds
+            </p>
+          )}
           {hasFilters && (
             <button
               type="button"

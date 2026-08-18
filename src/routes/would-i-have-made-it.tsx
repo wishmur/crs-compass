@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+import { SecondaryLink } from "@/components/CTA";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -227,7 +228,7 @@ function Wihbi() {
   return (
     <TooltipProvider>
       <div className="mx-auto max-w-6xl px-5 pt-8 pb-16 sm:pt-10">
-      <div className="mx-auto w-full max-w-[800px]">
+      <div className="mx-auto w-full max-w-[960px]">
         {/* Header */}
         <p className="kicker">Your position</p>
         <h1 className="display mt-2 text-[1.75rem] font-semibold leading-[1.15] tracking-tight text-ink sm:text-[2.125rem]">
@@ -311,15 +312,14 @@ function Wihbi() {
                 />
               ))}
             </div>
-            <p className="mt-3 text-xs">
-              <a
-                className="text-muted-foreground underline underline-offset-4 hover:text-foreground"
+            <p className="mt-3">
+              <SecondaryLink
                 href="https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/submit-profile/rounds-invitations/category-based-selection.html"
                 target="_blank"
-                rel="noreferrer noopener"
+                className="text-xs"
               >
                 Official category criteria on canada.ca →
-              </a>
+              </SecondaryLink>
             </p>
           </div>
         </div>
@@ -503,10 +503,8 @@ function Wihbi() {
           </section>
         )}
 
-        <p className="mt-10 text-sm">
-          <Link to="/history" className="font-medium text-brand hover:opacity-70">
-            Explore History →
-          </Link>
+        <p className="mt-10">
+          <SecondaryLink to="/history">Explore full history →</SecondaryLink>
         </p>
 
         {/* PostHog survey target */}
