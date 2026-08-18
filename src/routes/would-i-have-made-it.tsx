@@ -51,11 +51,21 @@ function monthsAgo(n: number) {
 
 const PROGRAM_CHIPS: { value: Program | null; label: string }[] = [
   { value: null, label: "None of these / not sure" },
-  { value: "CEC", label: "CEC" },
-  { value: "FSW", label: "FSW" },
-  { value: "FST", label: "FST" },
-  { value: "PNP", label: "PNP" },
+  { value: "CEC", label: "I'm inside Canada working full-time (CEC)" },
+  { value: "FSW", label: "I'm a Federal Skilled Worker candidate (FSW)" },
+  { value: "FST", label: "I'm a Federal Skilled Trades candidate (FST)" },
+  { value: "PNP", label: "I hold a provincial nomination (PNP)" },
 ];
+
+function StepHeading({ n, title }: { n: number; title: string }) {
+  return (
+    <div className="flex items-baseline gap-3">
+      <span className="figure text-lg text-brand">{n}</span>
+      <h2 className="kicker">{title}</h2>
+    </div>
+  );
+}
+
 
 function Wihbi() {
   const [hydrated, setHydrated] = useState(false);
