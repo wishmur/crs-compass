@@ -23,7 +23,7 @@ function toPoints(draws: Draw[], series: { key: string; matches: (d: Draw) => bo
     row[s.key] = d.cutoff_score;
     byDate.set(d.draw_date, row);
   }
-  return [...byDate.values()].sort((a, b) => String(a.date).localeCompare(String(b.date)));
+  return [...byDate.values()].sort((a, b) => String(a['date']).localeCompare(String(b['date'])));
 }
 
 export function HistoryChart({ draws }: { draws: Draw[] }) {
