@@ -85,12 +85,20 @@ function History() {
     };
 
   const filtered = useMemo(() => {
+    const matchesType = (d: Draw) => {
+      if (!types.length) return true;
+      return types.some((t) => {
+        if (t !== d.round_type) return false;
+        if (t === "program_specific")
+          return !programs.length || (!!d.program && programs.includes(d.program));
+        if (t === "category_based")
+          return !categories.length || (!!d.category && categories.includes(d.category));
+        return true;
+      });
+    };
     const rows = draws.filter((d) => {
       if (years.length && !years.includes(d.draw_date.slice(0, 4))) return false;
-      if (types.length && !types.includes(d.round_type)) return false;
-      if (programs.length && (!d.program || !programs.includes(d.program))) return false;
-      if (categories.length && (!d.category || !categories.includes(d.category))) return false;
-      return true;
+      return matchesType(d);
     });
     const dir = sort.dir === "asc" ? 1 : -1;
     return [...rows].sort((a, b) => {
@@ -105,13 +113,16 @@ function History() {
   const pageRows = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
   const hasFilters =
     years.length + types.length + programs.length + categories.length > 0;
+  /** Only round-type/program/category chips narrow which series render; year narrows the data. */
+  const seriesFilterActive = types.length + programs.length + categories.length > 0;
 
-  /** One filter state drives both chart and table; with no filters we show a restrained default. */
+  /** One filter state drives both chart and table; with no series filter we show a restrained default. */
   const chartSeries = useMemo(() => {
     const present = MAIN_SERIES.filter((s) => filtered.some((d) => s.matches(d)));
-    if (!hasFilters) return present.filter((s) => s.key === "general" || s.key === "CEC");
+    if (!seriesFilterActive)
+      return present.filter((s) => s.key === "general" || s.key === "CEC");
     return present;
-  }, [filtered, hasFilters]);
+  }, [filtered, seriesFilterActive]);
 
   const clearAll = () => {
     setYears([]);
