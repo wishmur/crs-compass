@@ -52,7 +52,7 @@ export const Route = createFileRoute("/history")({
 
 type SortKey = "draw_date" | "invitations_issued" | "cutoff_score";
 
-const PAGE_SIZE = 25;
+const PAGE_SIZE = 15;
 const YEARS = Array.from({ length: 2026 - 2015 + 1 }, (_, i) => String(2015 + i));
 
 function History() {
