@@ -311,3 +311,11 @@
     color: var(--foreground);
   }
 }
+
+/* Round-type dots — same colour family as the badges */
+@utility dot-general { background-color: var(--tone-general-fg); }
+@utility dot-cec { background-color: var(--tone-cec-fg); }
+@utility dot-fsw { background-color: var(--tone-fsw-fg); }
+@utility dot-fst { background-color: var(--tone-fst-fg); }
+@utility dot-pnp { background-color: var(--tone-pnp-fg); }
+@utility dot-category { background-color: var(--tone-category-fg); }
