@@ -20,6 +20,8 @@ import { drawsQuery } from "@/lib/queries";
 import { EVENTS, capture } from "@/lib/analytics";
 import {
   CATEGORIES,
+  MAIN_SERIES,
+
   PROGRAMS,
   ROUND_TYPES,
   ROUND_TYPE_LABELS,
