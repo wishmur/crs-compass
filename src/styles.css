@@ -280,7 +280,7 @@
 @utility figure {
   font-family: var(--font-serif);
   font-optical-sizing: auto;
-  font-weight: 800;
+  font-weight: 400;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.035em;
   line-height: 0.9;
