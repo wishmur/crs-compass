@@ -1,0 +1,137 @@
+import { useMemo, useState } from "react";
+import {
+  CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import { MAIN_SERIES, PNP_SERIES, type Draw } from "@/data/round-types";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { EVENTS, capture } from "@/lib/analytics";
+
+function toPoints(draws: Draw[], series: { key: string; matches: (d: Draw) => boolean }[]) {
+  const byDate = new Map<string, Record<string, number | string>>();
+  for (const d of draws) {
+    const s = series.find((x) => x.matches(d));
+    if (!s) continue;
+    const row = byDate.get(d.draw_date) ?? { date: d.draw_date };
+    row[s.key] = d.cutoff_score;
+    byDate.set(d.draw_date, row);
+  }
+  return [...byDate.values()].sort((a, b) => String(a.date).localeCompare(String(b.date)));
+}
+
+export function HistoryChart({ draws }: { draws: Draw[] }) {
+  const [hidden, setHidden] = useState<Record<string, boolean>>({});
+  const [showPnp, setShowPnp] = useState(false);
+
+  const cutoff = useMemo(() => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() - 3);
+    return d.toISOString().slice(0, 10);
+  }, []);
+
+  const recent = useMemo(() => draws.filter((d) => d.draw_date >= cutoff), [draws, cutoff]);
+
+  const activeSeries = useMemo(
+    () => MAIN_SERIES.filter((s) => recent.some((d) => s.matches(d))),
+    [recent],
+  );
+  const data = useMemo(() => toPoints(recent, activeSeries), [recent, activeSeries]);
+  const pnpData = useMemo(() => toPoints(recent, [PNP_SERIES]), [recent]);
+
+  const toggle = (key: string) => {
+    const next = !hidden[key];
+    setHidden((h) => ({ ...h, [key]: next }));
+    capture(EVENTS.CHART_SERIES_TOGGLED, { series: key, visible: !next });
+  };
+
+  if (!data.length) return null;
+
+  return (
+    <div className="rounded-lg border border-border p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase">
+          Cutoffs, last 3 years
+        </h2>
+        <div className="flex items-center gap-2">
+          <Switch
+            id="pnp-toggle"
+            checked={showPnp}
+            onCheckedChange={(v) => {
+              setShowPnp(v);
+              capture(EVENTS.CHART_SERIES_TOGGLED, { series: "PNP", visible: v });
+            }}
+          />
+          <Label htmlFor="pnp-toggle" className="text-xs text-muted-foreground">
+            Show PNP (separate scale)
+          </Label>
+        </div>
+      </div>
+
+      <div className="mt-4 h-[320px] w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={data} margin={{ top: 8, right: 8, bottom: 8, left: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+            <XAxis dataKey="date" tick={{ fontSize: 11 }} minTickGap={40} />
+            <YAxis
+              domain={["auto", "auto"]}
+              tick={{ fontSize: 11 }}
+              label={{ value: "CRS cutoff", angle: -90, position: "insideLeft", fontSize: 11 }}
+            />
+            <Tooltip contentStyle={{ fontSize: 12 }} />
+            <Legend
+              wrapperStyle={{ fontSize: 11, cursor: "pointer" }}
+              onClick={(e) => toggle(String((e as { dataKey?: string }).dataKey ?? ""))}
+            />
+            {activeSeries.map((s) => (
+              <Line
+                key={s.key}
+                type="monotone"
+                dataKey={s.key}
+                name={s.label}
+                stroke={s.color}
+                strokeWidth={2}
+                dot={false}
+                connectNulls
+                hide={hidden[s.key]}
+              />
+            ))}
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+
+      {showPnp && pnpData.length > 0 && (
+        <div className="mt-6">
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase">
+            Program-specific · PNP (includes the automatic 600-point nomination bonus)
+          </h3>
+          <div className="mt-2 h-[200px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={pnpData} margin={{ top: 8, right: 8, bottom: 8, left: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                <XAxis dataKey="date" tick={{ fontSize: 11 }} minTickGap={40} />
+                <YAxis domain={["auto", "auto"]} tick={{ fontSize: 11 }} />
+                <Tooltip contentStyle={{ fontSize: 12 }} />
+                <Line
+                  type="monotone"
+                  dataKey={PNP_SERIES.key}
+                  name={PNP_SERIES.label}
+                  stroke={PNP_SERIES.color}
+                  strokeWidth={2}
+                  dot={false}
+                  connectNulls
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
