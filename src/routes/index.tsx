@@ -7,7 +7,7 @@ import { ScoreScale } from "@/components/ScoreScale";
 import { formatDate } from "@/components/DrawMeta";
 import { CardCarousel } from "@/components/CardCarousel";
 import { PrimaryCTA, SecondaryLink } from "@/components/CTA";
-import { badgeTone, type Draw } from "@/data/round-types";
+import { type Draw } from "@/data/round-types";
 import { drawsQuery } from "@/lib/queries";
 import { EVENTS, capture } from "@/lib/analytics";
 
@@ -33,29 +33,16 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-/** Very light category tints — differentiation only, never good/bad signalling. */
-const TILE_BG: Record<string, string> = {
-  general: "color-mix(in srgb, var(--brand) 6%, transparent)",
-  cec: "color-mix(in srgb, var(--brand) 9%, transparent)",
-  fsw: "color-mix(in srgb, var(--brand) 4%, transparent)",
-  fst: "color-mix(in srgb, var(--brand) 12%, transparent)",
-  pnp: "color-mix(in srgb, var(--accent) 6%, transparent)",
-  category: "color-mix(in srgb, var(--accent) 10%, transparent)",
-};
-
 function DrawTile({ draw }: { draw: Draw }) {
   return (
-    <article
-      className="flex min-w-[15rem] flex-col justify-between rounded-[var(--radius)] border border-[var(--rule)] p-5 md:snap-start"
-      style={{ backgroundColor: TILE_BG[badgeTone(draw)] ?? "transparent" }}
-    >
+    <article className="flex h-[13rem] min-w-[15rem] flex-col justify-between rounded-[var(--radius)] border border-[var(--rule)] bg-[var(--card)] p-5 md:snap-start">
       <div>
         <p className="text-xs text-muted-foreground tabular-nums">{formatDate(draw.draw_date)}</p>
         <div className="mt-2">
           <RoundBadge draw={draw} />
         </div>
       </div>
-      <div className="mt-6">
+      <div>
         <div className="figure text-[2.75rem] leading-none text-ink">{draw.cutoff_score}</div>
         <p className="mt-2 text-xs text-muted-foreground tabular-nums">
           {draw.invitations_issued.toLocaleString("en-CA")} invitations
@@ -246,14 +233,12 @@ function Index() {
         )}
       </section>
 
-      {/* Primary CTA — one clear action */}
-      <section className="mt-12 border-t border-[var(--rule)] pt-8">
+      {/* Primary CTA — sentence left, button right, same alignment pattern as the rest of the page */}
+      <section className="mt-12 flex flex-wrap items-center justify-between gap-4 border-t border-[var(--rule)] pt-8">
         <p className="text-[0.95rem] text-ink">
           See which of these your score would have cleared.
         </p>
-        <div className="mt-4">
-          <PrimaryCTA to="/would-i-have-made-it">Check my score →</PrimaryCTA>
-        </div>
+        <PrimaryCTA to="/would-i-have-made-it">Check my score →</PrimaryCTA>
       </section>
 
       {/* Footer strip — quiet secondary link */}

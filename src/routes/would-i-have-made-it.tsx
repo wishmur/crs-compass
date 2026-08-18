@@ -262,65 +262,66 @@ function Wihbi() {
 
           <div className="my-6 h-px bg-[var(--rule)]" />
 
-          {/* Program eligibility */}
-          <div>
-            <label className="kicker">Program eligibility</label>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {PROGRAM_CHIPS.map((p) => (
-                <FilterChip
-                  key={p.label}
-                  label={p.label}
-                  selected={elig.program === p.value}
-                  onClick={() => setElig((e) => ({ ...e, program: p.value }))}
-                />
-              ))}
-            </div>
-            {elig.program === "PNP" && (
-              <div
-                className="mt-3 rounded-[var(--radius)] p-3 text-sm leading-relaxed text-ink"
-                style={{ backgroundColor: "var(--accent-soft)" }}
-              >
-                PNP cutoffs include an automatic 600-point nomination bonus. Only select this if you
-                actually hold a nomination — otherwise the comparison against PNP cutoffs will be
-                misleading.
+          {/* Eligibility — two columns on md+, stacked on mobile */}
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 md:gap-10">
+            {/* Program eligibility */}
+            <div>
+              <label className="kicker">Program eligibility</label>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {PROGRAM_CHIPS.map((p) => (
+                  <FilterChip
+                    key={p.label}
+                    label={p.label}
+                    selected={elig.program === p.value}
+                    onClick={() => setElig((e) => ({ ...e, program: p.value }))}
+                  />
+                ))}
               </div>
-            )}
-          </div>
-
-          <div className="my-6 h-px bg-[var(--rule)]" />
-
-          {/* Category-based eligibility */}
-          <div>
-            <label className="kicker">Category-based eligibility</label>
-            <p className="mt-3 text-sm text-muted-foreground">
-              Select every category you meet the official criteria for.
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {CATEGORIES.map((c) => (
-                <FilterChip
-                  key={c}
-                  label={c}
-                  selected={elig.categories.includes(c)}
-                  onClick={() =>
-                    setElig((e) => ({
-                      ...e,
-                      categories: e.categories.includes(c)
-                        ? e.categories.filter((x) => x !== c)
-                        : [...e.categories, c],
-                    }))
-                  }
-                />
-              ))}
+              {elig.program === "PNP" && (
+                <div
+                  className="mt-3 rounded-[var(--radius)] p-3 text-sm leading-relaxed text-ink"
+                  style={{ backgroundColor: "var(--accent-soft)" }}
+                >
+                  PNP cutoffs include an automatic 600-point nomination bonus. Only select this if
+                  you actually hold a nomination — otherwise the comparison against PNP cutoffs will
+                  be misleading.
+                </div>
+              )}
             </div>
-            <p className="mt-3">
-              <SecondaryLink
-                href="https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/submit-profile/rounds-invitations/category-based-selection.html"
-                target="_blank"
-                className="text-xs"
-              >
-                Official category criteria on canada.ca →
-              </SecondaryLink>
-            </p>
+
+            {/* Category-based eligibility */}
+            <div>
+              <label className="kicker">Category-based eligibility</label>
+              <p className="mt-3 text-sm text-muted-foreground">
+                Select every category you meet the official criteria for.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {CATEGORIES.map((c) => (
+                  <FilterChip
+                    key={c}
+                    label={c}
+                    selected={elig.categories.includes(c)}
+                    onClick={() =>
+                      setElig((e) => ({
+                        ...e,
+                        categories: e.categories.includes(c)
+                          ? e.categories.filter((x) => x !== c)
+                          : [...e.categories, c],
+                      }))
+                    }
+                  />
+                ))}
+              </div>
+              <p className="mt-3">
+                <SecondaryLink
+                  href="https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/submit-profile/rounds-invitations/category-based-selection.html"
+                  target="_blank"
+                  className="text-xs"
+                >
+                  Official category criteria on canada.ca →
+                </SecondaryLink>
+              </p>
+            </div>
           </div>
         </div>
 
