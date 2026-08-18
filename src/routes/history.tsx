@@ -103,6 +103,14 @@ function History() {
   const pageRows = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
   const hasFilters =
     years.length + types.length + programs.length + categories.length > 0;
+
+  /** One filter state drives both chart and table; with no filters we show a restrained default. */
+  const chartSeries = useMemo(() => {
+    const present = MAIN_SERIES.filter((s) => filtered.some((d) => s.matches(d)));
+    if (!hasFilters) return present.filter((s) => s.key === "general" || s.key === "CEC");
+    return present;
+  }, [filtered, hasFilters]);
+
   const clearAll = () => {
     setYears([]);
     setTypes([]);
