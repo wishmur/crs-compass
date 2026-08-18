@@ -3,31 +3,35 @@ import { Link } from "@tanstack/react-router";
 const links = [
   { to: "/", label: "Latest" },
   { to: "/history", label: "History" },
-  { to: "/would-i-have-made-it", label: "Would I have been invited?" },
+  { to: "/would-i-have-made-it", label: "My score" },
   { to: "/about", label: "About" },
 ] as const;
 
 export function SiteHeader() {
   return (
-    <header className="border-b border-border bg-card/60 backdrop-blur">
+    <header className="sticky top-0 z-30 border-b border-hairline bg-background/85 backdrop-blur-md">
       <nav
         aria-label="Main"
-        className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-8 gap-y-3 px-4 py-4"
+        className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3"
       >
-        <Link to="/" className="leading-tight">
-          <span className="block text-sm font-bold tracking-tight text-foreground">
-            CRS<span className="text-primary"> Compass</span>
+        <Link to="/" className="group flex items-center gap-2.5">
+          <span
+            aria-hidden
+            className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-[0.7rem] font-bold tracking-tight text-primary-foreground transition-transform duration-200 group-hover:-rotate-6"
+          >
+            CC
           </span>
-          <span className="block text-xs text-muted-foreground">
-            A personalized Express Entry tracker for Canada.
+          <span className="text-sm font-semibold tracking-tight text-foreground">
+            CRS Compass
           </span>
         </Link>
-        <ul className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
+
+        <ul className="flex items-center gap-0.5 text-sm">
           {links.map((l) => (
             <li key={l.to}>
               <Link
                 to={l.to}
-                className="text-muted-foreground transition-colors hover:text-foreground [&.active]:font-medium [&.active]:text-foreground"
+                className="nav-pill block rounded-lg px-2.5 py-1.5 text-muted-foreground sm:px-3 [&.active]:bg-surface-sunken [&.active]:font-medium [&.active]:text-foreground"
                 activeOptions={{ exact: l.to === "/" }}
               >
                 {l.label}
