@@ -12,47 +12,41 @@ export function ScoreScale({ cutoffDraw, score }: { cutoffDraw: Draw; score: num
   const scorePct = score != null ? clampPct(score) : null;
 
   return (
-    <div className="pt-8">
-      <div className="relative">
-        <div className="relative h-px w-full bg-rule">
-          {/* ticks */}
-          {TICKS.map((t) => (
-            <span
-              key={t}
-              className="absolute top-0 h-1.5 w-px bg-rule"
-              style={{ left: `${clampPct(t)}%` }}
-            />
-          ))}
-
-          {/* cutoff marker */}
+    <div className="relative">
+      <div className="relative h-px w-full bg-rule">
+        {TICKS.map((t) => (
           <span
-            className="absolute -top-2 h-4 w-0.5 bg-brand"
-            style={{ left: `${cutoffPct}%` }}
+            key={t}
+            className="absolute top-0 h-1.5 w-px bg-rule"
+            style={{ left: `${clampPct(t)}%` }}
           />
-          {scorePct != null && (
-            <span
-              className="absolute -top-2 h-4 w-0.5"
-              style={{ left: `${scorePct}%`, backgroundColor: "var(--accent)" }}
-            />
-          )}
-        </div>
+        ))}
 
-        <div className="relative mt-2 h-4">
-          {TICKS.map((t) => (
-            <span
-              key={t}
-              className="absolute -translate-x-1/2 text-[0.65rem] text-muted-foreground tabular-nums"
-              style={{ left: `${clampPct(t)}%` }}
-            >
-              {t}
-            </span>
-          ))}
-        </div>
+        {/* cutoff marker */}
+        <span
+          className="absolute -top-1.5 h-3 w-px bg-brand"
+          style={{ left: `${cutoffPct}%` }}
+        />
 
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <RoundBadge draw={cutoffDraw} />
-          <span className="text-xs text-muted-foreground">latest round</span>
-        </div>
+        {/* score marker */}
+        {scorePct != null && (
+          <span
+            className="absolute -top-1.5 h-3 w-3 -translate-x-1/2 rounded-full border border-[var(--paper)]"
+            style={{ left: `${scorePct}%`, backgroundColor: "var(--accent)" }}
+          />
+        )}
+      </div>
+
+      <div className="relative mt-1 h-3">
+        {TICKS.map((t) => (
+          <span
+            key={t}
+            className="absolute -translate-x-1/2 text-[0.65rem] text-muted-foreground tabular-nums"
+            style={{ left: `${clampPct(t)}%` }}
+          >
+            {t}
+          </span>
+        ))}
       </div>
     </div>
   );

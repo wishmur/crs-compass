@@ -62,93 +62,80 @@ function Index() {
   const latest = data?.[0];
   const recent = data?.slice(0, 6) ?? [];
 
-
   return (
     <div className="mx-auto max-w-6xl px-5 pt-12 pb-6">
       {/* Hero */}
-      <section
-        className="grid gap-12 rounded-2xl border border-rule p-7 md:grid-cols-2 md:gap-16 md:p-12"
-        style={{ backgroundColor: "color-mix(in oklab, var(--brand-soft) 40%, transparent)" }}
-      >
-        <div>
+      <section className="grid grid-cols-1 gap-10 md:grid-cols-12 md:gap-6">
+        {/* Left 6 columns: heading */}
+        <div className="md:col-span-6">
           <p className="kicker">Express Entry, in context</p>
-          <h1 className="display mt-4 max-w-[14ch] text-[2.75rem] leading-[1.02] font-semibold text-ink md:text-[3.5rem]">
+          <h1 className="display mt-3 max-w-[14ch] text-[2.5rem] leading-[1.05] font-semibold text-ink sm:text-[3rem]">
             See where your score stands.
           </h1>
-          <p className="mt-5 max-w-md text-[0.95rem] leading-relaxed text-muted-foreground">
-            Type your CRS score to place it against the most recent round.
-          </p>
-
-
-          <div className="mt-10 max-w-xs border-b border-rule pb-1">
-            <label htmlFor="crs-score" className="kicker block">
-              Your CRS score
-            </label>
-            <input
-              id="crs-score"
-              inputMode="numeric"
-              autoComplete="off"
-              placeholder="486"
-              value={raw}
-              onChange={(e) => setRaw(e.target.value.replace(/\D/g, "").slice(0, 4))}
-              className="figure mt-2 w-full bg-transparent text-6xl text-ink outline-none placeholder:text-rule md:text-7xl"
-            />
-          </div>
         </div>
 
-        {/* Live comparison */}
-        <div className="md:pt-2">
-          <p className="kicker">Against the latest round</p>
+        {/* Right 6 columns: cutoff + score + timeline */}
+        <div className="md:col-span-6">
           {isLoading ? (
-            <Skeleton className="mt-8 h-24 w-full" />
+            <Skeleton className="h-32 w-full" />
           ) : !latest ? (
-            <p className="mt-6 text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Data not available yet — the daily refresh runs at ~9am ET.
             </p>
           ) : (
-            <>
-              <div className="mt-6 flex flex-col gap-4">
-                {score != null && (
-                  <div>
-                    <div className="kicker">Your score</div>
-                    <div className="figure text-5xl text-accent">{score}</div>
-                  </div>
-                )}
-                <div>
-                  <div className="kicker">Latest cutoff</div>
-                  <div className="figure text-5xl text-ink">{latest.cutoff_score}</div>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              {/* Latest cutoff */}
+              <div>
+                <div className="kicker">Latest cutoff</div>
+                <div className="figure mt-1 text-[3rem] leading-none text-ink sm:text-[3.5rem]">
+                  {latest.cutoff_score}
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                  <RoundBadge draw={latest} />
+                  <span>·</span>
+                  <span>{formatDate(latest.draw_date)}</span>
+                </div>
+              </div>
+
+              {/* Your score */}
+              <div>
+                <label htmlFor="crs-score" className="kicker">
+                  Your score
+                </label>
+                <div className="mt-1 border-b border-rule pb-1">
+                  <input
+                    id="crs-score"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    placeholder="—"
+                    value={raw}
+                    onChange={(e) => setRaw(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                    className="figure w-full bg-transparent text-[3rem] leading-none text-ink outline-none placeholder:text-rule sm:text-[3.5rem]"
+                  />
+                </div>
+              </div>
+
+              {/* Timeline spanning both columns */}
+              <div className="sm:col-span-2">
+                <div className="pt-2">
+                  <ScoreScale cutoffDraw={latest} score={score} />
                 </div>
                 {score != null && (
-                  <div className="text-sm font-medium">
+                  <div className="mt-3 text-sm font-medium">
                     {(() => {
                       const diff = score - latest.cutoff_score;
                       if (diff > 0) {
                         return <span className="text-brand">+{diff} above cutoff</span>;
                       }
                       if (diff < 0) {
-                        return (
-                          <span className="text-accent">
-                            {Math.abs(diff)} below cutoff
-                          </span>
-                        );
+                        return <span className="text-accent">{Math.abs(diff)} below cutoff</span>;
                       }
                       return <span className="text-muted-foreground">At the cutoff</span>;
                     })()}
                   </div>
                 )}
               </div>
-
-              <ScoreScale cutoffDraw={latest} score={score} />
-
-              <p className="mt-6 text-sm">
-                <Link
-                  to="/would-i-have-made-it"
-                  className="text-brand underline underline-offset-4 hover:no-underline"
-                >
-                  See every relevant round →
-                </Link>
-              </p>
-            </>
+            </div>
           )}
         </div>
       </section>
