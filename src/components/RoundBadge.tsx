@@ -3,6 +3,24 @@ import { BADGE_TONE_CLASS, badgeTone, roundLabel, type Draw } from "@/data/round
 
 type Ctx = Pick<Draw, "round_type" | "program" | "category">;
 
+const DOT_TONE_CLASS: Record<string, string> = {
+  general: "dot-general",
+  cec: "dot-cec",
+  fsw: "dot-fsw",
+  fst: "dot-fst",
+  pnp: "dot-pnp",
+  category: "dot-category",
+};
+
+export function RoundDot({ draw, className }: { draw: Ctx; className?: string }) {
+  return (
+    <span
+      aria-hidden
+      className={cn("h-2 w-2 shrink-0 rounded-full", DOT_TONE_CLASS[badgeTone(draw)], className)}
+    />
+  );
+}
+
 export function RoundBadge({
   draw,
   size = "sm",
@@ -15,12 +33,13 @@ export function RoundBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full font-semibold tracking-tight",
+        "inline-flex items-center gap-1.5 rounded-md font-medium tracking-tight",
         BADGE_TONE_CLASS[badgeTone(draw)],
-        size === "lg" ? "px-4 py-2 text-xl md:text-3xl" : "px-2.5 py-1 text-xs",
+        size === "lg" ? "px-3 py-1.5 text-sm" : "px-2 py-1 text-xs",
         className,
       )}
     >
+      <RoundDot draw={draw} className={size === "lg" ? "h-2 w-2" : "h-1.5 w-1.5"} />
       {roundLabel(draw)}
     </span>
   );
