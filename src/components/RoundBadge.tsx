@@ -33,14 +33,15 @@ export function RoundBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-md font-medium tracking-tight",
+        "inline-flex items-center gap-1.5 rounded-full font-medium tracking-wide uppercase",
         BADGE_TONE_CLASS[badgeTone(draw)],
-        size === "lg" ? "px-3 py-1.5 text-sm" : "px-2 py-1 text-xs",
+        size === "lg" ? "px-3.5 py-1.5 text-xs" : "px-2.5 py-1 text-[0.65rem]",
         className,
       )}
     >
-      <RoundDot draw={draw} className={size === "lg" ? "h-2 w-2" : "h-1.5 w-1.5"} />
+      <RoundDot draw={draw} className={size === "lg" ? "h-1.5 w-1.5" : "h-1 w-1"} />
       {roundLabel(draw)}
     </span>
   );
 }
+
