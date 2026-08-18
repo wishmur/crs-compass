@@ -278,7 +278,7 @@ function History() {
 
           {/* Mobile cards */}
           <ul className="mt-6 space-y-3 md:hidden">
-            {filtered.map((d) => (
+            {pageRows.map((d) => (
               <li key={d.round_number} className="surface p-4">
                 <div className="flex items-center justify-between gap-2 text-sm">
                   <span className="text-muted-foreground">{formatDate(d.draw_date)}</span>
@@ -297,7 +297,53 @@ function History() {
               </li>
             ))}
           </ul>
+
+          {pageCount > 1 && (
+            <nav
+              aria-label="Pagination"
+              className="mt-6 flex items-center justify-center gap-1 text-sm"
+            >
+              <button
+                type="button"
+                onClick={() => setPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1.5 text-muted-foreground hover:text-foreground disabled:opacity-40"
+              >
+                ← Prev
+              </button>
+              {pageItems().map((p, i) =>
+                p === "…" ? (
+                  <span key={`e${i}`} className="px-2 text-muted-foreground">
+                    …
+                  </span>
+                ) : (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setPage(p)}
+                    aria-current={p === currentPage ? "page" : undefined}
+                    className={
+                      p === currentPage
+                        ? "num rounded-full bg-[var(--brand)] px-3 py-1.5 text-white"
+                        : "num rounded-full px-3 py-1.5 text-muted-foreground hover:text-foreground"
+                    }
+                  >
+                    {p}
+                  </button>
+                ),
+              )}
+              <button
+                type="button"
+                onClick={() => setPage(Math.min(pageCount, currentPage + 1))}
+                disabled={currentPage === pageCount}
+                className="px-3 py-1.5 text-muted-foreground hover:text-foreground disabled:opacity-40"
+              >
+                Next →
+              </button>
+            </nav>
+          )}
         </>
+
       )}
     </div>
   );
