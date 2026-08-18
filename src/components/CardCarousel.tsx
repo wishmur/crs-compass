@@ -39,10 +39,28 @@ export function CardCarousel({ ariaLabel, children }: CardCarouselProps) {
     };
   }, []);
 
-  const scrollBy = (dx: number) => {
+  // Snap to the previous / next card boundary — not a fixed pixel step.
+  // Fixes the "clicking next nudges a fraction of a card" feel.
+  const step = (dir: "prev" | "next") => {
     const el = trackRef.current;
     if (!el) return;
-    el.scrollBy({ left: dx, behavior: "smooth" });
+    const cards = Array.from(el.children) as HTMLElement[];
+    if (cards.length === 0) return;
+
+    // Card width is uniform (all snap-start children have the same wrapper
+    // width), so per-step distance = first child's outerWidth + gap.
+    const cardWidth = cards[0]!.offsetWidth;
+    const gap =
+      cards.length > 1 ? cards[1]!.offsetLeft - cards[0]!.offsetLeft - cardWidth : 0;
+    const strideRaw = cardWidth + gap;
+    const stride = strideRaw > 0 ? strideRaw : cardWidth;
+
+    const currentIndex = Math.round(el.scrollLeft / stride);
+    const nextIndex =
+      dir === "next"
+        ? Math.min(cards.length - 1, currentIndex + 1)
+        : Math.max(0, currentIndex - 1);
+    el.scrollTo({ left: nextIndex * stride, behavior: "smooth" });
   };
 
   return (
@@ -72,25 +90,26 @@ export function CardCarousel({ ariaLabel, children }: CardCarouselProps) {
         {children}
       </div>
 
-      {/* Chevrons — desktop only, only when there's more to scroll */}
+      {/* Chevrons — desktop only, only when there's more to scroll.
+          Sized and elevated enough to read as intentional controls, not tiny hints. */}
       {canLeft && (
         <button
           type="button"
-          onClick={() => scrollBy(-320)}
-          aria-label="Scroll left"
-          className="absolute left-1 top-1/2 hidden -translate-y-1/2 rounded-full border border-[var(--rule)] bg-[var(--card)] p-2 text-[var(--brand)] shadow-sm transition-opacity hover:opacity-90 md:inline-flex"
+          onClick={() => step("prev")}
+          aria-label="Previous card"
+          className="absolute left-2 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--rule)] bg-[var(--card)] text-[var(--brand)] shadow-md transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--paper)] md:inline-flex"
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft className="h-5 w-5" />
         </button>
       )}
       {canRight && (
         <button
           type="button"
-          onClick={() => scrollBy(320)}
-          aria-label="Scroll right"
-          className="absolute right-1 top-1/2 hidden -translate-y-1/2 rounded-full border border-[var(--rule)] bg-[var(--card)] p-2 text-[var(--brand)] shadow-sm transition-opacity hover:opacity-90 md:inline-flex"
+          onClick={() => step("next")}
+          aria-label="Next card"
+          className="absolute right-2 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--rule)] bg-[var(--card)] text-[var(--brand)] shadow-md transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--paper)] md:inline-flex"
         >
-          <ChevronRight className="h-4 w-4" />
+          <ChevronRight className="h-5 w-5" />
         </button>
       )}
     </div>

@@ -233,18 +233,15 @@ function Index() {
         )}
       </section>
 
-      {/* Primary CTA — sentence left, button right, same alignment pattern as the rest of the page */}
-      <section className="mt-12 flex flex-wrap items-center justify-between gap-4 border-t border-[var(--rule)] pt-8">
+      {/* Primary CTA — one row, tight, integrates with the carousel section above.
+          The About link that used to sit below has been removed; the nav bar
+          already exposes About and a stranded footer link was awkward. */}
+      <section className="mt-8 flex flex-wrap items-center justify-between gap-4">
         <p className="text-[0.95rem] text-ink">
           See which of these your score would have cleared.
         </p>
         <PrimaryCTA to="/would-i-have-made-it">Check my score →</PrimaryCTA>
       </section>
-
-      {/* Footer strip — quiet secondary link */}
-      <div className="mt-12 flex justify-end border-t border-[var(--rule)] pt-5">
-        <SecondaryLink to="/about">Learn how Express Entry works →</SecondaryLink>
-      </div>
     </div>
   );
 }
