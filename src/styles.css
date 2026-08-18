@@ -62,26 +62,27 @@
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
+  --radius: 0.875rem;
+  /* warm off-white page, elevated white surfaces */
+  --background: oklch(0.982 0.005 85);
+  --foreground: oklch(0.22 0.012 260);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
+  --card-foreground: oklch(0.22 0.012 260);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.52 0.11 218);
+  --popover-foreground: oklch(0.22 0.012 260);
+  --primary: oklch(0.53 0.095 210);
   --primary-foreground: oklch(0.99 0.005 240);
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
+  --secondary: oklch(0.955 0.008 85);
+  --secondary-foreground: oklch(0.28 0.015 255);
+  --muted: oklch(0.958 0.006 85);
+  --muted-foreground: oklch(0.53 0.014 258);
+  --accent: oklch(0.955 0.012 210);
+  --accent-foreground: oklch(0.32 0.045 215);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.52 0.11 218);
+  --border: oklch(0.915 0.007 80);
+  --input: oklch(0.9 0.008 80);
+  --ring: oklch(0.53 0.095 210);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -96,6 +97,7 @@
   --sidebar-border: oklch(0.929 0.013 255.508);
   --sidebar-ring: oklch(0.704 0.04 256.788);
 }
+
 
 .dark {
   --background: oklch(0.129 0.042 264.695);
@@ -224,3 +226,96 @@
   background-color: var(--result-fail-bg);
   color: var(--result-fail-fg);
 }
+
+/* --- Surfaces, typography and motion --- */
+:root {
+  --surface: oklch(1 0 0);
+  --surface-sunken: oklch(0.965 0.006 85);
+  --hairline: oklch(0.92 0.006 80);
+  --shadow-soft: 0 1px 2px oklch(0.3 0.02 260 / 0.05), 0 8px 24px -12px oklch(0.3 0.02 260 / 0.14);
+  --shadow-lift: 0 1px 2px oklch(0.3 0.02 260 / 0.06), 0 16px 40px -18px oklch(0.3 0.02 260 / 0.22);
+  --track: oklch(0.93 0.006 85);
+}
+
+@theme inline {
+  --color-surface: var(--surface);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-hairline: var(--hairline);
+  --color-track: var(--track);
+  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    font-family: var(--font-sans);
+  }
+  h1, h2, h3 {
+    letter-spacing: -0.022em;
+  }
+}
+
+/* Elevated white surface without a hard outline */
+@utility surface {
+  background-color: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+}
+
+@utility surface-hover {
+  transition: box-shadow 200ms ease, transform 200ms ease, background-color 200ms ease;
+  &:hover {
+    box-shadow: var(--shadow-lift);
+  }
+}
+
+@utility sunken {
+  background-color: var(--surface-sunken);
+  border-radius: var(--radius);
+}
+
+/* Tabular numerals for any displayed figure */
+@utility num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  letter-spacing: -0.02em;
+}
+
+@utility section-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+@utility hairline-t {
+  border-top: 1px solid var(--hairline);
+}
+
+/* Small comparison track used for cutoff visualisation */
+@utility score-track {
+  background-color: var(--track);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+@utility nav-pill {
+  transition: color 160ms ease, background-color 160ms ease;
+  &:hover {
+    background-color: var(--surface-sunken);
+    color: var(--foreground);
+  }
+}
+
+/* Round-type dots — same colour family as the badges */
+@utility dot-general { background-color: var(--tone-general-fg); }
+@utility dot-cec { background-color: var(--tone-cec-fg); }
+@utility dot-fsw { background-color: var(--tone-fsw-fg); }
+@utility dot-fst { background-color: var(--tone-fst-fg); }
+@utility dot-pnp { background-color: var(--tone-pnp-fg); }
+@utility dot-category { background-color: var(--tone-category-fg); }

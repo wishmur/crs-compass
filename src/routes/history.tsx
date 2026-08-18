@@ -65,7 +65,7 @@ function FilterGroup<T extends string>({
 }) {
   return (
     <fieldset className="min-w-[10rem]">
-      <legend className="text-xs font-semibold text-muted-foreground uppercase">{title}</legend>
+      <legend className="section-label">{title}</legend>
       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2">
         {options.map((o) => (
           <label key={o} className="flex cursor-pointer items-center gap-2 text-sm">
@@ -146,9 +146,12 @@ function History() {
   );
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10">
-      <h1 className="text-3xl font-bold tracking-tight">Draw history</h1>
-      <p className="mt-2 text-muted-foreground">Every Express Entry round since 2015.</p>
+    <div className="mx-auto max-w-5xl px-4 pt-10 pb-4 sm:pt-14">
+      <p className="section-label">History</p>
+      <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Draw history</h1>
+      <p className="mt-3 max-w-xl text-[0.95rem] leading-relaxed text-muted-foreground">
+        Every Express Entry round since 2015 — filter by year, round type, program or category.
+      </p>
 
       <div className="mt-8">
         {isLoading ? (
@@ -158,7 +161,7 @@ function History() {
         )}
       </div>
 
-      <div className="mt-8 flex flex-wrap gap-8 rounded-lg border border-border p-4">
+      <div className="sunken mt-8 flex flex-wrap gap-x-10 gap-y-6 p-5 sm:p-6">
         <FilterGroup title="Year" options={allYears} selected={years} onToggle={toggle(setYears, "year")} />
         <FilterGroup
           title="Round type"
@@ -209,7 +212,7 @@ function History() {
       ) : (
         <>
           {/* Desktop table */}
-          <div className="mt-6 hidden md:block">
+          <div className="surface mt-6 hidden overflow-hidden p-2 md:block">
             <Table>
               <caption className="sr-only">Express Entry rounds of invitations</caption>
               <TableHeader>
@@ -228,14 +231,14 @@ function History() {
               <TableBody>
                 {filtered.map((d: Draw) => (
                   <TableRow key={d.round_number}>
-                    <TableCell className="whitespace-nowrap">{formatDate(d.draw_date)}</TableCell>
+                    <TableCell className="num whitespace-nowrap text-muted-foreground">{formatDate(d.draw_date)}</TableCell>
                     <TableCell>
                       <RoundBadge draw={d} />
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="num text-right text-muted-foreground">
                       {d.invitations_issued.toLocaleString("en-CA")}
                     </TableCell>
-                    <TableCell className="text-right font-semibold">{d.cutoff_score}</TableCell>
+                    <TableCell className="num text-right font-semibold">{d.cutoff_score}</TableCell>
                     <TableCell className="text-xs">
                       <SourceLink url={d.source_url} from="history" roundNumber={d.round_number} />
                     </TableCell>
@@ -248,10 +251,10 @@ function History() {
           {/* Mobile cards */}
           <ul className="mt-6 space-y-3 md:hidden">
             {filtered.map((d) => (
-              <li key={d.round_number} className="rounded-lg border border-border p-4">
+              <li key={d.round_number} className="surface p-4">
                 <div className="flex items-center justify-between gap-2 text-sm">
                   <span className="text-muted-foreground">{formatDate(d.draw_date)}</span>
-                  <span className="font-semibold">{d.cutoff_score} CRS</span>
+                  <span className="num font-semibold">{d.cutoff_score} CRS</span>
                 </div>
                 <div className="mt-2">
                   <RoundBadge draw={d} />
