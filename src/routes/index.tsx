@@ -123,7 +123,7 @@ function Index() {
                   to="/would-i-have-made-it"
                   className="text-brand underline underline-offset-4 hover:no-underline"
                 >
-                  See where you stand across every relevant round →
+                  See every relevant round →
                 </Link>
               </p>
             </>
@@ -151,8 +151,7 @@ function Index() {
                 <RoundBadge draw={latest} size="lg" />
               </div>
               <p className="mt-5 max-w-lg text-sm leading-relaxed text-muted-foreground">
-                The cutoff is the CRS score of the last candidate invited in this round — it only
-                means something alongside the round type above.
+                The cutoff is the score of the last candidate invited in this round.
               </p>
               <p className="mt-3 text-sm text-muted-foreground">
                 Round #{latest.round_number} · {formatDate(latest.draw_date)}
