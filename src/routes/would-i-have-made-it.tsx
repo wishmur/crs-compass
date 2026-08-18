@@ -1,12 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { HelpCircle } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
@@ -14,11 +8,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { ChipGroup, FilterChip } from "@/components/FilterChip";
 import { RoundBadge } from "@/components/RoundBadge";
 import { formatDate } from "@/components/DrawMeta";
 import { relevantDrawsQuery, drawsQuery } from "@/lib/queries";
 import { EVENTS, capture } from "@/lib/analytics";
-import { CATEGORIES, PROGRAM_LABELS, roundLabel, type Program } from "@/data/round-types";
+import { CATEGORIES, roundLabel, type Program } from "@/data/round-types";
 
 export const Route = createFileRoute("/would-i-have-made-it")({
   head: () => ({
@@ -42,25 +37,32 @@ export const Route = createFileRoute("/would-i-have-made-it")({
 
 const SCORE_KEY = "crsSignal.score";
 const ELIG_KEY = "crsSignal.eligibility";
-const CATEGORY_HINT =
-  "You should only check this if you meet IRCC's specific criteria for that category — see the official list.";
 
 interface Eligibility {
   program: Program | null;
   categories: string[];
 }
 
-function twoYearsAgo() {
+function monthsAgo(n: number) {
   const d = new Date();
-  d.setFullYear(d.getFullYear() - 2);
+  d.setMonth(d.getMonth() - n);
   return d.toISOString().slice(0, 10);
 }
+
+const PROGRAM_CHIPS: { value: Program | null; label: string }[] = [
+  { value: null, label: "None of these / not sure" },
+  { value: "CEC", label: "CEC" },
+  { value: "FSW", label: "FSW" },
+  { value: "FST", label: "FST" },
+  { value: "PNP", label: "PNP" },
+];
 
 function Wihbi() {
   const [hydrated, setHydrated] = useState(false);
   const [score, setScore] = useState<string>("");
   const [elig, setElig] = useState<Eligibility>({ program: null, categories: [] });
-  const since = useMemo(twoYearsAgo, []);
+  const [windowMonths, setWindowMonths] = useState<24 | 36>(24);
+  const since = useMemo(() => monthsAgo(windowMonths), [windowMonths]);
 
   useEffect(() => {
     capture(EVENTS.WIHBI_STARTED);
@@ -78,16 +80,18 @@ function Wihbi() {
     setHydrated(true);
   }, []);
 
-  // Persist + debounced score event
+  // Debounced persistence + score event
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!hydrated) return;
-    localStorage.setItem(SCORE_KEY, score);
     if (timer.current) clearTimeout(timer.current);
-    const n = Number(score);
-    if (score !== "" && Number.isFinite(n)) {
-      timer.current = setTimeout(() => capture(EVENTS.WIHBI_SCORE_ENTERED, { score: n }), 800);
-    }
+    timer.current = setTimeout(() => {
+      localStorage.setItem(SCORE_KEY, score);
+      const n = Number(score);
+      if (score !== "" && Number.isFinite(n)) {
+        capture(EVENTS.WIHBI_SCORE_ENTERED, { score: n });
+      }
+    }, 500);
     return () => {
       if (timer.current) clearTimeout(timer.current);
     };
@@ -103,7 +107,8 @@ function Wihbi() {
   }, [elig, hydrated]);
 
   const numericScore = Number(score);
-  const validScore = score !== "" && Number.isFinite(numericScore) && numericScore >= 0 && numericScore <= 1200;
+  const validScore =
+    score !== "" && Number.isFinite(numericScore) && numericScore >= 0 && numericScore <= 1200;
 
   const roundTypes = useMemo(() => {
     const t = ["general"];
@@ -127,29 +132,27 @@ function Wihbi() {
 
   const cleared = results?.filter((r) => r.would_have_cleared).length ?? 0;
   const total = results?.length ?? 0;
+  const ratio = total ? cleared / total : 0;
+  const figureColor =
+    cleared === 0 ? "var(--muted-foreground)" : ratio >= 0.5 ? "var(--brand)" : "var(--accent)";
 
   useEffect(() => {
-    if (results && results.length >= 0 && validScore && !isLoading) {
+    if (results && validScore && !isLoading) {
       capture(EVENTS.WIHBI_RESULT_VIEWED, { cleared, total, since });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [results, isLoading]);
 
-  const lastTwelve = useMemo(
+  const recent = useMemo(
     () =>
       [...(results ?? [])]
         .sort((a, b) => b.draw_date.localeCompare(a.draw_date))
-        .slice(0, 12)
+        .slice(0, 20)
         .reverse(),
     [results],
   );
 
-  const sixMonthsAgo = useMemo(() => {
-    const d = new Date();
-    d.setMonth(d.getMonth() - 6);
-    return d.toISOString().slice(0, 10);
-  }, []);
-
+  const sixMonthsAgo = useMemo(() => monthsAgo(6), []);
   const clearedRecently = (results ?? []).some(
     (r) => r.would_have_cleared && r.draw_date >= sixMonthsAgo,
   );
@@ -171,195 +174,140 @@ function Wihbi() {
 
   return (
     <TooltipProvider>
-      <div className="mx-auto max-w-3xl px-4 pt-10 pb-4 sm:pt-14">
-        <p className="section-label">Your position</p>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Would I have been invited?</h1>
-        <p className="mt-3 text-[0.95rem] leading-relaxed text-muted-foreground">
-          Enter a CRS score you already know, tell us which rounds actually apply to you, and see
-          what the history says.
-        </p>
+      <div className="mx-auto max-w-6xl px-4 pt-10 pb-16 sm:pt-14">
+        <div className="grid gap-12 md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] md:gap-16">
+          {/* Profile */}
+          <div className="md:sticky md:top-24 md:self-start">
+            <p className="kicker">Your profile</p>
 
-        {/* Step 1 */}
-        <Card className="mt-9 border-0 shadow-[var(--shadow-soft)]">
-          <CardContent className="p-6 sm:p-7">
-            <h2 className="section-label">
-              Step 1 — Your CRS score
-            </h2>
-            <div className="mt-3 max-w-40">
-              <Label htmlFor="score" className="sr-only">
-                CRS score
-              </Label>
-              <Input
-                id="score"
-                className="num h-11 text-lg"
-                type="number"
-                min={0}
-                max={1200}
+            <div className="mt-6 max-w-xs border-b border-rule pb-1">
+              <label htmlFor="crs-score" className="kicker block">
+                Your CRS score
+              </label>
+              <input
+                id="crs-score"
                 inputMode="numeric"
-                placeholder="e.g. 486"
+                autoComplete="off"
+                placeholder="486"
                 value={score}
-                onChange={(e) => setScore(e.target.value)}
+                onChange={(e) => setScore(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                className="figure mt-2 w-full bg-transparent text-6xl text-ink outline-none placeholder:text-rule md:text-7xl"
               />
             </div>
-            {score !== "" && !validScore && (
-              <p className="mt-2 text-sm text-destructive">Enter a score between 0 and 1200.</p>
-            )}
-          </CardContent>
-        </Card>
 
-        {/* Step 2 */}
-        <Card className="mt-5 border-0 shadow-[var(--shadow-soft)]">
-          <CardContent className="p-6 sm:p-7">
-            <h2 className="section-label">
-              Step 2 — What actually applies to you?
-            </h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              General rounds are always included — everyone in the pool is eligible when they run.
+            <div className="mt-10 flex flex-col gap-4">
+              <ChipGroup title="Program">
+                {PROGRAM_CHIPS.map((p) => (
+                  <FilterChip
+                    key={p.label}
+                    label={p.label}
+                    selected={elig.program === p.value}
+                    onClick={() => setElig((e) => ({ ...e, program: p.value }))}
+                  />
+                ))}
+              </ChipGroup>
+
+              <ChipGroup title="Category-based">
+                {CATEGORIES.map((c) => (
+                  <FilterChip
+                    key={c}
+                    label={c}
+                    selected={elig.categories.includes(c)}
+                    onClick={() =>
+                      setElig((e) => ({
+                        ...e,
+                        categories: e.categories.includes(c)
+                          ? e.categories.filter((x) => x !== c)
+                          : [...e.categories, c],
+                      }))
+                    }
+                  />
+                ))}
+              </ChipGroup>
+            </div>
+
+            <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+              Select what actually applies. PNP cutoffs include a 600-point nomination bonus, so
+              don&rsquo;t check PNP unless you hold one.
             </p>
 
-            <fieldset className="mt-5">
-              <legend className="text-sm font-medium">Program</legend>
-              <RadioGroup
-                className="mt-3 space-y-2"
-                value={elig.program ?? "none"}
-                onValueChange={(v) =>
-                  setElig((e) => ({ ...e, program: v === "none" ? null : (v as Program) }))
-                }
+            <p className="mt-6 text-xs">
+              <a
+                className="text-muted-foreground underline underline-offset-4 hover:text-foreground"
+                href="https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/submit-profile/rounds-invitations/category-based-selection.html"
+                target="_blank"
+                rel="noreferrer noopener"
               >
-                {[
-                  { v: "none", label: "None of these / not sure" },
-                  { v: "CEC", label: "I'm inside Canada working full-time (CEC)" },
-                  { v: "FSW", label: "I'm a Federal Skilled Worker candidate (FSW)" },
-                  { v: "FST", label: "I'm a Federal Skilled Trades candidate (FST)" },
-                  { v: "PNP", label: "I hold a provincial nomination (PNP)" },
-                ].map((o) => (
-                  <div key={o.v} className="flex items-start gap-2">
-                    <RadioGroupItem value={o.v} id={`prog-${o.v}`} className="mt-1" />
-                    <Label htmlFor={`prog-${o.v}`} className="font-normal">
-                      {o.label}
-                      {o.v === "PNP" && (
-                        <span className="mt-1 block text-xs text-muted-foreground">
-                          Only check this if you actually hold a nomination. PNP cutoffs include the
-                          automatic 600-point bonus, so they are meaningless without one.
-                        </span>
-                      )}
-                    </Label>
-                  </div>
-                ))}
-              </RadioGroup>
-              {elig.program && (
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Comparing against: {PROGRAM_LABELS[elig.program]}
-                </p>
-              )}
-            </fieldset>
+                Official category criteria on canada.ca →
+              </a>
+            </p>
+          </div>
 
-            <fieldset className="mt-6">
-              <legend className="text-sm font-medium">Category-based rounds</legend>
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                {CATEGORIES.map((c) => (
-                  <div key={c} className="flex items-center gap-2">
-                    <Checkbox
-                      id={`cat-${c}`}
-                      checked={elig.categories.includes(c)}
-                      onCheckedChange={() =>
-                        setElig((e) => ({
-                          ...e,
-                          categories: e.categories.includes(c)
-                            ? e.categories.filter((x) => x !== c)
-                            : [...e.categories, c],
-                        }))
-                      }
-                    />
-                    <Label htmlFor={`cat-${c}`} className="font-normal">
-                      {c}
-                    </Label>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button type="button" aria-label={`About the ${c} category`}>
-                          <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-xs text-xs">{CATEGORY_HINT}</TooltipContent>
-                    </Tooltip>
-                  </div>
-                ))}
-              </div>
-              <p className="mt-3 text-xs">
-                <a
-                  className="text-primary underline underline-offset-4 hover:no-underline"
-                  href="https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/submit-profile/rounds-invitations/category-based-selection.html"
-                  target="_blank"
-                  rel="noreferrer noopener"
-                >
-                  Official category criteria on canada.ca
-                </a>
-              </p>
-            </fieldset>
-          </CardContent>
-        </Card>
-
-        {/* Step 3 */}
-        <Card className="mt-5 border-0 shadow-[var(--shadow-soft)]">
-          <CardContent className="p-6 sm:p-7">
-            <h2 className="section-label">
-              Step 3 — Result
-            </h2>
+          {/* Live result */}
+          <div>
+            <p className="kicker">What the history says</p>
 
             {!validScore ? (
-              <p className="mt-3 text-sm text-muted-foreground">
-                Enter your score above to see your results.
+              <p className="display mt-6 max-w-[22ch] text-2xl leading-snug text-muted-foreground">
+                Enter a score to see how many of the last {windowMonths} months of relevant rounds
+                it would have cleared.
               </p>
             ) : isLoading ? (
-              <div className="mt-4 space-y-3">
-                <Skeleton className="h-6 w-72" />
-                <Skeleton className="h-10 w-full" />
+              <div className="mt-6 space-y-4">
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-24 w-full" />
               </div>
             ) : total === 0 ? (
-              <p className="mt-3 text-sm text-muted-foreground">
+              <p className="mt-6 text-sm text-muted-foreground">
                 No relevant rounds found since {formatDate(since)} for these selections — or data is
                 not available yet (the daily refresh runs at ~9am ET).
               </p>
             ) : (
-              <div className="mt-3">
-                <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
-                  <p className="num text-5xl leading-none font-semibold text-foreground">
+              <>
+                <h2 className="display mt-5 text-[2rem] leading-[1.15] text-ink md:text-[2.5rem]">
+                  You would have cleared{" "}
+                  <span className="figure text-[3.5rem] leading-none md:text-[4.5rem]" style={{ color: figureColor }}>
                     {cleared}
-                    <span className="text-2xl font-medium text-muted-foreground"> / {total}</span>
-                  </p>
-                  <p className="mb-1 text-sm text-muted-foreground">
-                    relevant rounds cleared since {formatDate(since)}
-                  </p>
-                </div>
+                  </span>{" "}
+                  of {total} relevant rounds in the last {windowMonths} months.
+                </h2>
 
-                <div className="mt-5 flex flex-wrap gap-2">
-                  {lastTwelve.map((r) => (
+                <div className="mt-8 flex flex-wrap gap-1.5">
+                  {recent.map((r) => (
                     <Tooltip key={r.round_number}>
                       <TooltipTrigger asChild>
                         <span
                           tabIndex={0}
-                          className="h-8 w-8 rounded-lg transition-transform duration-150 hover:scale-110"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-xs"
                           style={{
                             backgroundColor: r.would_have_cleared
-                              ? "var(--result-pass-bg)"
-                              : "var(--result-fail-bg)",
+                              ? "var(--brand-soft)"
+                              : "var(--accent-soft)",
+                            color: r.would_have_cleared ? "var(--brand)" : "var(--accent)",
                           }}
                           aria-label={`${formatDate(r.draw_date)} — ${roundLabel(r)} — cutoff ${r.cutoff_score} — ${r.would_have_cleared ? "cleared" : "did not clear"}`}
-                        />
+                        >
+                          {r.would_have_cleared ? "✓" : "✕"}
+                        </span>
                       </TooltipTrigger>
                       <TooltipContent className="text-xs">
-                        {formatDate(r.draw_date)} · {roundLabel(r)} · cutoff {r.cutoff_score}
+                        <span className="flex items-center gap-2">
+                          {formatDate(r.draw_date)} · cutoff {r.cutoff_score}
+                          <RoundBadge draw={r} />
+                        </span>
                       </TooltipContent>
                     </Tooltip>
                   ))}
                 </div>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Last {lastTwelve.length} relevant rounds — green means your score cleared the
-                  cutoff.
+                <p className="mt-3 text-xs text-muted-foreground">
+                  Last {recent.length} relevant rounds, oldest to newest.
                 </p>
 
                 {!clearedRecently && (
-                  <p className="mt-5 rounded-lg border-l-2 border-primary/40 bg-surface-sunken p-4 text-sm leading-relaxed">
+                  <div
+                    className="mt-8 p-5 text-sm leading-relaxed"
+                    style={{ backgroundColor: "var(--accent-soft)" }}
+                  >
                     No relevant rounds have been within your reach in the last 6 months.
                     {topUncheckedFamilies.length > 0 && (
                       <>
@@ -368,39 +316,25 @@ function Wihbi() {
                         {topUncheckedFamilies.join(" and ")} category rounds.
                       </>
                     )}
-                  </p>
+                  </div>
                 )}
 
-                <ul className="mt-6 space-y-2">
-                  {[...(results ?? [])]
-                    .sort((a, b) => b.draw_date.localeCompare(a.draw_date))
-                    .slice(0, 12)
-                    .map((r) => (
-                      <li
-                        key={r.round_number}
-                        className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-surface-sunken px-4 py-3 text-sm transition-colors hover:bg-accent"
-                      >
-                        <span className="flex flex-wrap items-center gap-3">
-                          <span className="text-muted-foreground">{formatDate(r.draw_date)}</span>
-                          <RoundBadge draw={r} />
-                        </span>
-                        <span
-                          className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold tracking-tight ${
-                            r.would_have_cleared ? "pill-pass" : "pill-fail"
-                          }`}
-                        >
-                          {r.cutoff_score} CRS · {r.would_have_cleared ? "cleared" : "missed"}
-                        </span>
-                      </li>
-                    ))}
-                </ul>
-              </div>
+                <button
+                  type="button"
+                  onClick={() => setWindowMonths((w) => (w === 24 ? 36 : 24))}
+                  className="mt-8 text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+                >
+                  {windowMonths === 24
+                    ? "Compare against the last 3 years instead →"
+                    : "Back to the last 24 months →"}
+                </button>
+              </>
             )}
 
             {/* PostHog survey target */}
-            <div id="wihbi-survey-slot" className="mt-8" />
-          </CardContent>
-        </Card>
+            <div id="wihbi-survey-slot" className="mt-10" />
+          </div>
+        </div>
       </div>
     </TooltipProvider>
   );
