@@ -51,11 +51,21 @@ function monthsAgo(n: number) {
 
 const PROGRAM_CHIPS: { value: Program | null; label: string }[] = [
   { value: null, label: "None of these / not sure" },
-  { value: "CEC", label: "CEC" },
-  { value: "FSW", label: "FSW" },
-  { value: "FST", label: "FST" },
-  { value: "PNP", label: "PNP" },
+  { value: "CEC", label: "I'm inside Canada working full-time (CEC)" },
+  { value: "FSW", label: "I'm a Federal Skilled Worker candidate (FSW)" },
+  { value: "FST", label: "I'm a Federal Skilled Trades candidate (FST)" },
+  { value: "PNP", label: "I hold a provincial nomination (PNP)" },
 ];
+
+function StepHeading({ n, title }: { n: number; title: string }) {
+  return (
+    <div className="flex items-baseline gap-3">
+      <span className="figure text-lg text-brand">{n}</span>
+      <h2 className="kicker">{title}</h2>
+    </div>
+  );
+}
+
 
 function Wihbi() {
   const [hydrated, setHydrated] = useState(false);
@@ -174,14 +184,22 @@ function Wihbi() {
 
   return (
     <TooltipProvider>
-      <div className="mx-auto max-w-6xl px-4 pt-10 pb-16 sm:pt-14">
-        <div className="grid gap-12 md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] md:gap-16">
-          {/* Profile */}
-          <div className="md:sticky md:top-24 md:self-start">
-            <p className="kicker">Your profile</p>
+      <div className="mx-auto w-full max-w-[880px] px-4 pt-10 pb-16 sm:pt-14">
+        <p className="kicker">Would I have been invited?</p>
+        <h1 className="display mt-3 text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
+          Check your score against the rounds that applied to you
+        </h1>
+        <p className="mt-3 text-[0.95rem] leading-relaxed text-muted-foreground">
+          A cutoff only means something next to the round type it came from. Tell us what you are
+          eligible for, and we compare your score against those rounds only.
+        </p>
 
-            <div className="mt-6 max-w-xs border-b border-rule pb-1">
-              <label htmlFor="crs-score" className="kicker block">
+        <div className="mt-10 flex flex-col divide-y divide-[var(--rule)] border-y border-[var(--rule)]">
+          {/* 1 — score */}
+          <section className="py-8">
+            <StepHeading n={1} title="Your CRS score" />
+            <div className="mt-5 max-w-xs border-b border-rule pb-1">
+              <label htmlFor="crs-score" className="sr-only">
                 Your CRS score
               </label>
               <input
@@ -191,47 +209,66 @@ function Wihbi() {
                 placeholder="486"
                 value={score}
                 onChange={(e) => setScore(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                className="figure mt-2 w-full bg-transparent text-6xl text-ink outline-none placeholder:text-rule md:text-7xl"
+                className="figure w-full bg-transparent text-6xl text-ink outline-none placeholder:text-rule md:text-7xl"
               />
             </div>
-
-            <div className="mt-10 flex flex-col gap-4">
-              <ChipGroup title="Program">
-                {PROGRAM_CHIPS.map((p) => (
-                  <FilterChip
-                    key={p.label}
-                    label={p.label}
-                    selected={elig.program === p.value}
-                    onClick={() => setElig((e) => ({ ...e, program: p.value }))}
-                  />
-                ))}
-              </ChipGroup>
-
-              <ChipGroup title="Category-based">
-                {CATEGORIES.map((c) => (
-                  <FilterChip
-                    key={c}
-                    label={c}
-                    selected={elig.categories.includes(c)}
-                    onClick={() =>
-                      setElig((e) => ({
-                        ...e,
-                        categories: e.categories.includes(c)
-                          ? e.categories.filter((x) => x !== c)
-                          : [...e.categories, c],
-                      }))
-                    }
-                  />
-                ))}
-              </ChipGroup>
-            </div>
-
-            <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-              Select what actually applies. PNP cutoffs include a 600-point nomination bonus, so
-              don&rsquo;t check PNP unless you hold one.
+            <p className="mt-3 text-sm text-muted-foreground">
+              Your score is saved on this device only.
             </p>
+          </section>
 
-            <p className="mt-6 text-xs">
+          {/* 2 — program */}
+          <section className="py-8">
+            <StepHeading n={2} title="Program eligibility" />
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              Pick the one program stream you are actually in — program-specific rounds only apply
+              to candidates in that stream.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {PROGRAM_CHIPS.map((p) => (
+                <FilterChip
+                  key={p.label}
+                  label={p.label}
+                  selected={elig.program === p.value}
+                  onClick={() => setElig((e) => ({ ...e, program: p.value }))}
+                />
+              ))}
+            </div>
+            {elig.program === "PNP" && (
+              <div
+                className="mt-4 rounded-lg p-4 text-sm leading-relaxed text-ink"
+                style={{ backgroundColor: "var(--accent-soft)" }}
+              >
+                PNP cutoffs include an automatic 600-point nomination bonus. Only select this if you
+                actually hold a provincial nomination — otherwise the comparison will be misleading.
+              </div>
+            )}
+          </section>
+
+          {/* 3 — categories */}
+          <section className="py-8">
+            <StepHeading n={3} title="Category-based eligibility" />
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              Select every category you meet the official criteria for.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {CATEGORIES.map((c) => (
+                <FilterChip
+                  key={c}
+                  label={c}
+                  selected={elig.categories.includes(c)}
+                  onClick={() =>
+                    setElig((e) => ({
+                      ...e,
+                      categories: e.categories.includes(c)
+                        ? e.categories.filter((x) => x !== c)
+                        : [...e.categories, c],
+                    }))
+                  }
+                />
+              ))}
+            </div>
+            <p className="mt-4 text-xs">
               <a
                 className="text-muted-foreground underline underline-offset-4 hover:text-foreground"
                 href="https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/submit-profile/rounds-invitations/category-based-selection.html"
@@ -241,36 +278,39 @@ function Wihbi() {
                 Official category criteria on canada.ca →
               </a>
             </p>
-          </div>
+          </section>
 
-          {/* Live result */}
-          <div>
-            <p className="kicker">What the history says</p>
+          {/* 4 — result */}
+          <section className="py-8">
+            <StepHeading n={4} title="Result" />
 
             {!validScore ? (
-              <p className="display mt-6 max-w-[22ch] text-2xl leading-snug text-muted-foreground">
-                Enter a score to see how many of the last {windowMonths} months of relevant rounds
-                it would have cleared.
+              <p className="display mt-5 max-w-[36ch] text-2xl leading-snug text-muted-foreground">
+                Enter a score above to see how many of the last {windowMonths} months of relevant
+                rounds it would have cleared.
               </p>
             ) : isLoading ? (
-              <div className="mt-6 space-y-4">
+              <div className="mt-5 space-y-4">
                 <Skeleton className="h-16 w-full" />
                 <Skeleton className="h-24 w-full" />
               </div>
             ) : total === 0 ? (
-              <p className="mt-6 text-sm text-muted-foreground">
+              <p className="mt-5 text-sm text-muted-foreground">
                 No relevant rounds found since {formatDate(since)} for these selections — or data is
                 not available yet (the daily refresh runs at ~9am ET).
               </p>
             ) : (
               <>
-                <h2 className="display mt-5 text-[2rem] leading-[1.15] text-ink md:text-[2.5rem]">
+                <h3 className="display mt-5 text-[2rem] leading-[1.15] text-ink md:text-[2.5rem]">
                   You would have cleared{" "}
-                  <span className="figure text-[3.5rem] leading-none md:text-[4.5rem]" style={{ color: figureColor }}>
+                  <span
+                    className="figure text-[3.5rem] leading-none md:text-[4.5rem]"
+                    style={{ color: figureColor }}
+                  >
                     {cleared}
                   </span>{" "}
                   of {total} relevant rounds in the last {windowMonths} months.
-                </h2>
+                </h3>
 
                 <div className="mt-8 flex flex-wrap gap-1.5">
                   {recent.map((r) => (
@@ -305,7 +345,7 @@ function Wihbi() {
 
                 {!clearedRecently && (
                   <div
-                    className="mt-8 p-5 text-sm leading-relaxed"
+                    className="mt-8 rounded-lg p-5 text-sm leading-relaxed text-ink"
                     style={{ backgroundColor: "var(--accent-soft)" }}
                   >
                     No relevant rounds have been within your reach in the last 6 months.
@@ -333,9 +373,10 @@ function Wihbi() {
 
             {/* PostHog survey target */}
             <div id="wihbi-survey-slot" className="mt-10" />
-          </div>
+          </section>
         </div>
       </div>
     </TooltipProvider>
   );
 }
+
