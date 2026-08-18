@@ -20,6 +20,8 @@ import { drawsQuery } from "@/lib/queries";
 import { EVENTS, capture } from "@/lib/analytics";
 import {
   CATEGORIES,
+  MAIN_SERIES,
+
   PROGRAMS,
   ROUND_TYPES,
   ROUND_TYPE_LABELS,
@@ -103,6 +105,14 @@ function History() {
   const pageRows = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
   const hasFilters =
     years.length + types.length + programs.length + categories.length > 0;
+
+  /** One filter state drives both chart and table; with no filters we show a restrained default. */
+  const chartSeries = useMemo(() => {
+    const present = MAIN_SERIES.filter((s) => filtered.some((d) => s.matches(d)));
+    if (!hasFilters) return present.filter((s) => s.key === "general" || s.key === "CEC");
+    return present;
+  }, [filtered, hasFilters]);
+
   const clearAll = () => {
     setYears([]);
     setTypes([]);
@@ -144,16 +154,12 @@ function History() {
   return (
     <div className="mx-auto max-w-5xl px-4 pt-10 pb-4 sm:pt-14">
       <p className="section-label">History</p>
-      <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Draw history</h1>
-      <p className="mt-3 max-w-xl text-[0.95rem] leading-relaxed text-muted-foreground">
-        Every Express Entry round since 2015 — filter by year, round type, program or category.
-      </p>
-
-      <div className="mt-8">
-        {isLoading ? (
-          <Skeleton className="h-[320px] w-full" />
-        ) : (
-          <HistoryChart draws={draws} />
+      <div className="mt-3 flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6">
+        <h1 className="display text-3xl font-semibold tracking-tight sm:text-4xl">Draw history</h1>
+        {!isLoading && draws.length > 0 && (
+          <p className="text-sm text-muted-foreground tabular-nums">
+            {draws.length.toLocaleString("en-CA")} draws since 2015
+          </p>
         )}
       </div>
 
@@ -224,6 +230,15 @@ function History() {
           )}
         </div>
       </div>
+
+      <div className="mt-8">
+        {isLoading ? (
+          <Skeleton className="h-[320px] w-full" />
+        ) : (
+          <HistoryChart draws={filtered} series={chartSeries} />
+        )}
+      </div>
+
 
 
       {isLoading ? (
