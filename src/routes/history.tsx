@@ -157,42 +157,74 @@ function History() {
         )}
       </div>
 
-      <div className="sunken mt-8 flex flex-wrap gap-x-10 gap-y-6 p-5 sm:p-6">
-        <FilterGroup title="Year" options={allYears} selected={years} onToggle={toggle(setYears, "year")} />
-        <FilterGroup
-          title="Round type"
-          options={ROUND_TYPES}
-          selected={types}
-          onToggle={toggle<RoundType>(setTypes, "round_type")}
-          labelFor={(t) => ROUND_TYPE_LABELS[t]}
-        />
-        <FilterGroup
-          title="Program"
-          options={PROGRAMS}
-          selected={programs}
-          onToggle={toggle(setPrograms, "program")}
-        />
-        <FilterGroup
-          title="Category"
-          options={CATEGORIES}
-          selected={categories}
-          onToggle={toggle(setCategories, "category")}
-        />
-        {(years.length || types.length || programs.length || categories.length) > 0 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setYears([]);
-              setTypes([]);
-              setPrograms([]);
-              setCategories([]);
-            }}
-          >
-            Clear filters
-          </Button>
-        )}
+      <div className="mt-8 border-t border-[var(--rule)] pt-5">
+        <div className="flex items-baseline justify-between gap-4">
+          <p className="text-sm text-muted-foreground">
+            Showing {filtered.length.toLocaleString("en-CA")} of{" "}
+            {draws.length.toLocaleString("en-CA")} rounds
+          </p>
+          {hasFilters && (
+            <button
+              type="button"
+              onClick={clearAll}
+              className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+            >
+              Clear all
+            </button>
+          )}
+        </div>
+
+        <div className="mt-4 flex flex-col gap-3">
+          <ChipGroup title="Year">
+            {YEARS.map((y) => (
+              <FilterChip
+                key={y}
+                label={y}
+                selected={years.includes(y)}
+                onClick={() => toggle(setYears, "year")(y)}
+              />
+            ))}
+          </ChipGroup>
+
+          <ChipGroup title="Round type">
+            {ROUND_TYPES.map((t) => (
+              <FilterChip
+                key={t}
+                label={ROUND_TYPE_LABELS[t]}
+                selected={types.includes(t)}
+                onClick={() => toggle<RoundType>(setTypes, "round_type")(t)}
+              />
+            ))}
+          </ChipGroup>
+
+          {types.includes("program_specific") && (
+            <ChipGroup title="Program">
+              {PROGRAMS.map((p) => (
+                <FilterChip
+                  key={p}
+                  label={p}
+                  selected={programs.includes(p)}
+                  onClick={() => toggle(setPrograms, "program")(p)}
+                />
+              ))}
+            </ChipGroup>
+          )}
+
+          {types.includes("category_based") && (
+            <ChipGroup title="Category">
+              {CATEGORIES.map((c) => (
+                <FilterChip
+                  key={c}
+                  label={c}
+                  selected={categories.includes(c)}
+                  onClick={() => toggle(setCategories, "category")(c)}
+                />
+              ))}
+            </ChipGroup>
+          )}
+        </div>
       </div>
+
 
       {isLoading ? (
         <div className="mt-6 space-y-2">
