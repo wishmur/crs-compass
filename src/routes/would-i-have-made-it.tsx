@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -484,6 +484,12 @@ function Wihbi() {
             </ul>
           </section>
         )}
+
+        <p className="mt-10 text-sm">
+          <Link to="/history" className="font-medium text-brand hover:opacity-70">
+            Explore History →
+          </Link>
+        </p>
 
         {/* PostHog survey target */}
         <div id="wihbi-survey-slot" className="mt-8" />

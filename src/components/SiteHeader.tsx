@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 
 const links = [
-  { to: "/", label: "Latest" },
+  { to: "/", label: "Home" },
   { to: "/history", label: "History" },
   { to: "/would-i-have-made-it", label: "My Score" },
   { to: "/about", label: "About" },
@@ -24,7 +24,7 @@ export function SiteHeader() {
             <li key={l.to}>
               <Link
                 to={l.to}
-                className="block rounded-md px-2.5 py-1.5 text-muted-foreground transition-colors hover:text-ink sm:px-3 [&.active]:font-medium [&.active]:text-ink"
+                className="block rounded-md px-2.5 py-1.5 text-muted-foreground transition-colors hover:text-ink sm:px-3 [&.active]:bg-[var(--brand-soft)] [&.active]:font-medium [&.active]:text-brand"
                 activeOptions={{ exact: l.to === "/" }}
               >
                 {l.label}
