@@ -50,33 +50,8 @@ export const Route = createFileRoute("/history")({
 
 type SortKey = "draw_date" | "invitations_issued" | "cutoff_score";
 
-function FilterGroup<T extends string>({
-  title,
-  options,
-  selected,
-  onToggle,
-  labelFor,
-}: {
-  title: string;
-  options: readonly T[];
-  selected: T[];
-  onToggle: (v: T) => void;
-  labelFor?: (v: T) => string;
-}) {
-  return (
-    <fieldset className="min-w-[10rem]">
-      <legend className="section-label">{title}</legend>
-      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2">
-        {options.map((o) => (
-          <label key={o} className="flex cursor-pointer items-center gap-2 text-sm">
-            <Checkbox checked={selected.includes(o)} onCheckedChange={() => onToggle(o)} />
-            {labelFor ? labelFor(o) : o}
-          </label>
-        ))}
-      </div>
-    </fieldset>
-  );
-}
+const PAGE_SIZE = 25;
+const YEARS = Array.from({ length: 2026 - 2015 + 1 }, (_, i) => String(2015 + i));
 
 function History() {
   const { data, isLoading } = useQuery(drawsQuery());
@@ -84,6 +59,7 @@ function History() {
   const [types, setTypes] = useState<RoundType[]>([]);
   const [programs, setPrograms] = useState<string[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
+  const [page, setPage] = useState(1);
   const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" }>({
     key: "draw_date",
     dir: "desc",
@@ -94,10 +70,6 @@ function History() {
   }, []);
 
   const draws = data ?? [];
-  const allYears = useMemo(
-    () => [...new Set(draws.map((d) => d.draw_date.slice(0, 4)))].sort((a, b) => b.localeCompare(a)),
-    [draws],
-  );
 
   const toggle =
     <T extends string>(
@@ -106,6 +78,7 @@ function History() {
     ) =>
     (v: T) => {
       set((cur) => (cur.includes(v) ? cur.filter((x) => x !== v) : [...cur, v]));
+      setPage(1);
       capture(EVENTS.HISTORY_FILTER_USED, { filter, value: v });
     };
 
@@ -124,6 +97,29 @@ function History() {
       return av === bv ? 0 : (av > bv ? 1 : -1) * dir;
     });
   }, [draws, years, types, programs, categories, sort]);
+
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount);
+  const pageRows = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const hasFilters =
+    years.length + types.length + programs.length + categories.length > 0;
+  const clearAll = () => {
+    setYears([]);
+    setTypes([]);
+    setPrograms([]);
+    setCategories([]);
+    setPage(1);
+  };
+
+  const pageItems = (): (number | "…")[] => {
+    const items: (number | "…")[] = [];
+    for (let p = 1; p <= pageCount; p++) {
+      if (p === 1 || p === pageCount || Math.abs(p - currentPage) <= 1) items.push(p);
+      else if (items[items.length - 1] !== "…") items.push("…");
+    }
+    return items;
+  };
+
 
   const sortBtn = (key: SortKey, label: string) => (
     <button
