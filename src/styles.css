@@ -144,7 +144,7 @@
 }
 
 
-/* --- CRS Signal design tokens --- */
+/* --- CRS Compass design tokens --- */
 :root {
   --accent-strong: oklch(0.52 0.11 218);
 
@@ -163,6 +163,11 @@
 
   --result-pass: oklch(0.56 0.13 150);
   --result-fail: oklch(0.58 0.16 25);
+
+  --result-pass-bg: oklch(0.94 0.03 150);
+  --result-pass-fg: oklch(0.42 0.07 150);
+  --result-fail-bg: oklch(0.95 0.025 25);
+  --result-fail-fg: oklch(0.45 0.08 25);
 
   --series-general: oklch(0.5 0.02 255);
   --series-cec: oklch(0.55 0.13 250);
@@ -209,4 +214,13 @@
 @utility badge-category {
   background-color: var(--tone-category-bg);
   color: var(--tone-category-fg);
+}
+
+@utility pill-pass {
+  background-color: var(--result-pass-bg);
+  color: var(--result-pass-fg);
+}
+@utility pill-fail {
+  background-color: var(--result-fail-bg);
+  color: var(--result-fail-fg);
 }

@@ -11,13 +11,13 @@ import { EVENTS, capture } from "@/lib/analytics";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "CRS Signal — Latest Express Entry draw and cutoff" },
+      { title: "CRS Compass — Latest Express Entry draw and cutoff" },
       {
         name: "description",
         content:
           "The most recent Express Entry round: cutoff score, invitations issued and round type, plus the last rounds at a glance.",
       },
-      { property: "og:title", content: "CRS Signal — Latest Express Entry draw" },
+      { property: "og:title", content: "CRS Compass — Latest Express Entry draw" },
       {
         property: "og:description",
         content:

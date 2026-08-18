@@ -29,7 +29,7 @@ export const Route = createFileRoute("/would-i-have-made-it")({
         content:
           "Enter your CRS score and the rounds that actually apply to you, and see which past Express Entry rounds you would have cleared.",
       },
-      { property: "og:title", content: "Would I have made it? — CRS Signal" },
+      { property: "og:title", content: "Would I have made it? — CRS Compass" },
       {
         property: "og:description",
         content:

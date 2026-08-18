@@ -5,13 +5,13 @@ import { EVENTS, capture } from "@/lib/analytics";
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
-      { title: "About CRS Signal — what it is and isn't" },
+      { title: "About CRS Compass — what it is and isn't" },
       {
         name: "description",
         content:
           "How Express Entry rounds work, why cutoffs differ across round types, the PNP trap, and why nobody can predict the next cutoff.",
       },
-      { property: "og:title", content: "About CRS Signal" },
+      { property: "og:title", content: "About CRS Compass" },
       {
         property: "og:description",
         content:
@@ -29,7 +29,7 @@ function About() {
 
   return (
     <article className="mx-auto max-w-2xl px-4 py-10">
-      <h1 className="text-3xl font-bold tracking-tight">About CRS Signal</h1>
+      <h1 className="text-3xl font-bold tracking-tight">About CRS Compass</h1>
 
       <h2 className="mt-8 text-lg font-semibold">What Express Entry is</h2>
       <p className="mt-2 text-sm text-muted-foreground">
