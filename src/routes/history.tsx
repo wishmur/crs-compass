@@ -11,8 +11,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { ChipGroup, FilterChip } from "@/components/FilterChip";
+
 import { RoundBadge } from "@/components/RoundBadge";
 import { SourceLink, formatDate } from "@/components/DrawMeta";
 import { HistoryChart } from "@/components/HistoryChart";
