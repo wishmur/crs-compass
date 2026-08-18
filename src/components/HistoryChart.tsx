@@ -75,9 +75,12 @@ export function HistoryChart({ draws, series }: { draws: Draw[]; series: SeriesD
           below.
         </p>
       ) : !data.length ? (
-        <p className="mt-5 text-sm text-muted-foreground">
-          No rounds in the last 3 years match these filters.
-        </p>
+        <div className="mt-5 text-sm leading-relaxed">
+          <p className="text-ink">No rounds match these filters.</p>
+          <p className="text-muted-foreground">
+            Adjust the year, round type, or category selection.
+          </p>
+        </div>
       ) : (
         <div className="mt-4 h-[320px] w-full">
           <ResponsiveContainer width="100%" height="100%">
