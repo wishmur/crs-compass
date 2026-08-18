@@ -1,225 +1,161 @@
 # CRS Compass
 
-## What we're building
+A personalized Express Entry tracker. Ingests the IRCC daily draw feed, stores
+it in Supabase, and shows a Lovable-built UI where a user can see the latest
+draw, browse full history, and check whether their CRS score would have
+cleared past rounds relevant to them.
 
-**CRS Signal** — a personalized Express Entry tracker. It answers one question
-for people navigating Canadian permanent residence: *"Where do I stand?"*
+Working name — revisit before public launch. See [LOVABLE-PROMPT.md](./LOVABLE-PROMPT.md)
+for the product brief.
 
-The site does three things:
-
-1. Shows the most recent Express Entry rounds (draws).
-2. Shows the full history of every round since 2015, filterable.
-3. Lets a user enter a CRS score and see which historical rounds — filtered
-   to the ones that actually apply to them — they would have cleared.
-
-**No CRS calculator in v1.** Users enter a score they already know; the
-calculator lands in v2.
-
-**No accounts.** The user's score + relevance selections persist in the
-browser's `localStorage`.
-
-This is a portfolio project, not a startup — success is a real, usable product
-in front of real users, instrumented so we can learn from what they do.
-
-## Stack
-
-- **Vite + React + TypeScript** (Lovable default).
-- **Tailwind + shadcn/ui** for styling. Prefer shadcn primitives (Card, Table,
-  Tabs, Badge, Button, Input, Toggle, Select) over custom components.
-- **Recharts** for the history chart.
-- **@supabase/supabase-js** for data.
-- **posthog-js** for analytics + surveys.
-
-Env vars (Vite requires `VITE_` prefix for anything the browser reads):
+## Architecture
 
 ```
-VITE_SUPABASE_URL
-VITE_SUPABASE_ANON_KEY
-VITE_POSTHOG_KEY
-VITE_POSTHOG_HOST=https://us.i.posthog.com
+IRCC (undocumented JSON) ──daily──▶ GitHub Actions ingester (Python)
+                                        │
+                                        ▼
+                              Supabase Postgres
+                              ├── draws  (every round since 2015)
+                              ├── pool_snapshots
+                              └── ingest_runs (audit + freshness)
+                                        │
+                                        ▼
+                              Lovable app (Vite + React + Tailwind + shadcn/ui)
+                              ├── reads via supabase-js (anon key)
+                              ├── PostHog analytics + surveys
+                              └── localStorage for the user's score/eligibility
 ```
 
-## Supabase — data available in v1
+Two rules the codebase enforces:
 
-The ingester (already written, in `scripts/ingest/`) populates two tables and
-a helper function. The app is **read-only** — it never writes to Supabase.
+1. **Never fetch IRCC on a user page load.** Reads come from Supabase.
+2. **Every displayed cutoff carries its round type/program/category label.** No
+   bare numbers, no charts that merge PNP with anything else.
 
-**Table `draws`** — every Express Entry round since 2015.
-Columns you'll use:
+## Repository layout
 
-| column               | type                    | notes |
-|----------------------|-------------------------|-------|
-| `round_number`       | `text` (PK)             | usually digits like `"434"`; can include letter suffix (`"91b"`) |
-| `draw_date`          | `date`                  | ISO YYYY-MM-DD |
-| `round_type`         | `'general' \| 'program_specific' \| 'category_based'` | drives chart series and filters |
-| `program`            | `'CEC' \| 'FSW' \| 'FST' \| 'PNP' \| null` | non-null only when `round_type='program_specific'` |
-| `category`           | `text \| null`          | e.g. `"French language"`, `"Healthcare"`, `"Transport"`, `"STEM"`, `"Trades"`, `"Agriculture"`, `"Education"`, `"Senior managers"`, `"Physicians"`, `"Military"` |
-| `invitations_issued` | `integer`               |  |
-| `cutoff_score`       | `integer` (0–1200)      |  |
-| `tie_break_timestamp`| `timestamptz \| null`   | for candidates exactly at the cutoff |
-| `source_url`         | `text \| null`          | link to the official IRCC announcement |
-
-**Table `pool_snapshots`** — how many candidates sit in each CRS band, as of
-the most recent capture. Rows: `(as_of_date, band_low, band_high, candidate_count)`.
-(V1 only *shows* the latest date somewhere subtle — no pool-position feature yet.)
-
-**Function `get_last_updated() → timestamptz`** — call for the "last updated"
-badge:
-
-```ts
-const { data } = await supabase.rpc('get_last_updated')
-// data is an ISO timestamp string
+```
+crs-compass/
+├── README.md              (this file — the setup runbook)
+├── LOVABLE-PROMPT.md      (paste into Lovable to scaffold the UI)
+├── sql/                   (Supabase migrations, run in order)
+├── scripts/ingest/        (Python ingester — self-contained, own deps)
+├── .github/workflows/     (ingest cron)
+├── .env.example
+├── .gitignore
+└── src/                   (Lovable will populate this)
 ```
 
-**Function `fn_relevant_draws(p_score, p_round_types, p_programs, p_categories, p_since)`**
-— for "Would I have been invited?". Pass the user's score and the round
-contexts they're actually eligible for. Returns matching rows with a
-`would_have_cleared` boolean:
+## Setup — first time
 
-```ts
-const { data } = await supabase.rpc('fn_relevant_draws', {
-  p_score: 486,
-  p_round_types: ['program_specific', 'category_based'],
-  p_programs: ['CEC'],                     // only if they qualify for CEC
-  p_categories: ['French language'],       // categories they meet the criteria for
-  p_since: '2024-01-01',
-})
+You (a human, not Claude Code) do these once.
+
+### 1. Supabase
+
+Use the unused free Supabase project. Rename to `crs-compass` if the dashboard
+lets you.
+
+In the Supabase SQL editor, run these files in order:
+
+```
+sql/001_initial_schema.sql
+sql/002_rls_policies.sql
+sql/003_views.sql
 ```
 
-Pass `null` for a parameter to disable that filter.
+Grab the API keys from **Project Settings → API**:
 
-**The relevance is the whole point of the feature.** The UI is responsible for
-NOT passing round contexts the user doesn't qualify for. In particular:
-**never pass `program: 'PNP'`** unless the user says they hold a provincial
-nomination — PNP cutoffs include a 600-point bonus that everyone in that
-round carries, so those cutoffs are meaningless for anyone without a
-nomination.
+- `Project URL`               → will become `SUPABASE_URL` and `VITE_SUPABASE_URL`
+- `Project API keys → anon`   → will become `VITE_SUPABASE_ANON_KEY`
+- `Project API keys → service_role` → will become `SUPABASE_SERVICE_ROLE_KEY` (server-only, never in the browser)
 
-## Pages
+### 2. GitHub
 
-### 1. `/` — Landing / Latest draw
+Create a **public** repo named `crs-compass` under your account, then push
+this folder:
 
-- **Hero card:** the most recent draw.
-  - Round type label (e.g. "Category-based · French language" or "Program-specific · CEC") in a **prominent badge**, sized *as visually large as the cutoff number*. Never show a cutoff without its round-type context. This is a hard rule.
-  - Date, invitations issued, cutoff score, tie-break timestamp (if any), link to the official IRCC announcement.
-- Below the hero, a compact "recent rounds" list — the last 5–7 rounds.
-- "Last updated" badge sourced from `get_last_updated()`, subtle, footer-adjacent.
-- Below the fold: a plain-language paragraph explaining what Express Entry is (2–3 sentences), linking to the About page.
-
-### 2. `/history` — Full history
-
-- Table of every draw. Columns: date, round type, program, category, invitations, cutoff, source link.
-- Filters (all combinable): year, round_type, program, category. Multi-select.
-- Sortable by any numeric/date column.
-- Default sort: date desc.
-- Above the table, an inline chart (Recharts LineChart) with **one line per round type or category family** — never a single merged line.
-  - Legend is interactive: clicking a series hides it. Default view: last 3 years, all series visible.
-  - Y axis is CRS cutoff. X axis is draw_date.
-  - **Do not** put PNP on the same chart as anything else — its scale (700–800) crushes everything else visually. Give PNP its own toggle and, when toggled on, either use a dual y-axis or render as a separate small chart below.
-
-### 3. `/would-i-have-made-it` — WIHBI (the hero personalization feature)
-
-Three-step form on one page:
-
-**Step 1 — Score.** Number input, 0–1200. Persist to `localStorage` under
-`crsSignal.score`. If a value is already there, prefill it.
-
-**Step 2 — What actually applies to you?** Grouped checkboxes. Persist under
-`crsSignal.eligibility` as a JSON object.
-
-- **Programs** (single-select or none):
-  - "I'm inside Canada working full-time" → CEC
-  - "I'm a Federal Skilled Worker candidate" → FSW
-  - "I'm a Federal Skilled Trades candidate" → FST
-  - "I hold a provincial nomination" → PNP (explicit warning next to it about the 600-point bonus)
-- **Category-based rounds** (multi-select):
-  - checkbox per category family (French language, Healthcare, STEM, Trades, Transport, Agriculture, Education, Senior managers, Physicians, Military) — with a subtle "?" tooltip that says "You should only check this if you meet IRCC's specific criteria for that category — see the official list."
-- **General rounds** — auto-included (everyone is eligible when they run), so don't ask.
-- Add a helper link out to `canada.ca/…/rounds-invitations/category-based-selection.html` for the official criteria.
-
-**Step 3 — Result.** Call `fn_relevant_draws` and render:
-
-- **Summary line:** "You would have cleared **N of M** relevant rounds since {since_date}." (Default `since` = 2 years ago.)
-- **Bar of the last 12 relevant rounds**, each shown as a small pill colored green (cleared) or red (didn't clear), with a tooltip showing date + cutoff.
-- **Honest zero-callout:** if there are zero cleared rounds in the last 6 months across their selections, show a factual message: *"No relevant rounds have been within your reach in the last 6 months. In {current_year}, most invitations went to {top-2 category families they didn't check}."* Compute the "top two" from the actual data.
-- Every cutoff shown carries its round-type/category label. **No bare cutoff numbers anywhere.**
-- Below the result: a PostHog survey component asking "Was this useful? Yes/No + a free-text field."
-
-### 4. `/about` — What this is and isn't
-
-Plain, human copy covering:
-- What Express Entry is (2–3 paragraphs, no jargon).
-- Why cutoffs mean different things across round types (the PNP trap, explained).
-- **The province question:** "There is no such thing as a cutoff *for Ontario* (or any province) in federal Express Entry. The pool is national. Provinces only enter the picture through their separate Provincial Nominee Programs, which are out of scope for this site."
-- **Nobody can predict the next cutoff** — including us — because the cutoff is determined *after* IRCC decides how many people to invite.
-- **Disclaimer:** "This site is not immigration advice. Data comes from IRCC and may be delayed or incomplete. Always verify with the official Canadian government resources before making decisions."
-- Credits + links to source: IRCC's official rounds page, this repo on GitHub.
-
-## Global UI rules
-
-- **Every displayed cutoff carries its round-type / program / category label.** Non-negotiable — this is what stops the product from misleading users.
-- **Footer on every page:** "Data: IRCC · Last updated: {ts} · Not immigration advice."
-- **Mobile-first.** The history table becomes a stacked card list under `md`.
-- **Empty & loading states:** skeleton loaders, not spinners. "Data not available yet — the daily refresh runs at ~9am ET" fallback text if `get_last_updated()` returns null.
-- **Accessibility:** semantic table markup, keyboard-navigable filters, sufficient contrast.
-- Color: neutral palette (slate/stone). One accent color for interactive elements. Round-type badges get distinct colors, but muted:
-  - General: neutral gray
-  - CEC: blue
-  - FSW / FST: teal
-  - PNP: purple (distinct — this is the "watch out" class)
-  - Category-based: warm (amber / orange), varying subtly by family
-
-## Analytics events (PostHog)
-
-Fire these — event names live in `src/lib/analytics.ts` as constants:
-
-- `landing_viewed`
-- `history_viewed`
-- `history_filter_used` (props: `{ filter: 'year' | 'round_type' | 'program' | 'category', value }`)
-- `chart_series_toggled` (props: `{ series, visible: boolean }`)
-- `wihbi_started`
-- `wihbi_score_entered` (props: `{ score }`) — debounced
-- `wihbi_eligibility_changed` (props: `{ programs, categories }`)
-- `wihbi_result_viewed` (props: `{ cleared, total, since }`)
-- `official_source_clicked` (props: `{ from: 'latest' | 'history' | 'wihbi', round_number }`)
-- `about_viewed`
-- Standard PostHog `$pageview` on route change; `$identify` never called (anonymous only).
-
-Also install PostHog surveys — configure a survey in the PostHog project that
-targets `#wihbi-survey-slot` and gets shown once per user after `wihbi_result_viewed`.
-
-## Repo conventions to respect
-
-- Do not touch `scripts/`, `sql/`, or `.github/` — those are owned by the
-  ingester and don't need Lovable's changes.
-- Env vars: read via `import.meta.env.VITE_...`. Never hardcode Supabase or
-  PostHog keys.
-- Keep `src/lib/supabase.ts` as the single Supabase client instance.
-- Keep the round-type / category display metadata (colors, labels, ordering)
-  in **one** file: `src/data/round-types.ts`. Every component imports from it.
-
-
-REPO ON GIT https://github.com/wishmur/crs-signal.git
-
-This project was built with [Lovable](https://lovable.dev).
-
-**Live app**: https://crs-compass.lovable.app
-
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/909a0db5-8a58-42e5-a0b9-58319e6adc9b).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
-
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
+```bash
+git remote add origin git@github.com:<your-user>/crs-compass.git
+git push -u origin main
 ```
+
+Add these under **Settings → Secrets and variables → Actions → Repository secrets**:
+
+| Secret                       | Value |
+|------------------------------|-------|
+| `SUPABASE_URL`               | project URL |
+| `SUPABASE_SERVICE_ROLE_KEY`  | service_role key |
+
+The ingest workflow will start running on the daily cron the next morning.
+To fire it immediately once: **Actions tab → `ingest` → Run workflow**.
+
+### 3. PostHog
+
+Create a project at [posthog.com](https://posthog.com/) (free tier).
+
+Grab the **Project API key** (starts with `phc_`).
+
+Under **Product → Surveys**, create a "Was this useful?" survey targeting
+`#wihbi-survey-slot`, triggered by the `wihbi_result_viewed` event.
+
+### 4. Lovable
+
+Create a new Lovable project. Under project settings, connect it to the
+`crs-compass` GitHub repo via Lovable's GitHub sync. Paste the contents of
+[LOVABLE-PROMPT.md](./LOVABLE-PROMPT.md) into the initial project message.
+
+Add these environment variables in Lovable's project settings:
+
+| Env var                  | Value |
+|--------------------------|-------|
+| `VITE_SUPABASE_URL`      | project URL |
+| `VITE_SUPABASE_ANON_KEY` | anon key |
+| `VITE_POSTHOG_KEY`       | posthog project key |
+| `VITE_POSTHOG_HOST`      | `https://us.i.posthog.com` (or `https://eu.i.posthog.com`) |
+
+### 5. Verify
+
+- **Ingest ran:** Actions tab shows a green "ingest" run. Supabase `draws`
+  table has 400+ rows. `select get_last_updated();` returns a recent
+  timestamp.
+- **Site loads:** the Lovable preview URL renders the latest-draw hero card
+  with an actual round from IRCC (not "no data").
+- **A random draw matches IRCC:** pick a row from `draws`, compare the
+  cutoff/date/category against the official IRCC results page. They must
+  match exactly.
+
+## Working on the ingester locally
+
+```bash
+cd scripts/ingest
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements-dev.txt
+
+# no DB writes — parse the live IRCC feed and print
+python -m ingest.run --dry-run
+
+# tests against the captured snapshot
+pytest -q
+```
+
+See [scripts/ingest/README.md](./scripts/ingest/README.md) for details.
+
+## When the IRCC feed breaks
+
+The endpoint is undocumented; the government can change it without notice.
+When that happens:
+
+1. The `ingest` workflow fails and opens a GitHub issue.
+2. The site keeps serving the last-known-good data (a failed ingest never
+   touches `draws`), and the "last updated" badge stays honest about the age.
+3. Update `scripts/ingest/ingest/schema.py` and `normalize.py`, refresh
+   `scripts/ingest/fixtures/ee_rounds.sample.json` against a fresh capture,
+   re-run `pytest`.
+
+## Disclaimer
+
+CRS Compass is an information product, not immigration advice. Data comes from
+Immigration, Refugees and Citizenship Canada (IRCC) and may be delayed or
+incomplete. Nobody, including this site, can predict future cutoffs. Always
+verify against the official Canadian government resources before acting.
