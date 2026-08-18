@@ -23,13 +23,13 @@ import { CATEGORIES, PROGRAM_LABELS, roundLabel, type Program } from "@/data/rou
 export const Route = createFileRoute("/would-i-have-made-it")({
   head: () => ({
     meta: [
-      { title: "Would I have made it? — Express Entry CRS score check" },
+      { title: "Would I have been invited? — Express Entry CRS score check" },
       {
         name: "description",
         content:
           "Enter your CRS score and the rounds that actually apply to you, and see which past Express Entry rounds you would have cleared.",
       },
-      { property: "og:title", content: "Would I have made it? — CRS Compass" },
+      { property: "og:title", content: "Would I have been invited? — CRS Compass" },
       {
         property: "og:description",
         content:
@@ -172,7 +172,7 @@ function Wihbi() {
   return (
     <TooltipProvider>
       <div className="mx-auto max-w-3xl px-4 py-10">
-        <h1 className="text-3xl font-bold tracking-tight">Would I have made it?</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Would I have been invited?</h1>
         <p className="mt-2 text-muted-foreground">
           Enter a CRS score you already know, tell us which rounds actually apply to you, and see
           what the history says.
@@ -337,8 +337,8 @@ function Wihbi() {
                           className="h-8 w-8 rounded-full"
                           style={{
                             backgroundColor: r.would_have_cleared
-                              ? "var(--result-pass)"
-                              : "var(--result-fail)",
+                              ? "var(--result-pass-bg)"
+                              : "var(--result-fail-bg)",
                           }}
                           aria-label={`${formatDate(r.draw_date)} — ${roundLabel(r)} — cutoff ${r.cutoff_score} — ${r.would_have_cleared ? "cleared" : "did not clear"}`}
                         />
@@ -381,12 +381,9 @@ function Wihbi() {
                           <RoundBadge draw={r} />
                         </span>
                         <span
-                          className="font-semibold"
-                          style={{
-                            color: r.would_have_cleared
-                              ? "var(--result-pass)"
-                              : "var(--result-fail)",
-                          }}
+                          className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold tracking-tight ${
+                            r.would_have_cleared ? "pill-pass" : "pill-fail"
+                          }`}
                         >
                           {r.cutoff_score} CRS · {r.would_have_cleared ? "cleared" : "missed"}
                         </span>
