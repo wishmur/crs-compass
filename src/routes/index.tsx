@@ -15,7 +15,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "The most recent Express Entry round: cutoff score, invitations issued and round type, plus the last rounds at a glance.",
+          "A personalized Express Entry tracker for Canada: check your CRS score against recent rounds, with cutoffs always shown in round-type context.",
       },
       { property: "og:title", content: "CRS Compass — Latest Express Entry draw" },
       {
@@ -39,20 +39,42 @@ function Index() {
   const recent = data?.slice(1, 7) ?? [];
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10">
-      <h1 className="text-3xl font-bold tracking-tight text-foreground">
-        Where do you stand in Express Entry?
-      </h1>
-      <p className="mt-2 max-w-2xl text-muted-foreground">
-        Every round, every cutoff — always shown with the round type that gives it meaning.
-      </p>
+    <div className="mx-auto max-w-5xl px-4 py-12">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">CRS Compass</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          A personalized Express Entry tracker for Canada.
+        </p>
+      </div>
 
-      <section aria-labelledby="latest-heading" className="mt-8">
-        <h2 id="latest-heading" className="sr-only">
+      <section aria-labelledby="cta-heading" className="mt-10">
+        <Card className="border-primary/30 bg-card">
+          <CardContent className="p-8">
+            <h2 id="cta-heading" className="text-2xl font-bold tracking-tight md:text-3xl">
+              See where your score stands
+            </h2>
+            <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
+              Enter your CRS score and see which of the most recent Express Entry rounds you would
+              have cleared — filtered to the ones that actually apply to you. This isn&apos;t a
+              prediction — nobody can predict future cutoffs — but knowing what has already happened
+              is often more useful.
+            </p>
+            <Link
+              to="/would-i-have-made-it"
+              className="mt-6 inline-flex items-center justify-center rounded-md bg-primary px-6 py-3 text-base font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              Check my score →
+            </Link>
+          </CardContent>
+        </Card>
+      </section>
+
+      <section aria-labelledby="latest-heading" className="mt-14">
+        <h2 id="latest-heading" className="text-sm font-semibold text-muted-foreground uppercase">
           Most recent round
         </h2>
         {isLoading ? (
-          <Card>
+          <Card className="mt-4">
             <CardContent className="space-y-4 p-6">
               <Skeleton className="h-10 w-72" />
               <Skeleton className="h-16 w-40" />
@@ -60,23 +82,24 @@ function Index() {
             </CardContent>
           </Card>
         ) : !latest ? (
-          <Card>
+          <Card className="mt-4">
             <CardContent className="p-6 text-muted-foreground">
               Data not available yet — the daily refresh runs at ~9am ET.
             </CardContent>
           </Card>
         ) : (
-          <Card>
-            <CardContent className="p-6">
+          <Card className="mt-4">
+            <CardContent className="p-8">
               <div className="flex flex-wrap items-center gap-4">
                 <RoundBadge draw={latest} size="lg" />
-                <div className="leading-none">
-                  <div className="text-xl font-semibold text-muted-foreground md:text-3xl">
-                    {latest.cutoff_score} CRS
-                  </div>
+                <div className="text-4xl font-bold tracking-tight text-foreground md:text-5xl">
+                  {latest.cutoff_score}{" "}
+                  <span className="text-xl font-semibold text-muted-foreground md:text-2xl">
+                    CRS
+                  </span>
                 </div>
               </div>
-              <dl className="mt-6 grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
+              <dl className="mt-8 grid grid-cols-2 gap-5 text-sm sm:grid-cols-4">
                 <div>
                   <dt className="text-muted-foreground">Date</dt>
                   <dd className="font-medium">{formatDate(latest.draw_date)}</dd>
@@ -100,7 +123,7 @@ function Index() {
                   </dd>
                 </div>
               </dl>
-              <div className="mt-6 text-sm">
+              <div className="mt-8 text-sm">
                 <SourceLink
                   url={latest.source_url}
                   from="latest"
@@ -112,11 +135,11 @@ function Index() {
         )}
       </section>
 
-      <section aria-labelledby="recent-heading" className="mt-10">
+      <section aria-labelledby="recent-heading" className="mt-14">
         <h2 id="recent-heading" className="text-sm font-semibold text-muted-foreground uppercase">
           Recent rounds
         </h2>
-        <ul className="mt-3 divide-y divide-border rounded-lg border border-border">
+        <ul className="mt-4 divide-y divide-border rounded-lg border border-border">
           {isLoading
             ? Array.from({ length: 5 }).map((_, i) => (
                 <li key={i} className="p-4">
@@ -138,7 +161,7 @@ function Index() {
                 </li>
               ))}
         </ul>
-        <p className="mt-4 text-sm">
+        <p className="mt-5 text-sm">
           <Link
             to="/would-i-have-made-it"
             className="text-primary underline underline-offset-4 hover:no-underline"
@@ -148,16 +171,16 @@ function Index() {
         </p>
       </section>
 
-      <section className="mt-12 max-w-2xl">
+      <section className="mt-16 max-w-2xl">
         <h2 className="text-lg font-semibold">What is Express Entry?</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p className="mt-3 text-sm text-muted-foreground">
           Express Entry is the system Canada uses to manage applications for several permanent
           residence programs. Candidates sit in one national pool with a Comprehensive Ranking
           System (CRS) score, and IRCC periodically invites the highest-ranked candidates in a
           round of invitations. The cutoff score of each round is simply the score of the last
           person invited — it depends on who was in the pool and how many invitations were issued.
         </p>
-        <p className="mt-3 text-sm">
+        <p className="mt-4 text-sm">
           <Link
             to="/about"
             className="text-primary underline underline-offset-4 hover:no-underline"
