@@ -20,8 +20,8 @@ export function ScoreScale({ cutoffDraw, score }: { cutoffDraw: Draw; score: num
   return (
     <div className="pt-24">
       <div className="relative">
-        {/* labels */}
-        <div className="absolute inset-x-0 bottom-0 h-0">
+        <div className="relative h-px w-full bg-rule">
+          {/* labels — sit above the markers with >=8px clearance */}
           <div
             className="absolute -translate-x-1/2 text-center whitespace-nowrap"
             style={{ left: `${cutoffPct}%`, bottom: `${BASE_BOTTOM}px` }}
@@ -41,9 +41,7 @@ export function ScoreScale({ cutoffDraw, score }: { cutoffDraw: Draw; score: num
               <div className="figure text-2xl text-accent-strong">{score}</div>
             </div>
           )}
-        </div>
 
-        <div className="relative h-px w-full bg-rule">
           {/* ticks */}
           {TICKS.map((t) => (
             <span
