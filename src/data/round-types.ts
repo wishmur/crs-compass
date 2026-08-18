@@ -96,47 +96,47 @@ export interface SeriesDef {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  "French language": "var(--series-cat-1)",
-  Healthcare: "var(--series-cat-2)",
-  STEM: "var(--series-cat-3)",
-  Trades: "var(--series-cat-4)",
-  Transport: "var(--series-cat-5)",
-  Agriculture: "var(--series-cat-6)",
-  Education: "var(--series-cat-7)",
-  "Senior managers": "var(--series-cat-8)",
-  Physicians: "var(--series-cat-9)",
-  Military: "var(--series-cat-10)",
+  "French language": "#c8622a",
+  Healthcare: "#a8642a",
+  STEM: "#9c7a2e",
+  Trades: "#b0552f",
+  Transport: "#8a6b34",
+  Agriculture: "#6f7a41",
+  Education: "#a44a33",
+  "Senior managers": "#7d6a4a",
+  Physicians: "#93453f",
+  Military: "#6a5b3e",
 };
 
 export const MAIN_SERIES: SeriesDef[] = [
   {
     key: "general",
     label: "General",
-    color: "var(--series-general)",
+    color: "#6b7280",
     matches: (d) => d.round_type === "general",
   },
   {
     key: "CEC",
     label: "Program-specific · CEC",
-    color: "var(--series-cec)",
+    color: "#2f4a3f",
     matches: (d) => d.round_type === "program_specific" && d.program === "CEC",
   },
   {
     key: "FSW",
     label: "Program-specific · FSW",
-    color: "var(--series-fsw)",
+    color: "#365b60",
     matches: (d) => d.round_type === "program_specific" && d.program === "FSW",
   },
   {
     key: "FST",
     label: "Program-specific · FST",
-    color: "var(--series-fst)",
+    color: "#4a5a47",
     matches: (d) => d.round_type === "program_specific" && d.program === "FST",
   },
   ...CATEGORIES.map((c) => ({
     key: `cat:${c}`,
     label: `Category-based · ${c}`,
-    color: CATEGORY_COLORS[c] ?? "var(--series-cat-1)",
+    color: CATEGORY_COLORS[c] ?? "#c8622a",
     matches: (d: Draw) => d.round_type === "category_based" && d.category === c,
   })),
 ];
@@ -144,6 +144,6 @@ export const MAIN_SERIES: SeriesDef[] = [
 export const PNP_SERIES: SeriesDef = {
   key: "PNP",
   label: "Program-specific · PNP",
-  color: "var(--series-pnp)",
+  color: "#7b3f5c",
   matches: (d) => d.program === "PNP",
 };

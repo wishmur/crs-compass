@@ -267,7 +267,7 @@
   --color-hairline: var(--hairline);
   --color-track: var(--track);
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-serif: "Fraunces", ui-serif, Georgia, serif;
+  --font-serif: "Instrument Serif", ui-serif, Georgia, serif;
   --font-mono: ui-monospace, SFMono-Regular, monospace;
 }
 
@@ -280,7 +280,7 @@
 @utility figure {
   font-family: var(--font-serif);
   font-optical-sizing: auto;
-  font-weight: 800;
+  font-weight: 400;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.035em;
   line-height: 0.9;
