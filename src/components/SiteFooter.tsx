@@ -13,9 +13,9 @@ export function SiteFooter() {
   const pretty = formatDateTime(lastUpdated ?? null);
 
   return (
-    <footer className="mt-24 hairline-t">
+    <footer className="mt-14 rule-t">
       <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-10 text-xs text-muted-foreground">
-        <span className="font-medium text-foreground">CRS Compass</span>
+        <span className="display text-base text-foreground">CRS Compass</span>
         <span aria-hidden className="text-hairline">
           /
         </span>
