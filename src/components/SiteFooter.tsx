@@ -14,8 +14,8 @@ export function SiteFooter() {
 
   return (
     <footer className="mt-16 border-t border-border">
-      <div className="mx-auto max-w-5xl px-4 py-6 text-xs text-muted-foreground">
-        Data: IRCC ·{" "}
+      <div className="mx-auto max-w-5xl px-4 py-8 text-xs text-muted-foreground">
+        CRS Compass · Data: IRCC ·{" "}
         {pretty
           ? `Last updated: ${pretty}`
           : "Data not available yet — the daily refresh runs at ~9am ET"}{" "}

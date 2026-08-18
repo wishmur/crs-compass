@@ -81,13 +81,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "CRS Signal — Express Entry draws and cutoffs" },
+      { title: "CRS Compass — Express Entry draws and cutoffs" },
       {
         name: "description",
         content:
           "Track Express Entry rounds, cutoff scores and see which rounds your CRS score would have cleared.",
       },
-      { property: "og:title", content: "CRS Signal — Express Entry draws and cutoffs" },
+      { property: "og:title", content: "CRS Compass — Express Entry draws and cutoffs" },
       {
         property: "og:description",
         content:
