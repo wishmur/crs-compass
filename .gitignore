@@ -40,6 +40,8 @@ __pycache__/
 .ruff_cache/
 scripts/ingest/.venv/
 
-# env (values inside are public by design, but keep them out of git as policy)
-.env
-!.env.example
+# .env intentionally NOT ignored — Lovable's deployed build reads env vars
+# from .env in the repo, not from Lovable's project-settings env config.
+# The values here are all public-by-design (Supabase anon key, gated by RLS;
+# PostHog project key, shipped to every browser). The service_role key never
+# lives in this file — it stays only in GitHub Actions secrets.
