@@ -11,6 +11,7 @@ import {
 import { FilterChip } from "@/components/FilterChip";
 import { RoundBadge } from "@/components/RoundBadge";
 import { formatDate, SourceLink } from "@/components/DrawMeta";
+import { TablePagination } from "@/components/TablePagination";
 import {
   Table,
   TableBody,
@@ -45,6 +46,7 @@ export const Route = createFileRoute("/would-i-have-made-it")({
 
 const SCORE_KEY = "crsSignal.score";
 const ELIG_KEY = "crsSignal.eligibility";
+const TABLE_PAGE_SIZE = 15;
 
 interface Eligibility {
   program: Program | null;
@@ -191,6 +193,15 @@ function Wihbi() {
     () => [...(results ?? [])].sort((a, b) => b.draw_date.localeCompare(a.draw_date)),
     [results],
   );
+
+  const [tablePage, setTablePage] = useState(1);
+  const tablePageCount = Math.max(1, Math.ceil(tableRows.length / TABLE_PAGE_SIZE));
+  const currentTablePage = Math.min(tablePage, tablePageCount);
+  const pagedRows = tableRows.slice(
+    (currentTablePage - 1) * TABLE_PAGE_SIZE,
+    currentTablePage * TABLE_PAGE_SIZE,
+  );
+
 
   const sixMonthsAgo = useMemo(() => monthsAgo(6), []);
   const clearedRecently = (results ?? []).some(
@@ -433,7 +444,7 @@ function Wihbi() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {tableRows.map((d) => (
+                  {pagedRows.map((d) => (
                     <TableRow key={d.round_number}>
                       <TableCell className="num whitespace-nowrap text-muted-foreground">
                         {formatDate(d.draw_date)}
@@ -465,7 +476,7 @@ function Wihbi() {
 
             {/* Mobile cards */}
             <ul className="mt-5 space-y-3 md:hidden">
-              {tableRows.map((d) => (
+              {pagedRows.map((d) => (
                 <li key={d.round_number} className="surface p-4">
                   <div className="flex items-center justify-between gap-2 text-sm">
                     <span className="text-muted-foreground">{formatDate(d.draw_date)}</span>
@@ -482,6 +493,12 @@ function Wihbi() {
                 </li>
               ))}
             </ul>
+
+            <TablePagination
+              currentPage={currentTablePage}
+              pageCount={tablePageCount}
+              onChange={setTablePage}
+            />
           </section>
         )}
 
