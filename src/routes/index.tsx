@@ -31,20 +31,21 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
+/** Very light category tints — differentiation only, never good/bad signalling. */
 const TILE_BG: Record<string, string> = {
-  general: "var(--brand-soft)",
-  cec: "var(--brand-soft)",
-  fsw: "var(--brand-soft)",
-  fst: "var(--brand-soft)",
-  pnp: "var(--accent-soft)",
-  category: "var(--accent-soft)",
+  general: "color-mix(in srgb, var(--brand) 6%, transparent)",
+  cec: "color-mix(in srgb, var(--brand) 9%, transparent)",
+  fsw: "color-mix(in srgb, var(--brand) 4%, transparent)",
+  fst: "color-mix(in srgb, var(--brand) 12%, transparent)",
+  pnp: "color-mix(in srgb, var(--accent) 6%, transparent)",
+  category: "color-mix(in srgb, var(--accent) 10%, transparent)",
 };
 
 function DrawTile({ draw }: { draw: Draw }) {
   return (
     <article
-      className="flex flex-col justify-between rounded-[var(--radius)] border border-[var(--rule)] p-5"
-      style={{ backgroundColor: TILE_BG[badgeTone(draw)] ?? "var(--brand-soft)" }}
+      className="flex min-w-[15rem] flex-col justify-between rounded-[var(--radius)] border border-[var(--rule)] p-5 md:snap-start"
+      style={{ backgroundColor: TILE_BG[badgeTone(draw)] ?? "transparent" }}
     >
       <div>
         <p className="text-xs text-muted-foreground tabular-nums">{formatDate(draw.draw_date)}</p>
@@ -91,7 +92,7 @@ function Index() {
   const score = Number.isFinite(parsed) && parsed > 0 && parsed <= 1200 ? parsed : null;
 
   const latest = data?.[0];
-  const recent = data?.slice(0, 4) ?? [];
+  const recent = data?.slice(0, 8) ?? [];
 
   return (
     <div className="mx-auto max-w-6xl px-5 pt-8 pb-6">
@@ -213,9 +214,14 @@ function Index() {
 
       {/* Recent draws */}
       <section aria-labelledby="recent-heading" className="mt-14">
-        <h2 id="recent-heading" className="kicker">
-          Recent draws
-        </h2>
+        <div className="flex flex-wrap items-baseline justify-between gap-3">
+          <h2 id="recent-heading" className="kicker">
+            Recent draws
+          </h2>
+          <Link to="/history" className="text-sm font-medium text-brand hover:opacity-70">
+            View full history →
+          </Link>
+        </div>
 
         {isLoading ? (
           <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -228,38 +234,38 @@ function Index() {
             Data not available yet — the daily refresh runs at ~9am ET.
           </p>
         ) : (
-          <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div
+            className="mt-5 -mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-2 [scrollbar-width:thin]"
+            role="group"
+            aria-label="Recent Express Entry rounds"
+          >
             {recent.map((d) => (
-              <DrawTile key={d.round_number} draw={d} />
+              <div key={d.round_number} className="w-[15rem] shrink-0">
+                <DrawTile draw={d} />
+              </div>
             ))}
           </div>
         )}
-
-        <p className="mt-5 text-sm">
-          <Link to="/history" className="font-medium text-brand hover:opacity-70">
-            View full history →
-          </Link>
-        </p>
       </section>
 
-      {/* Personalized CTA */}
-      <section className="mt-12 flex flex-wrap items-center justify-between gap-4 rounded-[var(--radius)] border border-[var(--rule)] bg-card px-5 py-5">
+      {/* Personalized CTA — inline, no container */}
+      <section className="mt-12 flex flex-wrap items-baseline gap-x-3 gap-y-1 border-t border-[var(--rule)] pt-6">
         <p className="text-[0.95rem] text-ink">
           Want to see which of these you would have cleared?
         </p>
         <Link
           to="/would-i-have-made-it"
-          className="inline-flex items-center rounded-full px-4 py-2 text-sm font-medium"
-          style={{ backgroundColor: "var(--brand)", color: "var(--paper)" }}
+          className="text-[0.95rem] font-medium text-brand hover:opacity-70"
         >
           Check My Score →
         </Link>
       </section>
 
-      {/* Minimal About link */}
-      <p className="mt-10 text-sm text-muted-foreground">
+      {/* Footer link */}
+      <p className="mt-12 border-t border-[var(--rule)] pt-6 text-center text-sm text-muted-foreground">
+        New to Express Entry?{" "}
         <Link to="/about" className="underline underline-offset-4 hover:text-ink">
-          New to Express Entry? Learn how it works →
+          Learn how it works →
         </Link>
       </p>
     </div>
