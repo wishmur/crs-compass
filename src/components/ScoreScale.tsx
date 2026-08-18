@@ -18,7 +18,7 @@ export function ScoreScale({ cutoffDraw, score }: { cutoffDraw: Draw; score: num
   const scoreBottom = collides ? BASE_BOTTOM + 46 : BASE_BOTTOM;
 
   return (
-    <div className="pt-24">
+    <div className="pt-32">
       <div className="relative">
         <div className="relative h-px w-full bg-rule">
           {/* labels — sit above the markers with >=8px clearance */}
