@@ -13,13 +13,30 @@ export function SiteFooter() {
   const pretty = formatDateTime(lastUpdated ?? null);
 
   return (
-    <footer className="mt-16 border-t border-border">
-      <div className="mx-auto max-w-5xl px-4 py-8 text-xs text-muted-foreground">
-        CRS Compass · Data: IRCC ·{" "}
-        {pretty
-          ? `Last updated: ${pretty}`
-          : "Data not available yet — the daily refresh runs at ~9am ET"}{" "}
-        · Not immigration advice.
+    <footer className="mt-24 hairline-t">
+      <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-10 text-xs text-muted-foreground">
+        <span className="font-medium text-foreground">CRS Compass</span>
+        <span aria-hidden className="text-hairline">
+          /
+        </span>
+        <span>Data: IRCC</span>
+        <span aria-hidden className="text-hairline">
+          /
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span
+            aria-hidden
+            className="h-1.5 w-1.5 rounded-full"
+            style={{ backgroundColor: pretty ? "var(--result-pass)" : "var(--track)" }}
+          />
+          {pretty
+            ? `Last updated ${pretty}`
+            : "Data not available yet — the daily refresh runs at ~9am ET"}
+        </span>
+        <span aria-hidden className="text-hairline">
+          /
+        </span>
+        <span>Not immigration advice.</span>
       </div>
     </footer>
   );
