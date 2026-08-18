@@ -171,16 +171,16 @@ function Wihbi() {
 
   return (
     <TooltipProvider>
-      <div className="mx-auto max-w-3xl px-4 pt-10 pb-4 sm:pt-14">
+      <div className="mx-auto max-w-3xl px-5 pt-9 pb-8">
         <p className="section-label">Your position</p>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Would I have been invited?</h1>
+        <h1 className="display mt-2 text-4xl sm:text-5xl">Would I have been invited?</h1>
         <p className="mt-3 text-[0.95rem] leading-relaxed text-muted-foreground">
           Enter a CRS score you already know, tell us which rounds actually apply to you, and see
           what the history says.
         </p>
 
         {/* Step 1 */}
-        <Card className="mt-9 border-0 shadow-[var(--shadow-soft)]">
+        <Card className="mt-8 border-0 bg-surface shadow-[var(--shadow-soft)]">
           <CardContent className="p-6 sm:p-7">
             <h2 className="section-label">
               Step 1 — Your CRS score
@@ -208,7 +208,7 @@ function Wihbi() {
         </Card>
 
         {/* Step 2 */}
-        <Card className="mt-5 border-0 shadow-[var(--shadow-soft)]">
+        <Card className="mt-4 border-0 bg-surface shadow-[var(--shadow-soft)]">
           <CardContent className="p-6 sm:p-7">
             <h2 className="section-label">
               Step 2 — What actually applies to you?
@@ -300,7 +300,7 @@ function Wihbi() {
         </Card>
 
         {/* Step 3 */}
-        <Card className="mt-5 border-0 shadow-[var(--shadow-soft)]">
+        <Card className="mt-4 border-0 bg-surface shadow-[var(--shadow-soft)]">
           <CardContent className="p-6 sm:p-7">
             <h2 className="section-label">
               Step 3 — Result
