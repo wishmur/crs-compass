@@ -6,7 +6,8 @@ import { RoundBadge } from "@/components/RoundBadge";
 import { ScoreScale } from "@/components/ScoreScale";
 import { formatDate } from "@/components/DrawMeta";
 import { CardCarousel } from "@/components/CardCarousel";
-import { PrimaryCTA, SecondaryLink } from "@/components/CTA";
+import { SecondaryLink } from "@/components/CTA";
+import { PersonalScoreSection } from "@/components/PersonalScoreSection";
 import { type Draw } from "@/data/round-types";
 import { drawsQuery } from "@/lib/queries";
 import { EVENTS, capture } from "@/lib/analytics";
@@ -201,6 +202,11 @@ function Index() {
         </div>
       </section>
 
+      {/* Personalized "where you stand" — the core value of the product,
+          inlined here so users answer the primary question without leaving Home.
+          Score is read directly from the hero input above via the shared state. */}
+      <PersonalScoreSection score={score} />
+
       {/* Recent draws */}
       <section aria-labelledby="recent-heading" className="mt-14">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
@@ -233,15 +239,6 @@ function Index() {
         )}
       </section>
 
-      {/* Primary CTA — one row, tight, integrates with the carousel section above.
-          The About link that used to sit below has been removed; the nav bar
-          already exposes About and a stranded footer link was awkward. */}
-      <section className="mt-8 flex flex-wrap items-center justify-between gap-4">
-        <p className="text-[0.95rem] text-ink">
-          See which of these your score would have cleared.
-        </p>
-        <PrimaryCTA to="/would-i-have-made-it">Check my score →</PrimaryCTA>
-      </section>
     </div>
   );
 }
