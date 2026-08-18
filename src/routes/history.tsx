@@ -146,9 +146,9 @@ function History() {
   );
 
   return (
-    <div className="mx-auto max-w-6xl px-5 pt-9 pb-8">
+    <div className="mx-auto max-w-5xl px-4 pt-10 pb-4 sm:pt-14">
       <p className="section-label">History</p>
-      <h1 className="display mt-2 text-4xl sm:text-5xl">Draw history</h1>
+      <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Draw history</h1>
       <p className="mt-3 max-w-xl text-[0.95rem] leading-relaxed text-muted-foreground">
         Every Express Entry round since 2015 — filter by year, round type, program or category.
       </p>

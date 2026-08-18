@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RoundBadge, RoundDot } from "@/components/RoundBadge";
-import { ScoreCompare } from "@/components/ScoreCompare";
+import { ScoreScale } from "@/components/ScoreScale";
 import { SourceLink, formatDate } from "@/components/DrawMeta";
 import { roundLabel } from "@/data/round-types";
 import { drawsQuery } from "@/lib/queries";
 import { EVENTS, capture } from "@/lib/analytics";
+
+const SCORE_KEY = "crsSignal.score";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -30,197 +31,155 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-const SCORE_KEY = "crsSignal.score";
-
 function Index() {
   const { data, isLoading } = useQuery(drawsQuery(8));
-  const [score, setScore] = useState("");
+  const [raw, setRaw] = useState("");
 
   useEffect(() => {
     capture(EVENTS.LANDING_VIEWED);
     try {
-      const s = localStorage.getItem(SCORE_KEY);
-      if (s) setScore(s);
+      const stored = window.localStorage.getItem(SCORE_KEY);
+      if (stored) setRaw(stored);
     } catch {
       /* ignore */
     }
   }, []);
 
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      try {
+        if (raw) window.localStorage.setItem(SCORE_KEY, raw);
+      } catch {
+        /* ignore */
+      }
+    }, 500);
+    return () => window.clearTimeout(id);
+  }, [raw]);
+
+  const parsed = Number.parseInt(raw, 10);
+  const score = Number.isFinite(parsed) && parsed > 0 && parsed <= 1200 ? parsed : null;
+
   const latest = data?.[0];
-  const recent = data?.slice(1, 7) ?? [];
+  const recent = data?.slice(0, 6) ?? [];
 
-  const n = Number(score);
-  const validScore = score !== "" && Number.isFinite(n) && n >= 0 && n <= 1200;
-  const userScore = validScore ? n : null;
-
-  const scale = (() => {
-    const scores = (data ?? []).map((d) => d.cutoff_score);
-    if (!scores.length) return { min: 0, max: 1, span: 1 };
-    const min = Math.min(...scores, userScore ?? Infinity);
-    const max = Math.max(...scores, userScore ?? -Infinity);
-    const pad = Math.max(8, Math.round((max - min) * 0.15));
-    const lo = min - pad;
-    const hi = max + pad;
-    return { min: lo, max: hi, span: Math.max(1, hi - lo) };
+  const verdict = (() => {
+    if (!latest) return "Enter a score to see it placed on this scale.";
+    if (score == null) return "Enter a score to see it placed on this scale.";
+    const diff = score - latest.cutoff_score;
+    const type = roundLabel(latest);
+    return diff < 0
+      ? `${Math.abs(diff)} points short of the most recent ${type} cutoff.`
+      : `${diff} points above the most recent ${type} cutoff.`;
   })();
 
-  const pct = (v: number) => ((v - scale.min) / scale.span) * 100;
-
   return (
-    <div className="mx-auto max-w-6xl px-5">
-      {/* Hero — the comparison is the product */}
-      <section aria-labelledby="cta-heading" className="grid gap-10 pt-10 pb-12 lg:grid-cols-12 lg:gap-14">
-        <div className="lg:col-span-7">
-          <p className="section-label">Express Entry, in context</p>
-          <h1
-            id="cta-heading"
-            className="display mt-3 text-5xl text-foreground sm:text-6xl"
-          >
-            See where your score
-            <span className="block italic text-teal">stands today.</span>
+    <div className="mx-auto max-w-6xl px-5 pt-12 pb-6">
+      {/* Hero */}
+      <section className="grid gap-12 md:grid-cols-2 md:gap-16">
+        <div>
+          <p className="kicker">Express Entry, in context</p>
+          <h1 className="display mt-4 max-w-[14ch] text-[2.75rem] leading-[1.02] font-semibold text-ink md:text-[3.5rem]">
+            See where your score stands.
           </h1>
-          <p className="mt-4 max-w-lg text-[0.95rem] leading-relaxed text-muted-foreground">
-            Type your CRS score. We place it against the most recent round&apos;s cutoff — and on
-            the next page, against every round that actually applies to you.
+          <p className="mt-5 max-w-md text-[0.95rem] leading-relaxed text-muted-foreground">
+            Type your CRS score. We place it against the most recent round instantly, and against
+            every historical round that actually applies to you on the deeper page.
           </p>
 
-          <div className="mt-7 flex flex-wrap items-end gap-x-5 gap-y-4">
-            <label className="block">
-              <span className="section-label">Your CRS score</span>
-              <input
-                type="number"
-                min={0}
-                max={1200}
-                inputMode="numeric"
-                value={score}
-                onChange={(e) => setScore(e.target.value)}
-                placeholder="486"
-                aria-label="Your CRS score"
-                className="figure-xl mt-2 block w-44 border-b-2 border-rule bg-transparent pb-1 text-6xl text-foreground transition-colors outline-none placeholder:text-muted-foreground/35 focus:border-burnt"
-              />
+          <div className="mt-10 max-w-xs border-b border-rule pb-1">
+            <label htmlFor="crs-score" className="kicker block">
+              Your CRS score
             </label>
-
-            <Link
-              to="/would-i-have-made-it"
-              className="group inline-flex items-center gap-2 rounded-sm bg-primary px-5 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-teal-deep"
-            >
-              Check my score
-              <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
-            </Link>
+            <input
+              id="crs-score"
+              inputMode="numeric"
+              autoComplete="off"
+              placeholder="486"
+              value={raw}
+              onChange={(e) => setRaw(e.target.value.replace(/\D/g, "").slice(0, 4))}
+              className="figure mt-2 w-full bg-transparent text-6xl text-ink outline-none placeholder:text-rule md:text-7xl"
+            />
           </div>
         </div>
 
-        {/* Live comparison against the latest cutoff */}
-        <div className="lg:col-span-5 lg:pt-8">
-          {latest ? (
-            <div className="border-l-2 border-peach pl-6">
-              <p className="section-label">Against the latest round</p>
-              <ScoreCompare
-                className="mt-4"
-                cutoff={latest.cutoff_score}
-                score={userScore}
-                cutoffLabel={`cutoff ${latest.cutoff_score}`}
-              />
-              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                {userScore == null ? (
-                  <>Enter a score to see it placed on this scale.</>
-                ) : userScore >= latest.cutoff_score ? (
-                  <>
-                    You are{" "}
-                    <span className="num font-medium text-result-pass">
-                      {userScore - latest.cutoff_score} above
-                    </span>{" "}
-                    the {roundLabel(latest)} cutoff of {latest.cutoff_score}.
-                  </>
-                ) : (
-                  <>
-                    You are{" "}
-                    <span className="num font-medium text-result-fail">
-                      {latest.cutoff_score - userScore} below
-                    </span>{" "}
-                    the {roundLabel(latest)} cutoff of {latest.cutoff_score}.
-                  </>
-                )}
-              </p>
-            </div>
-          ) : (
-            <div className="border-l-2 border-peach pl-6 text-sm text-muted-foreground">
+        {/* Live comparison */}
+        <div className="md:pt-2">
+          <p className="kicker">Against the latest round</p>
+          {isLoading ? (
+            <Skeleton className="mt-8 h-24 w-full" />
+          ) : !latest ? (
+            <p className="mt-6 text-sm text-muted-foreground">
               Data not available yet — the daily refresh runs at ~9am ET.
-            </div>
+            </p>
+          ) : (
+            <>
+              <ScoreScale cutoffDraw={latest} score={score} />
+              <p className="mt-6 text-[0.95rem] leading-relaxed text-ink">{verdict}</p>
+              <p className="mt-4 text-sm">
+                <Link
+                  to="/would-i-have-made-it"
+                  className="text-brand underline underline-offset-4 hover:no-underline"
+                >
+                  See where you stand across every relevant round →
+                </Link>
+              </p>
+            </>
           )}
         </div>
       </section>
 
-      {/* Latest draw — a data headline, not a card */}
-      <section aria-labelledby="latest-heading" className="rule-t pt-8">
-        <div className="flex items-baseline justify-between gap-4">
-          <h2 id="latest-heading" className="section-label">
-            Latest draw
-          </h2>
-          <Link
-            to="/history"
-            className="text-xs font-medium text-burnt transition-opacity hover:opacity-70"
-          >
-            All history →
-          </Link>
-        </div>
+      {/* Latest draw — editorial block */}
+      <section aria-labelledby="latest-heading" className="mt-20 border-t border-rule pt-10">
+        <h2 id="latest-heading" className="kicker">
+          Latest draw
+        </h2>
 
         {isLoading ? (
-          <div className="mt-6 space-y-4">
-            <Skeleton className="h-24 w-64" />
-            <Skeleton className="h-4 w-full max-w-md" />
-          </div>
+          <Skeleton className="mt-6 h-28 w-72" />
         ) : !latest ? (
-          <p className="mt-6 text-sm text-muted-foreground">
+          <p className="mt-4 text-sm text-muted-foreground">
             Data not available yet — the daily refresh runs at ~9am ET.
           </p>
         ) : (
-          <div className="mt-5 grid gap-8 lg:grid-cols-12">
-            <div className="lg:col-span-7">
-              <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
-                <span className="figure-xl text-[5.5rem] text-foreground sm:text-[7rem]">
-                  {latest.cutoff_score}
-                </span>
-                <div className="mb-3 space-y-2">
-                  <RoundBadge draw={latest} size="lg" />
-                  <p className="num text-sm text-muted-foreground">
-                    {formatDate(latest.draw_date)} · Round #{latest.round_number}
-                  </p>
-                </div>
+          <div className="mt-6 grid gap-10 md:grid-cols-[1fr_auto]">
+            <div>
+              <div className="flex flex-wrap items-center gap-4">
+                <span className="figure text-7xl text-ink md:text-8xl">{latest.cutoff_score}</span>
+                <RoundBadge draw={latest} size="lg" />
               </div>
-              <p className="mt-1 max-w-md text-sm leading-relaxed text-muted-foreground">
+              <p className="mt-5 max-w-lg text-sm leading-relaxed text-muted-foreground">
                 The cutoff is the CRS score of the last candidate invited in this round — it only
                 means something alongside the round type above.
               </p>
+              <p className="mt-3 text-sm text-muted-foreground">
+                Round #{latest.round_number} · {formatDate(latest.draw_date)}
+              </p>
             </div>
 
-            <dl className="lg:col-span-5 lg:pt-4">
-              {[
-                {
-                  t: "Invitations issued",
-                  v: latest.invitations_issued.toLocaleString("en-CA"),
-                },
-                {
-                  t: "Tie-break",
-                  v: latest.tie_break_timestamp
+            <dl className="space-y-4 text-sm md:min-w-56 md:text-right">
+              <div>
+                <dt className="kicker">Invitations issued</dt>
+                <dd className="mt-1 font-medium tabular-nums text-ink">
+                  {latest.invitations_issued.toLocaleString("en-CA")}
+                </dd>
+              </div>
+              <div>
+                <dt className="kicker">Tie-break timestamp</dt>
+                <dd className="mt-1 font-medium tabular-nums text-ink">
+                  {latest.tie_break_timestamp
                     ? new Date(latest.tie_break_timestamp).toLocaleString("en-CA")
-                    : "—",
-                },
-              ].map((f) => (
-                <div
-                  key={f.t}
-                  className="flex items-baseline justify-between gap-6 py-2.5 [&+div]:hairline-t"
-                >
-                  <dt className="text-xs tracking-wide text-muted-foreground uppercase">{f.t}</dt>
-                  <dd className="num text-sm font-medium text-foreground">{f.v}</dd>
-                </div>
-              ))}
-              <div className="hairline-t py-2.5 text-xs">
-                <SourceLink
-                  url={latest.source_url}
-                  from="latest"
-                  roundNumber={latest.round_number}
-                />
+                    : "—"}
+                </dd>
+              </div>
+              <div>
+                <dt className="kicker">Source</dt>
+                <dd className="mt-1 text-ink">
+                  <SourceLink
+                    url={latest.source_url}
+                    from="latest"
+                    roundNumber={latest.round_number}
+                  />
+                </dd>
               </div>
             </dl>
           </div>
@@ -228,99 +187,68 @@ function Index() {
       </section>
 
       {/* Recent rounds */}
-      <section aria-labelledby="recent-heading" className="rule-t mt-12 pt-8">
+      <section aria-labelledby="recent-heading" className="mt-16 border-t border-rule pt-10">
         <div className="flex items-baseline justify-between gap-4">
-          <h2 id="recent-heading" className="section-label">
+          <h2 id="recent-heading" className="kicker">
             Recent rounds
           </h2>
-          {userScore != null && (
-            <p className="num text-xs text-muted-foreground">
-              Compared against your score of {userScore}
-            </p>
-          )}
+          <Link to="/history" className="text-xs font-medium text-brand hover:opacity-70">
+            All history →
+          </Link>
         </div>
 
-        <ul className="mt-3">
-          {isLoading
-            ? Array.from({ length: 5 }).map((_, i) => (
-                <li key={i} className="py-4">
-                  <Skeleton className="h-6 w-full" />
-                </li>
-              ))
-            : recent.map((d) => {
-                const cleared = userScore != null && userScore >= d.cutoff_score;
-                return (
-                  <li
-                    key={d.round_number}
-                    className="group hairline-t flex items-center gap-4 py-3 transition-colors hover:bg-surface-sunken/70"
-                  >
-                    <RoundDot draw={d} />
-                    <span className="num w-24 shrink-0 text-xs text-muted-foreground">
+        <table className="mt-5 w-full text-sm">
+          <thead>
+            <tr className="border-b border-rule text-left">
+              <th className="kicker py-2 font-semibold">Date</th>
+              <th className="kicker py-2 font-semibold">Round type</th>
+              <th className="kicker py-2 text-right font-semibold">Cutoff</th>
+            </tr>
+          </thead>
+          <tbody>
+            {isLoading
+              ? Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i}>
+                    <td colSpan={3} className="py-3">
+                      <Skeleton className="h-4 w-full" />
+                    </td>
+                  </tr>
+                ))
+              : recent.map((d) => (
+                  <tr key={d.round_number} className="border-b border-rule/70">
+                    <td className="py-3 whitespace-nowrap text-muted-foreground tabular-nums">
                       {formatDate(d.draw_date)}
-                    </span>
-                    <span className="hidden min-w-0 flex-1 truncate text-sm text-foreground sm:block">
-                      {roundLabel(d)}
-                    </span>
-                    <span className="relative hidden h-4 w-40 shrink-0 md:block">
-                      <span className="absolute top-1/2 h-px w-full -translate-y-1/2 bg-track" />
-                      <span
-                        aria-hidden
-                        className="absolute top-1/2 h-3.5 w-px -translate-y-1/2 bg-foreground/60"
-                        style={{ left: `${pct(d.cutoff_score)}%` }}
-                      />
-                      {userScore != null && (
-                        <span
-                          aria-hidden
-                          className="absolute top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full"
-                          style={{
-                            left: `${pct(userScore)}%`,
-                            backgroundColor: cleared
-                              ? "var(--result-pass)"
-                              : "var(--result-fail)",
-                          }}
-                        />
-                      )}
-                    </span>
-                    <span className="num ml-auto w-14 shrink-0 text-right text-[0.95rem] font-medium text-foreground">
+                    </td>
+                    <td className="py-3">
+                      <span className="inline-flex items-center gap-2 text-ink">
+                        <RoundDot draw={d} />
+                        {roundLabel(d)}
+                      </span>
+                    </td>
+                    <td className="py-3 text-right font-medium tabular-nums text-ink">
                       {d.cutoff_score}
-                    </span>
-                  </li>
-                );
-              })}
-        </ul>
-
-        <p className="mt-5 text-sm">
-          <Link
-            to="/would-i-have-made-it"
-            className="inline-flex items-center gap-1.5 font-medium text-burnt transition-opacity hover:opacity-70"
-          >
-            See which of these rounds you would have cleared
-            <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
-        </p>
+                    </td>
+                  </tr>
+                ))}
+          </tbody>
+        </table>
       </section>
 
-      {/* Explainer — offset, colored surface */}
-      <section className="mt-14 mb-6 lg:grid lg:grid-cols-12">
-        <div className="sunken p-7 lg:col-span-9 lg:col-start-2 sm:p-9">
-          <h2 className="display text-2xl text-foreground">What is Express Entry?</h2>
-          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-            Express Entry is the system Canada uses to manage applications for several permanent
-            residence programs. Candidates sit in one national pool with a Comprehensive Ranking
-            System (CRS) score, and IRCC periodically invites the highest-ranked candidates in a
-            round of invitations. The cutoff score of each round is simply the score of the last
-            person invited — it depends on who was in the pool and how many invitations were
-            issued.
-          </p>
-          <p className="mt-4 text-sm">
-            <Link
-              to="/about"
-              className="font-medium text-burnt transition-opacity hover:opacity-70"
-            >
-              More about how this works, and what it doesn&apos;t tell you →
-            </Link>
-          </p>
-        </div>
+      {/* Explainer */}
+      <section className="mt-16 max-w-2xl border-t border-rule pt-10">
+        <h2 className="display text-2xl font-semibold text-ink">What is Express Entry?</h2>
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+          Express Entry is the system Canada uses to manage applications for several permanent
+          residence programs. Candidates sit in one national pool with a Comprehensive Ranking
+          System (CRS) score, and IRCC periodically invites the highest-ranked candidates in a round
+          of invitations. The cutoff score of each round is simply the score of the last person
+          invited — it depends on who was in the pool and how many invitations were issued.
+        </p>
+        <p className="mt-5 text-sm">
+          <Link to="/about" className="font-medium text-brand hover:opacity-70">
+            More about how this works, and what it doesn&apos;t tell you →
+          </Link>
+        </p>
       </section>
     </div>
   );

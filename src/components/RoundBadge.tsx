@@ -16,7 +16,7 @@ export function RoundDot({ draw, className }: { draw: Ctx; className?: string })
   return (
     <span
       aria-hidden
-      className={cn("h-1.5 w-1.5 shrink-0 rounded-full", DOT_TONE_CLASS[badgeTone(draw)], className)}
+      className={cn("h-2 w-2 shrink-0 rounded-full", DOT_TONE_CLASS[badgeTone(draw)], className)}
     />
   );
 }
@@ -33,16 +33,15 @@ export function RoundBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-2 rounded-sm font-medium",
+        "inline-flex items-center gap-1.5 rounded-full font-medium tracking-wide uppercase",
         BADGE_TONE_CLASS[badgeTone(draw)],
-        size === "lg"
-          ? "px-2.5 py-1 text-[0.78rem] tracking-[0.06em] uppercase"
-          : "px-2 py-0.5 text-[0.7rem] tracking-[0.05em] uppercase",
+        size === "lg" ? "px-3.5 py-1.5 text-xs" : "px-2.5 py-1 text-[0.65rem]",
         className,
       )}
     >
-      <RoundDot draw={draw} />
+      <RoundDot draw={draw} className={size === "lg" ? "h-1.5 w-1.5" : "h-1 w-1"} />
       {roundLabel(draw)}
     </span>
   );
 }
+

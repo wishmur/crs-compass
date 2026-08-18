@@ -9,24 +9,22 @@ const links = [
 
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-30 border-b border-hairline bg-background/90 backdrop-blur-md">
+    <header className="sticky top-0 z-30 border-b border-rule bg-paper/90 backdrop-blur-md">
       <nav
         aria-label="Main"
-        className="mx-auto flex max-w-6xl items-baseline justify-between gap-6 px-5 py-3.5"
+        className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-3.5"
       >
-        <Link to="/" className="group flex items-baseline gap-2">
-          <span className="display text-[1.35rem] text-foreground">CRS</span>
-          <span className="display text-[1.35rem] italic text-teal transition-colors group-hover:text-burnt">
-            Compass
-          </span>
+        <Link to="/" className="display text-[20px] leading-none text-brand">
+          <span className="font-bold">CRS</span>{" "}
+          <span className="font-medium">Compass</span>
         </Link>
 
-        <ul className="flex items-center gap-4 text-[0.82rem] sm:gap-6">
+        <ul className="flex items-center gap-1 text-sm">
           {links.map((l) => (
             <li key={l.to}>
               <Link
                 to={l.to}
-                className="nav-pill relative block py-1 text-muted-foreground [&.active]:font-medium [&.active]:text-foreground [&.active]:after:absolute [&.active]:after:-bottom-0.5 [&.active]:after:left-0 [&.active]:after:h-px [&.active]:after:w-full [&.active]:after:bg-burnt"
+                className="block rounded-md px-2.5 py-1.5 text-muted-foreground transition-colors hover:text-ink sm:px-3 [&.active]:font-medium [&.active]:text-ink"
                 activeOptions={{ exact: l.to === "/" }}
               >
                 {l.label}
