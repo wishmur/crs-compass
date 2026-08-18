@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import {
@@ -166,6 +166,12 @@ function History() {
     <div className="mx-auto max-w-5xl px-4 pt-10 pb-4 sm:pt-14">
       <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6">
         <h1 className="display text-3xl font-semibold tracking-tight sm:text-4xl">Draw history</h1>
+        <Link
+          to="/would-i-have-made-it"
+          className="text-sm font-medium text-brand hover:opacity-70 sm:order-last"
+        >
+          Check My Score →
+        </Link>
         {!isLoading && draws.length > 0 && (
           <p className="text-sm text-muted-foreground tabular-nums">
             {draws.length.toLocaleString("en-CA")} draws since 2015
