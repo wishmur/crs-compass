@@ -245,19 +245,25 @@ function Index() {
           </p>
         ) : (
           <>
-            {/* Absolute-latest signal — surfaces when the user's filter
-                excludes a more recent draw than the one they're looking at.
-                Prevents someone in "General only" from thinking the site is
-                stale when IRCC actually just ran a CEC round today. */}
+            {/* Recency signal — surfaces only when a newer draw exists but
+                the user's filter excludes it. The large result below stays
+                the latest RELEVANT to the selected filters. */}
             {latestFallback && latestFallback !== latest && (
-              <div className="mb-5 flex flex-wrap items-baseline gap-x-2 gap-y-1 border-b border-[color-mix(in_srgb,var(--brand)_15%,transparent)] pb-4 text-xs text-muted-foreground">
-                <span className="uppercase tracking-[0.14em]">
-                  Most recent IRCC round overall:
-                </span>
+              <div className="mb-5 flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-[color-mix(in_srgb,var(--brand)_15%,transparent)] pb-4 text-xs text-muted-foreground">
+                <span>Newer IRCC draw outside your selections:</span>
                 <span className="tabular-nums text-ink">
-                  {formatDate(latestFallback.draw_date)} · {latestFallback.cutoff_score}
+                  {formatDate(latestFallback.draw_date)}
+                </span>
+                <span aria-hidden className="text-muted-foreground/60">
+                  ·
                 </span>
                 <RoundBadge draw={latestFallback} />
+                <span aria-hidden className="text-muted-foreground/60">
+                  ·
+                </span>
+                <span className="tabular-nums font-medium text-ink">
+                  {latestFallback.cutoff_score}
+                </span>
               </div>
             )}
 
