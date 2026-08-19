@@ -14,6 +14,8 @@ type LinkTo = ComponentProps<typeof Link>["to"];
 interface CTABaseProps {
   children: ReactNode;
   className?: string;
+  target?: string;
+  rel?: string;
 }
 
 interface InternalProps extends CTABaseProps {
@@ -24,8 +26,6 @@ interface InternalProps extends CTABaseProps {
 interface ExternalProps extends CTABaseProps {
   href: string;
   to?: never;
-  target?: string;
-  rel?: string;
 }
 
 type CTAProps = InternalProps | ExternalProps;

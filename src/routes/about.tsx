@@ -51,28 +51,48 @@ function About() {
       {/* Hero card — mirrors the Home hero's deep-green treatment so About
           reads as part of the same product, not a legal page. */}
       <section
-        className="rounded-[calc(var(--radius)*1.5)] px-6 py-12 sm:px-10 sm:py-16"
+        className="flex flex-col rounded-[calc(var(--radius)*1.5)] px-6 py-12 sm:px-10 sm:py-16 md:flex-row md:items-center md:gap-10"
         style={{ backgroundColor: "var(--brand)", color: "var(--paper)" }}
       >
-        <p
-          className="text-[0.7rem] font-semibold tracking-[0.14em] uppercase"
-          style={{ color: "var(--accent-soft)" }}
-        >
-          About
-        </p>
-        <h1
-          className="display mt-3 max-w-[22ch] text-[2.5rem] leading-[1.05] font-semibold sm:text-[3rem]"
-          style={{ color: "var(--paper)" }}
-        >
-          About CRS Compass
-        </h1>
-        <p
-          className="display mt-6 max-w-[52ch] text-[1.125rem] leading-[1.5] sm:text-[1.25rem]"
-          style={{ color: "rgba(246,241,232,0.92)" }}
-        >
-          My brother was trying to make sense of Canada&rsquo;s Express Entry system. I build
-          products. This was, in retrospect, an extremely predictable outcome.
-        </p>
+        <div className="md:w-[60%]">
+          <p
+            className="text-[0.7rem] font-semibold tracking-[0.14em] uppercase"
+            style={{ color: "var(--accent-soft)" }}
+          >
+            About
+          </p>
+          <h1
+            className="display mt-3 max-w-[22ch] text-[2.5rem] leading-[1.05] font-semibold sm:text-[3rem]"
+            style={{ color: "var(--paper)" }}
+          >
+            About CRS Compass
+          </h1>
+          <p
+            className="display mt-6 max-w-[52ch] text-[1.125rem] leading-[1.5] sm:text-[1.25rem]"
+            style={{ color: "rgba(246,241,232,0.92)" }}
+          >
+            My brother was trying to make sense of Canada&rsquo;s Express Entry system. I build
+            products. This was, in retrospect, an extremely predictable outcome.
+          </p>
+        </div>
+
+        <div className="relative mt-8 min-h-[220px] overflow-hidden md:mt-0 md:w-[40%] md:min-h-[260px] md:max-h-[280px]">
+          <img
+            src={creatorsAsset.url}
+            alt="Two people watching clouds roll over a mountain ridge"
+            className="absolute inset-0 h-full w-full object-cover object-center"
+            style={{
+              opacity: 0.72,
+              mixBlendMode: "multiply",
+              maskImage:
+                "linear-gradient(to right, transparent 0%, black 18%, black 80%, transparent 100%), linear-gradient(to top, transparent 0%, black 28%)",
+              WebkitMaskImage:
+                "linear-gradient(to right, transparent 0%, black 18%, black 80%, transparent 100%), linear-gradient(to top, transparent 0%, black 28%)",
+              maskComposite: "intersect",
+              WebkitMaskComposite: "source-in",
+            }}
+          />
+        </div>
       </section>
 
       {/* Two-column: What it does + Where the numbers come from */}
