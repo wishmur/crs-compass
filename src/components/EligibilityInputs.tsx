@@ -4,7 +4,7 @@ import { CATEGORIES, type Program } from "@/data/round-types";
 import type { Eligibility } from "@/lib/useCrsProfile";
 
 const PROGRAM_CHIPS: { value: Program | null; label: string }[] = [
-  { value: null, label: "None of these / not sure" },
+  { value: null, label: "None of these" },
   { value: "CEC", label: "Canadian Experience Class (CEC)" },
   { value: "FSW", label: "Federal Skilled Worker (FSW)" },
   { value: "FST", label: "Federal Skilled Trades (FST)" },

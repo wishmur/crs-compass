@@ -55,9 +55,25 @@ type SortKey = "draw_date" | "invitations_issued" | "cutoff_score";
 const PAGE_SIZE = 15;
 const YEARS = Array.from({ length: 2026 - 2015 + 1 }, (_, i) => String(2015 + i));
 
+const SCORE_KEY = "crsSignal.score";
+
 function History() {
   const { data, isLoading } = useQuery(drawsQuery());
   const [years, setYears] = useState<string[]>([]);
+  const [userScore, setUserScore] = useState<number | null>(null);
+
+  // Read the score from localStorage so the chart can overlay a reference line.
+  // No writes — Home owns the input.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(SCORE_KEY);
+      if (!raw) return;
+      const n = Number.parseInt(raw, 10);
+      if (Number.isFinite(n) && n > 0 && n <= 1200) setUserScore(n);
+    } catch {
+      /* ignore */
+    }
+  }, []);
   const [types, setTypes] = useState<RoundType[]>([]);
   const [programs, setPrograms] = useState<string[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
@@ -164,44 +180,30 @@ function History() {
 
   return (
     <div className="mx-auto max-w-6xl px-5 pt-10 pb-6 sm:pt-14">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-8">
-        <div className="max-w-xl">
-          <p className="kicker">Explore the data</p>
-          <h1 className="display mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
-            Draw History
-          </h1>
-          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-            Every Express Entry round since IRCC began publishing them. Filter by year, type,
-            program or category — the chart and table update together.
-          </p>
-        </div>
-        {!isLoading && draws.length > 0 && (
-          <p className="text-sm text-muted-foreground tabular-nums sm:mt-[2.4rem]">
-            {draws.length.toLocaleString("en-CA")} draws · 2015–{new Date().getFullYear()}
+      <div className="flex flex-wrap items-baseline justify-between gap-4">
+        <h1 className="display text-3xl font-semibold tracking-tight sm:text-4xl">Draw History</h1>
+        {isLoading ? (
+          <Skeleton className="h-4 w-40" />
+        ) : (
+          <p className="text-sm text-muted-foreground tabular-nums">
+            Showing {filtered.length.toLocaleString("en-CA")} of{" "}
+            {draws.length.toLocaleString("en-CA")} rounds
           </p>
         )}
       </div>
 
-      <div className="mt-8 border-t border-[var(--rule)] pt-5">
-        <div className="flex items-baseline justify-between gap-4">
-          {isLoading ? (
-            <Skeleton className="h-4 w-40" />
-          ) : (
-            <p className="text-sm text-muted-foreground tabular-nums">
-              Showing {filtered.length.toLocaleString("en-CA")} of{" "}
-              {draws.length.toLocaleString("en-CA")} rounds
-            </p>
-          )}
-          {hasFilters && (
+      <div className="mt-6">
+        {hasFilters && (
+          <div className="mb-3 flex justify-end">
             <button
               type="button"
               onClick={clearAll}
               className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
             >
-              Clear all
+              Clear filters
             </button>
-          )}
-        </div>
+          </div>
+        )}
 
         <div className="mt-4 flex flex-col gap-3">
           <ChipGroup title="Year">
@@ -258,7 +260,7 @@ function History() {
         {isLoading ? (
           <Skeleton className="h-[320px] w-full" />
         ) : (
-          <HistoryChart draws={filtered} series={chartSeries} />
+          <HistoryChart draws={filtered} series={chartSeries} userScore={userScore} />
         )}
       </div>
 

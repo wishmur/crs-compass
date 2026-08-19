@@ -25,7 +25,7 @@ import type { Eligibility } from "@/lib/useCrsProfile";
 
 // "What the history says" — the result of applying the user's score to the
 // rounds their eligibility makes relevant. Renders:
-//   - a headline (You would have cleared N of M ...)
+//   - a headline (Your score was at or above the cutoff in N of M ...)
 //   - a compact chip grid of the last ~20 relevant rounds (✓ / ✕)
 //   - a paginated table of every relevant round in the window
 //   - a "compare against last 3 years" toggle
@@ -90,18 +90,30 @@ export function PersonalScoreSection({ score, elig }: Props) {
   const figureColor =
     cleared === 0 ? "var(--muted-foreground)" : ratio >= 0.5 ? "var(--brand)" : "var(--accent)";
 
-  // Median cutoff of the relevant rounds — one meaningful comparative
-  // baseline. Combined with the user's score, tells them how far from the
-  // "middle of the pack" they are, which is a different question from
-  // "how many did you clear."
-  const medianCutoff = useMemo(() => {
+  // Median, highest, and lowest cutoff of the relevant rounds. Together they
+  // give the user a comparative baseline the raw "cleared N of M" number
+  // doesn't provide — how tight the range was, and where they sit in it.
+  const cutoffStats = useMemo(() => {
     if (!results || results.length === 0) return null;
     const sorted = results.map((r) => r.cutoff_score).sort((a, b) => a - b);
     const mid = Math.floor(sorted.length / 2);
-    return sorted.length % 2 === 0
-      ? Math.round((sorted[mid - 1]! + sorted[mid]!) / 2)
-      : sorted[mid]!;
+    const median =
+      sorted.length % 2 === 0
+        ? Math.round((sorted[mid - 1]! + sorted[mid]!) / 2)
+        : sorted[mid]!;
+    return { median, lowest: sorted[0]!, highest: sorted[sorted.length - 1]! };
   }, [results]);
+
+  // Human-readable summary of what the calculation is based on — so the user
+  // never has to wonder what N/M actually includes.
+  const profileSummary = useMemo(() => {
+    const parts: string[] = [`CRS ${score}`];
+    if (elig.program) parts.push(elig.program);
+    else parts.push("No program");
+    if (elig.categories.length) parts.push(elig.categories.join(", "));
+    else parts.push("No categories");
+    return parts.join(" · ");
+  }, [score, elig]);
 
   const analyticsFired = useRef<string>("");
   useEffect(() => {
@@ -174,8 +186,8 @@ export function PersonalScoreSection({ score, elig }: Props) {
 
         {!validScore ? (
           <p className="mt-3 text-[0.95rem] leading-relaxed text-muted-foreground">
-            Enter your CRS score in the hero above to see how many of the last {windowMonths}{" "}
-            months of relevant rounds it would have cleared.
+            Enter your CRS score in the hero above to see how it compares against the last{" "}
+            {windowMonths} months of relevant rounds.
           </p>
         ) : isLoading ? (
           <div className="mt-5 space-y-4">
@@ -190,8 +202,12 @@ export function PersonalScoreSection({ score, elig }: Props) {
           </p>
         ) : (
           <>
-            <h3 className="display mt-4 text-[1.5rem] leading-[1.2] text-ink sm:text-[1.75rem]">
-              You would have cleared{" "}
+            <p className="mt-3 text-xs uppercase tracking-[0.14em] text-muted-foreground">
+              {profileSummary}
+            </p>
+
+            <h3 className="display mt-3 text-[1.5rem] leading-[1.2] text-ink sm:text-[1.75rem]">
+              Your score was at or above the cutoff in{" "}
               <span
                 className="figure text-[2.75rem] leading-none sm:text-[3.25rem]"
                 style={{ color: figureColor }}
@@ -201,22 +217,25 @@ export function PersonalScoreSection({ score, elig }: Props) {
               of {total} relevant rounds in the last {windowMonths} months.
             </h3>
 
-            {medianCutoff !== null && (
+            {cutoffStats !== null && (
               <p className="mt-3 text-sm text-muted-foreground">
-                Median cutoff across these rounds was{" "}
-                <span className="font-medium tabular-nums text-ink">{medianCutoff}</span>
-                {" — "}
-                your score is{" "}
+                Cutoffs ranged from{" "}
+                <span className="font-medium tabular-nums text-ink">{cutoffStats.lowest}</span>{" "}
+                to{" "}
+                <span className="font-medium tabular-nums text-ink">{cutoffStats.highest}</span>{" "}
+                (median{" "}
+                <span className="font-medium tabular-nums text-ink">{cutoffStats.median}</span>).
+                Your score is{" "}
                 <span
                   className="font-semibold tabular-nums"
                   style={{
-                    color: score! - medianCutoff >= 0 ? "var(--brand)" : "var(--accent)",
+                    color: score! - cutoffStats.median >= 0 ? "var(--brand)" : "var(--accent)",
                   }}
                 >
-                  {score! - medianCutoff >= 0 ? "+" : ""}
-                  {score! - medianCutoff}
+                  {score! - cutoffStats.median >= 0 ? "+" : ""}
+                  {score! - cutoffStats.median}
                 </span>{" "}
-                {score! >= medianCutoff ? "above" : "below"} the median.
+                {score! >= cutoffStats.median ? "above" : "below"} the median.
               </p>
             )}
 

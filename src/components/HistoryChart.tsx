@@ -4,6 +4,7 @@ import {
   Legend,
   Line,
   LineChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -28,7 +29,17 @@ function toPoints(draws: Draw[], series: { key: string; matches: (d: Draw) => bo
   return [...byDate.values()].sort((a, b) => String(a['date']).localeCompare(String(b['date'])));
 }
 
-export function HistoryChart({ draws, series }: { draws: Draw[]; series: SeriesDef[] }) {
+export function HistoryChart({
+  draws,
+  series,
+  userScore,
+}: {
+  draws: Draw[];
+  series: SeriesDef[];
+  /** Optional: draw a horizontal reference line at the user's score so History
+      connects visually back to the personalized view on Home. */
+  userScore?: number | null;
+}) {
   const [hidden, setHidden] = useState<Record<string, boolean>>({});
   const [showPnp, setShowPnp] = useState(false);
 
@@ -97,6 +108,19 @@ export function HistoryChart({ draws, series }: { draws: Draw[]; series: SeriesD
                 wrapperStyle={{ fontSize: 11, cursor: "pointer" }}
                 onClick={(e) => toggle(String((e as { dataKey?: string }).dataKey ?? ""))}
               />
+              {userScore != null && userScore > 0 && (
+                <ReferenceLine
+                  y={userScore}
+                  stroke="var(--accent)"
+                  strokeDasharray="4 3"
+                  label={{
+                    value: `Your score: ${userScore}`,
+                    position: "insideTopRight",
+                    fill: "var(--accent)",
+                    fontSize: 11,
+                  }}
+                />
+              )}
               {series.map((s) => (
                 <Line
                   key={s.key}

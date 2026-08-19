@@ -85,13 +85,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "description",
         content:
-          "Track Express Entry rounds, cutoff scores and see which rounds your CRS score would have cleared.",
+          "Track Express Entry rounds and cutoff scores, and see how your CRS score compares against the rounds that apply to you.",
       },
       { property: "og:title", content: "CRS Compass — Express Entry draws and cutoffs" },
       {
         property: "og:description",
         content:
-          "Track Express Entry rounds, cutoff scores and see which rounds your CRS score would have cleared.",
+          "Track Express Entry rounds and cutoff scores, and see how your CRS score compares against the rounds that apply to you.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
