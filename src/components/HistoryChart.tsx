@@ -128,9 +128,15 @@ export function HistoryChart({
                   dataKey={s.key}
                   name={s.label}
                   stroke={s.color}
-                  strokeWidth={2}
-                  dot={false}
-                  connectNulls
+                  strokeWidth={1.75}
+                  // Visible dots at each round + no cross-gap bridging: a
+                  // Transport round in Aug should not draw a line back to a
+                  // CEC round in June just because they're on the same series
+                  // canvas. Each series's line only connects consecutive
+                  // rounds of that series.
+                  dot={{ r: 2.5, fill: s.color, strokeWidth: 0 }}
+                  activeDot={{ r: 4 }}
+                  connectNulls={false}
                   hide={hidden[s.key]}
                 />
               ))}
@@ -156,9 +162,10 @@ export function HistoryChart({
                   dataKey={PNP_SERIES.key}
                   name={PNP_SERIES.label}
                   stroke={PNP_SERIES.color}
-                  strokeWidth={2}
-                  dot={false}
-                  connectNulls
+                  strokeWidth={1.75}
+                  dot={{ r: 2.5, fill: PNP_SERIES.color, strokeWidth: 0 }}
+                  activeDot={{ r: 4 }}
+                  connectNulls={false}
                 />
               </LineChart>
             </ResponsiveContainer>

@@ -10,6 +10,12 @@ export const ELIG_KEY = "crsSignal.eligibility";
 
 export interface Eligibility {
   program: Program | null;
+  /** Only meaningful when program === null. 'none' = user explicitly does
+      not qualify for any listed program; 'unsure' = user is uncertain and
+      wants help. Both suppress the program filter, but 'unsure' surfaces
+      a help callout in the UI so the user isn't silently treated as
+      ineligible. */
+  programStance: "none" | "unsure";
   categories: string[];
 }
 
@@ -24,14 +30,22 @@ export interface CrsProfile {
 
 export function useCrsProfile(): CrsProfile {
   const [hydrated, setHydrated] = useState(false);
-  const [elig, setElig] = useState<Eligibility>({ program: null, categories: [] });
+  const [elig, setElig] = useState<Eligibility>({
+    program: null,
+    programStance: "none",
+    categories: [],
+  });
 
   useEffect(() => {
     try {
       const raw = localStorage.getItem(ELIG_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as Partial<Eligibility>;
-        setElig({ program: parsed.program ?? null, categories: parsed.categories ?? [] });
+        setElig({
+          program: parsed.program ?? null,
+          programStance: parsed.programStance === "unsure" ? "unsure" : "none",
+          categories: parsed.categories ?? [],
+        });
       }
     } catch {
       /* ignore */

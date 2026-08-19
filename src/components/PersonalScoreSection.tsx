@@ -39,6 +39,37 @@ function monthsAgo(n: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+function formatTieBreak(ts: string | null): string | null {
+  if (!ts) return null;
+  const d = new Date(ts);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleString("en-CA", { dateStyle: "medium", timeStyle: "short" });
+}
+
+/** Pill / row treatment for the three comparison states. */
+function stateStyle(state: "above" | "matched" | "below") {
+  if (state === "above")
+    return {
+      bg: "var(--brand-soft)",
+      fg: "var(--brand)",
+      mark: "✓",
+      label: "Above cutoff",
+    };
+  if (state === "matched")
+    return {
+      bg: "var(--muted)",
+      fg: "var(--muted-foreground)",
+      mark: "=",
+      label: "Matched cutoff · tie-break applies",
+    };
+  return {
+    bg: "var(--accent-soft)",
+    fg: "var(--accent)",
+    mark: "✕",
+    label: "Below cutoff",
+  };
+}
+
 interface Props {
   /** Parsed numeric CRS score from the hero input, or null if empty/invalid. */
   score: number | null;
@@ -84,11 +115,23 @@ export function PersonalScoreSection({ score, elig }: Props) {
   const { data: results, isLoading } = useQuery(relevantDrawsQuery(params));
   const { data: allDraws } = useQuery(drawsQuery());
 
-  const cleared = results?.filter((r) => r.would_have_cleared).length ?? 0;
+  // Three-state comparison — precise about "above" vs "matched exactly"
+  // (which triggers the tie-break rule). The RPC's would_have_cleared is
+  // (score >= cutoff) and lumps matches with above; we split them here so
+  // the UI can be honest about tie-break cases.
+  type Compare = "above" | "matched" | "below";
+  const compare = (cutoff: number): Compare => {
+    if (score === null) return "below";
+    if (score > cutoff) return "above";
+    if (score < cutoff) return "below";
+    return "matched";
+  };
+  const above = results?.filter((r) => compare(r.cutoff_score) === "above").length ?? 0;
+  const matched = results?.filter((r) => compare(r.cutoff_score) === "matched").length ?? 0;
   const total = results?.length ?? 0;
-  const ratio = total ? cleared / total : 0;
+  const ratio = total ? above / total : 0;
   const figureColor =
-    cleared === 0 ? "var(--muted-foreground)" : ratio >= 0.5 ? "var(--brand)" : "var(--accent)";
+    above === 0 ? "var(--muted-foreground)" : ratio >= 0.5 ? "var(--brand)" : "var(--accent)";
 
   // Median, highest, and lowest cutoff of the relevant rounds. Together they
   // give the user a comparative baseline the raw "cleared N of M" number
@@ -121,8 +164,8 @@ export function PersonalScoreSection({ score, elig }: Props) {
     const key = `${score}-${elig.program}-${elig.categories.join(",")}-${windowMonths}`;
     if (analyticsFired.current === key) return;
     analyticsFired.current = key;
-    capture(EVENTS.WIHBI_RESULT_VIEWED, { cleared, total, since });
-  }, [results, validScore, isLoading, score, elig, windowMonths, cleared, total, since]);
+    capture(EVENTS.WIHBI_RESULT_VIEWED, { cleared: above, total, since });
+  }, [results, validScore, isLoading, score, elig, windowMonths, above, total, since]);
 
   // Oldest → newest for the pill grid so the eye reads left-to-right through
   // time and stops on "most recent" at the right edge.
@@ -207,15 +250,21 @@ export function PersonalScoreSection({ score, elig }: Props) {
             </p>
 
             <h3 className="display mt-3 text-[1.5rem] leading-[1.2] text-ink sm:text-[1.75rem]">
-              Your score was at or above the cutoff in{" "}
+              Your score was above the cutoff in{" "}
               <span
                 className="figure text-[2.75rem] leading-none sm:text-[3.25rem]"
                 style={{ color: figureColor }}
               >
-                {cleared}
+                {above}
               </span>{" "}
               of {total} relevant rounds in the last {windowMonths} months.
             </h3>
+            {matched > 0 && (
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                {matched} more matched the cutoff exactly &mdash; the tie-break rule applied to
+                candidates at that score.
+              </p>
+            )}
 
             {cutoffStats !== null && (
               <p className="mt-3 text-sm text-muted-foreground">
@@ -240,31 +289,37 @@ export function PersonalScoreSection({ score, elig }: Props) {
             )}
 
             <div className="mt-6 flex flex-wrap gap-1.5">
-              {pillGrid.map((r) => (
-                <Tooltip key={r.round_number}>
-                  <TooltipTrigger asChild>
-                    <span
-                      tabIndex={0}
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-full text-xs"
-                      style={{
-                        backgroundColor: r.would_have_cleared
-                          ? "var(--brand-soft)"
-                          : "var(--accent-soft)",
-                        color: r.would_have_cleared ? "var(--brand)" : "var(--accent)",
-                      }}
-                      aria-label={`${formatDate(r.draw_date)} — ${roundLabel(r)} — cutoff ${r.cutoff_score} — ${r.would_have_cleared ? "cleared" : "did not clear"}`}
-                    >
-                      {r.would_have_cleared ? "✓" : "✕"}
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent className="text-xs">
-                    <span className="flex items-center gap-2">
-                      {formatDate(r.draw_date)} · cutoff {r.cutoff_score}
-                      <RoundBadge draw={r} />
-                    </span>
-                  </TooltipContent>
-                </Tooltip>
-              ))}
+              {pillGrid.map((r) => {
+                const state = compare(r.cutoff_score);
+                const s = stateStyle(state);
+                const tieBreak = formatTieBreak(r.tie_break_timestamp);
+                return (
+                  <Tooltip key={r.round_number}>
+                    <TooltipTrigger asChild>
+                      <span
+                        tabIndex={0}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium"
+                        style={{ backgroundColor: s.bg, color: s.fg }}
+                        aria-label={`${formatDate(r.draw_date)} — ${roundLabel(r)} — cutoff ${r.cutoff_score} — ${s.label}`}
+                      >
+                        {s.mark}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent className="text-xs">
+                      <div className="flex items-center gap-2">
+                        {formatDate(r.draw_date)} · cutoff {r.cutoff_score}
+                        <RoundBadge draw={r} />
+                      </div>
+                      <div className="mt-1 font-medium" style={{ color: s.fg }}>
+                        {s.label}
+                      </div>
+                      {state === "matched" && tieBreak && (
+                        <div className="mt-1 text-muted-foreground">Tie-break: {tieBreak}</div>
+                      )}
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              })}
             </div>
             <p className="mt-2 text-xs text-muted-foreground">
               Last {pillGrid.length} relevant rounds, oldest to newest.
@@ -286,15 +341,23 @@ export function PersonalScoreSection({ score, elig }: Props) {
               </div>
             )}
 
-            <button
-              type="button"
-              onClick={() => setWindowMonths((w) => (w === 24 ? 36 : 24))}
-              className="mt-6 text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
-            >
-              {windowMonths === 24
-                ? "Compare against the last 3 years instead →"
-                : "Back to the last 24 months →"}
-            </button>
+            <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2">
+              <button
+                type="button"
+                onClick={() => setWindowMonths((w) => (w === 24 ? 36 : 24))}
+                className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+              >
+                {windowMonths === 24
+                  ? "Compare against the last 3 years instead →"
+                  : "Back to the last 24 months →"}
+              </button>
+              <a
+                href="/about#methodology"
+                className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+              >
+                How this is calculated →
+              </a>
+            </div>
 
             {/* Full paginated table of every relevant round in the window */}
             <div className="mt-10">
@@ -322,79 +385,101 @@ export function PersonalScoreSection({ score, elig }: Props) {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {pagedRows.map((d) => (
-                      <TableRow key={d.round_number}>
-                        <TableCell className="whitespace-nowrap tabular-nums text-muted-foreground">
-                          {formatDate(d.draw_date)}
-                        </TableCell>
-                        <TableCell>
-                          <RoundBadge draw={d} />
-                        </TableCell>
-                        <TableCell className="num text-right">
-                          {d.invitations_issued.toLocaleString("en-CA")}
-                        </TableCell>
-                        <TableCell className="num text-right font-semibold">
-                          {d.cutoff_score}
-                        </TableCell>
-                        <TableCell>
-                          <span
-                            className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
-                            style={{
-                              backgroundColor: d.would_have_cleared
-                                ? "var(--brand-soft)"
-                                : "var(--accent-soft)",
-                              color: d.would_have_cleared ? "var(--brand)" : "var(--accent)",
-                            }}
-                          >
-                            {d.would_have_cleared ? "Cleared" : "Not cleared"}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <SourceLink url={d.source_url} from="wihbi" roundNumber={d.round_number} />
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {pagedRows.map((d) => {
+                      const state = compare(d.cutoff_score);
+                      const s = stateStyle(state);
+                      const tieBreak = formatTieBreak(d.tie_break_timestamp);
+                      return (
+                        <TableRow key={d.round_number}>
+                          <TableCell className="whitespace-nowrap tabular-nums text-muted-foreground">
+                            {formatDate(d.draw_date)}
+                          </TableCell>
+                          <TableCell>
+                            <RoundBadge draw={d} />
+                          </TableCell>
+                          <TableCell className="num text-right">
+                            {d.invitations_issued.toLocaleString("en-CA")}
+                          </TableCell>
+                          <TableCell className="num text-right font-semibold">
+                            {d.cutoff_score}
+                          </TableCell>
+                          <TableCell>
+                            <span
+                              className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                              style={{ backgroundColor: s.bg, color: s.fg }}
+                            >
+                              {state === "above"
+                                ? "Above"
+                                : state === "matched"
+                                  ? "Matched"
+                                  : "Below"}
+                            </span>
+                            {state === "matched" && tieBreak && (
+                              <div className="mt-1 text-xs text-muted-foreground">
+                                Tie-break: {tieBreak}
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <SourceLink
+                              url={d.source_url}
+                              from="wihbi"
+                              roundNumber={d.round_number}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
 
               {/* Mobile card list */}
               <ul className="mt-4 space-y-3 md:hidden">
-                {pagedRows.map((d) => (
-                  <li
-                    key={d.round_number}
-                    className="rounded-[var(--radius)] border border-[var(--rule)] p-4"
-                  >
-                    <div className="flex items-baseline justify-between gap-3">
-                      <span className="text-xs tabular-nums text-muted-foreground">
-                        {formatDate(d.draw_date)}
-                      </span>
-                      <span className="num font-semibold">{d.cutoff_score} CRS</span>
-                    </div>
-                    <div className="mt-2">
-                      <RoundBadge draw={d} />
-                    </div>
-                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
-                      <span className="tabular-nums">
-                        {d.invitations_issued.toLocaleString("en-CA")} invitations
-                      </span>
-                      <span
-                        className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
-                        style={{
-                          backgroundColor: d.would_have_cleared
-                            ? "var(--brand-soft)"
-                            : "var(--accent-soft)",
-                          color: d.would_have_cleared ? "var(--brand)" : "var(--accent)",
-                        }}
-                      >
-                        {d.would_have_cleared ? "Cleared" : "Not cleared"}
-                      </span>
-                    </div>
-                    <div className="mt-2 text-xs">
-                      <SourceLink url={d.source_url} from="wihbi" roundNumber={d.round_number} />
-                    </div>
-                  </li>
-                ))}
+                {pagedRows.map((d) => {
+                  const state = compare(d.cutoff_score);
+                  const s = stateStyle(state);
+                  const tieBreak = formatTieBreak(d.tie_break_timestamp);
+                  return (
+                    <li
+                      key={d.round_number}
+                      className="rounded-[var(--radius)] border border-[var(--rule)] p-4"
+                    >
+                      <div className="flex items-baseline justify-between gap-3">
+                        <span className="text-xs tabular-nums text-muted-foreground">
+                          {formatDate(d.draw_date)}
+                        </span>
+                        <span className="num font-semibold">{d.cutoff_score} CRS</span>
+                      </div>
+                      <div className="mt-2">
+                        <RoundBadge draw={d} />
+                      </div>
+                      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+                        <span className="tabular-nums">
+                          {d.invitations_issued.toLocaleString("en-CA")} invitations
+                        </span>
+                        <span
+                          className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                          style={{ backgroundColor: s.bg, color: s.fg }}
+                        >
+                          {state === "above"
+                            ? "Above"
+                            : state === "matched"
+                              ? "Matched"
+                              : "Below"}
+                        </span>
+                      </div>
+                      {state === "matched" && tieBreak && (
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          Tie-break: {tieBreak}
+                        </p>
+                      )}
+                      <div className="mt-2 text-xs">
+                        <SourceLink url={d.source_url} from="wihbi" roundNumber={d.round_number} />
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
 
               <TablePagination

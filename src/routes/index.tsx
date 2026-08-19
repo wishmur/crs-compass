@@ -10,7 +10,7 @@ import { RecentRelevantDraws } from "@/components/RecentRelevantDraws";
 import { PersonalScoreSection } from "@/components/PersonalScoreSection";
 import { drawsQuery } from "@/lib/queries";
 import { EVENTS, capture } from "@/lib/analytics";
-import { useCrsProfile } from "@/lib/useCrsProfile";
+import { useCrsProfile, isRelevantDraw } from "@/lib/useCrsProfile";
 
 const SCORE_KEY = "crsSignal.score";
 
@@ -63,7 +63,14 @@ function Index() {
   const parsed = Number.parseInt(raw, 10);
   const score = Number.isFinite(parsed) && parsed > 0 && parsed <= 1200 ? parsed : null;
 
-  const latest = data?.[0];
+  // "Latest relevant" — the most recent draw matching current eligibility.
+  // With no eligibility, isRelevantDraw excludes PNP (whose cutoffs assume a
+  // 600-point nomination bonus), so users see a comparison that means
+  // something in their context.
+  const latestRelevant = data?.find((d) => isRelevantDraw(d, elig));
+  const latestFallback = data?.[0];
+  const latest = latestRelevant ?? latestFallback;
+  const isRelevantLatest = latestRelevant !== undefined && latestRelevant === latest;
 
   return (
     <div className="mx-auto max-w-6xl px-5 pt-8 pb-6">
@@ -99,13 +106,13 @@ function Index() {
               </p>
             ) : (
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                {/* Latest cutoff */}
+                {/* Latest relevant cutoff */}
                 <div>
                   <div
                     className="text-[0.7rem] font-semibold tracking-[0.14em] uppercase"
                     style={{ color: "rgba(246,241,232,0.65)" }}
                   >
-                    Latest cutoff
+                    {isRelevantLatest ? "Latest relevant cutoff" : "Latest cutoff"}
                   </div>
                   <div
                     className="figure mt-1 text-[3rem] leading-none sm:text-[3.5rem]"

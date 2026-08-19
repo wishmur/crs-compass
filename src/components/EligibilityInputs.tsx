@@ -3,8 +3,13 @@ import { SecondaryLink } from "@/components/CTA";
 import { CATEGORIES, type Program } from "@/data/round-types";
 import type { Eligibility } from "@/lib/useCrsProfile";
 
-const PROGRAM_CHIPS: { value: Program | null; label: string }[] = [
-  { value: null, label: "None of these" },
+const PROGRAM_CHIPS: {
+  value: Program | null;
+  stance?: "none" | "unsure";
+  label: string;
+}[] = [
+  { value: null, stance: "none", label: "None of these" },
+  { value: null, stance: "unsure", label: "Not sure" },
   { value: "CEC", label: "Canadian Experience Class (CEC)" },
   { value: "FSW", label: "Federal Skilled Worker (FSW)" },
   { value: "FST", label: "Federal Skilled Trades (FST)" },
@@ -33,23 +38,54 @@ export function EligibilityInputs({ elig, setElig }: Props) {
         <div>
           <label className="kicker">Program eligibility</label>
           <div className="mt-3 flex flex-wrap gap-2">
-            {PROGRAM_CHIPS.map((p) => (
-              <FilterChip
-                key={p.label}
-                label={p.label}
-                selected={elig.program === p.value}
-                onClick={() => setElig((e) => ({ ...e, program: p.value }))}
-              />
-            ))}
+            {PROGRAM_CHIPS.map((p) => {
+              const selected =
+                p.value === null
+                  ? elig.program === null && elig.programStance === (p.stance ?? "none")
+                  : elig.program === p.value;
+              return (
+                <FilterChip
+                  key={p.label}
+                  label={p.label}
+                  selected={selected}
+                  onClick={() =>
+                    setElig((e) => ({
+                      ...e,
+                      program: p.value,
+                      programStance: p.stance ?? "none",
+                    }))
+                  }
+                />
+              );
+            })}
           </div>
+          {elig.program === null && elig.programStance === "unsure" && (
+            <div
+              className="mt-3 rounded-[var(--radius)] p-3 text-sm leading-relaxed text-ink"
+              style={{ backgroundColor: "var(--brand-soft)" }}
+            >
+              Which program applies depends on your situation. A few quick heuristics: if you
+              already work full-time in Canada under a valid work permit, look at{" "}
+              <strong>CEC</strong>. If you have a provincial nomination in hand, that&rsquo;s{" "}
+              <strong>PNP</strong>. Otherwise, IRCC&rsquo;s official criteria pages are the
+              authoritative source.{" "}
+              <SecondaryLink
+                href="https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/eligibility.html"
+                target="_blank"
+                className="text-xs"
+              >
+                IRCC eligibility &rarr;
+              </SecondaryLink>
+            </div>
+          )}
           {elig.program === "PNP" && (
             <div
               className="mt-3 rounded-[var(--radius)] p-3 text-sm leading-relaxed text-ink"
               style={{ backgroundColor: "var(--accent-soft)" }}
             >
               PNP cutoffs include an automatic 600-point nomination bonus. Only select this if you
-              actually hold a nomination — otherwise the comparison against PNP cutoffs will be
-              misleading.
+              actually hold a nomination &mdash; otherwise the comparison against PNP cutoffs will
+              be misleading.
             </div>
           )}
         </div>

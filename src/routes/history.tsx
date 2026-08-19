@@ -186,8 +186,9 @@ function History() {
           <Skeleton className="h-4 w-40" />
         ) : (
           <p className="text-sm text-muted-foreground tabular-nums">
-            Showing {filtered.length.toLocaleString("en-CA")} of{" "}
-            {draws.length.toLocaleString("en-CA")} rounds
+            {hasFilters
+              ? `Showing ${filtered.length.toLocaleString("en-CA")} of ${draws.length.toLocaleString("en-CA")} draws`
+              : `Showing all ${draws.length.toLocaleString("en-CA")} draws`}
           </p>
         )}
       </div>
