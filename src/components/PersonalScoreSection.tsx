@@ -89,7 +89,7 @@ export function PersonalScoreSection({ score, elig }: Props) {
   // means.
   const roundTypes = useMemo(() => {
     const t = ["general", "category_based"];
-    if (elig.program) t.push("program_specific");
+    if (elig.programs.length > 0) t.push("program_specific");
     return t;
   }, [elig]);
 
@@ -101,7 +101,9 @@ export function PersonalScoreSection({ score, elig }: Props) {
     ? {
         score: score!,
         roundTypes,
-        programs: elig.program ? [elig.program, "ANY_GENERAL"] : null,
+        programs: elig.programs.length
+          ? [...elig.programs, "ANY_GENERAL"]
+          : null,
         categories: elig.categories.length
           ? [...elig.categories, "ANY_NONCATEGORY"]
           : null,
@@ -148,7 +150,7 @@ export function PersonalScoreSection({ score, elig }: Props) {
   // never has to wonder what N/M actually includes.
   const profileSummary = useMemo(() => {
     const parts: string[] = [`CRS ${score}`];
-    parts.push(elig.program ?? "General only");
+    parts.push(elig.programs.length ? elig.programs.join(", ") : "General only");
     parts.push(elig.categories.length ? elig.categories.join(", ") : "All categories");
     return parts.join(" · ");
   }, [score, elig]);
@@ -156,7 +158,7 @@ export function PersonalScoreSection({ score, elig }: Props) {
   const analyticsFired = useRef<string>("");
   useEffect(() => {
     if (!results || !validScore || isLoading) return;
-    const key = `${score}-${elig.program}-${elig.categories.join(",")}-${windowMonths}`;
+    const key = `${score}-${elig.programs.join(",")}-${elig.categories.join(",")}-${windowMonths}`;
     if (analyticsFired.current === key) return;
     analyticsFired.current = key;
     capture(EVENTS.WIHBI_RESULT_VIEWED, { cleared: above, total, since });
@@ -209,10 +211,17 @@ export function PersonalScoreSection({ score, elig }: Props) {
   return (
     <TooltipProvider>
       <section id="what-the-history-says" className="mt-14">
-        <p className="kicker">What the history says</p>
+        <div className="flex flex-wrap items-baseline justify-between gap-3">
+          <p className="kicker">What the history says</p>
+          {validScore && (
+            <p className="text-[0.7rem] tabular-nums text-muted-foreground/80">
+              {profileSummary}
+            </p>
+          )}
+        </div>
 
         {!validScore ? (
-          <p className="mt-3 text-[0.95rem] leading-relaxed text-muted-foreground">
+          <p className="mt-4 text-[0.95rem] leading-relaxed text-muted-foreground">
             Enter your CRS score in the hero above to see how it compares against the last{" "}
             {windowMonths} months of relevant rounds.
           </p>
@@ -223,17 +232,14 @@ export function PersonalScoreSection({ score, elig }: Props) {
             <Skeleton className="h-60 w-full" />
           </div>
         ) : total === 0 ? (
-          <p className="mt-3 text-sm text-muted-foreground">
+          <p className="mt-4 text-sm text-muted-foreground">
             No relevant rounds found since {formatDate(since)} for these selections — or data is
             not available yet (the daily refresh runs at ~9am ET).
           </p>
         ) : (
           <>
-            <p className="mt-3 text-xs uppercase tracking-[0.14em] text-muted-foreground">
-              {profileSummary}
-            </p>
-
-            <h3 className="display mt-3 text-[1.5rem] leading-[1.2] text-ink sm:text-[1.75rem]">
+            {/* PRIMARY: the answer */}
+            <h3 className="display mt-5 text-[1.5rem] leading-[1.2] text-ink sm:text-[1.85rem]">
               Your score was above the cutoff in{" "}
               <span
                 className="figure text-[2.75rem] leading-none sm:text-[3.25rem]"
@@ -243,36 +249,57 @@ export function PersonalScoreSection({ score, elig }: Props) {
               </span>{" "}
               of {total} relevant rounds in the last {windowMonths} months.
             </h3>
-            {matched > 0 && (
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                {matched} more matched the cutoff exactly &mdash; the tie-break rule applied to
-                candidates at that score.
-              </p>
-            )}
 
+            {/* SECONDARY: supporting stats collapsed into one quiet line
+                (two on mobile). Individually smaller and lighter so they
+                don't compete with the answer above. */}
             {cutoffStats !== null && (
-              <p className="mt-3 text-sm text-muted-foreground">
-                Cutoffs ranged from{" "}
-                <span className="font-medium tabular-nums text-ink">{cutoffStats.lowest}</span>{" "}
-                to{" "}
-                <span className="font-medium tabular-nums text-ink">{cutoffStats.highest}</span>{" "}
-                (median{" "}
-                <span className="font-medium tabular-nums text-ink">{cutoffStats.median}</span>).
-                Your score is{" "}
-                <span
-                  className="font-semibold tabular-nums"
-                  style={{
-                    color: score! - cutoffStats.median >= 0 ? "var(--brand)" : "var(--accent)",
-                  }}
-                >
-                  {score! - cutoffStats.median >= 0 ? "+" : ""}
-                  {score! - cutoffStats.median}
-                </span>{" "}
-                {score! >= cutoffStats.median ? "above" : "below"} the median.
-              </p>
+              <div className="mt-4 flex flex-wrap items-baseline gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                <span>
+                  Range{" "}
+                  <span className="tabular-nums text-ink">
+                    {cutoffStats.lowest}–{cutoffStats.highest}
+                  </span>
+                </span>
+                <span aria-hidden className="text-muted-foreground/50">
+                  ·
+                </span>
+                <span>
+                  Median{" "}
+                  <span className="tabular-nums text-ink">{cutoffStats.median}</span>
+                </span>
+                <span aria-hidden className="text-muted-foreground/50">
+                  ·
+                </span>
+                <span>
+                  You{" "}
+                  <span
+                    className="font-medium tabular-nums"
+                    style={{
+                      color: score! - cutoffStats.median >= 0 ? "var(--brand)" : "var(--accent)",
+                    }}
+                  >
+                    {score! - cutoffStats.median >= 0 ? "+" : ""}
+                    {score! - cutoffStats.median}
+                  </span>{" "}
+                  {score! >= cutoffStats.median ? "above" : "below"} median
+                </span>
+                {matched > 0 && (
+                  <>
+                    <span aria-hidden className="text-muted-foreground/50">
+                      ·
+                    </span>
+                    <span>
+                      <span className="tabular-nums text-ink">{matched}</span> matched exactly
+                      (tie-break)
+                    </span>
+                  </>
+                )}
+              </div>
             )}
 
-            <div className="mt-6 flex flex-wrap gap-1.5">
+            {/* Pill grid — more air, isolated from the numbers above */}
+            <div className="mt-8 flex flex-wrap gap-2">
               {pillGrid.map((r) => {
                 const state = compare(r.cutoff_score);
                 const s = stateStyle(state);
@@ -305,7 +332,7 @@ export function PersonalScoreSection({ score, elig }: Props) {
                 );
               })}
             </div>
-            <p className="mt-2 text-xs text-muted-foreground">
+            <p className="mt-3 text-xs text-muted-foreground/80">
               Last {pillGrid.length} relevant rounds, oldest to newest.
             </p>
 
@@ -325,11 +352,11 @@ export function PersonalScoreSection({ score, elig }: Props) {
               </div>
             )}
 
-            <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2">
+            <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-[0.8125rem]">
               <button
                 type="button"
                 onClick={() => setWindowMonths((w) => (w === 24 ? 36 : 24))}
-                className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+                className="text-muted-foreground/80 underline underline-offset-4 hover:text-foreground"
               >
                 {windowMonths === 24
                   ? "Compare against the last 3 years instead →"
@@ -337,7 +364,7 @@ export function PersonalScoreSection({ score, elig }: Props) {
               </button>
               <a
                 href="/about"
-                className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+                className="text-muted-foreground/80 underline underline-offset-4 hover:text-foreground"
               >
                 How this works →
               </a>

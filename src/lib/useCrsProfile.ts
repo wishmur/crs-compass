@@ -9,26 +9,41 @@ import type { Program, Draw } from "@/data/round-types";
 export const ELIG_KEY = "crsSignal.eligibility";
 
 export interface Eligibility {
-  /** null = the "General only" default: no specific program selected, so
-      program-specific rounds (CEC/FSW/FST/PNP) are excluded from the view. */
-  program: Program | null;
-  /** Empty array = the "All categories" default: every category-based round
-      passes. A non-empty array narrows to just those category families. */
+  /** Empty array = the "General only" default. Non-empty = those specific
+      programs (multi-select). CEC + FSW selected together means "show me
+      rounds for either." */
+  programs: Program[];
+  /** Empty array = the "All categories" default. A non-empty array narrows
+      to just those category families. */
   categories: string[];
 }
 
-const DEFAULT_ELIG: Eligibility = { program: null, categories: [] };
+const DEFAULT_ELIG: Eligibility = { programs: [], categories: [] };
 
 export interface CrsProfile {
   elig: Eligibility;
   setElig: React.Dispatch<React.SetStateAction<Eligibility>>;
   resetElig: () => void;
-  /** True once we've read localStorage. */
   hydrated: boolean;
-  /** True when the user has narrowed away from the default view (any
-      specific program or specific category selected). Drives the "Latest
-      relevant cutoff" vs "Latest cutoff in this view" label. */
+  /** True when the user has narrowed away from the default view. */
   hasEligibility: boolean;
+}
+
+/** Read the stored shape, tolerating the older single-program layout. */
+function migrate(parsed: unknown): Eligibility {
+  if (!parsed || typeof parsed !== "object") return DEFAULT_ELIG;
+  const p = parsed as {
+    program?: Program | null;
+    programs?: Program[];
+    categories?: string[];
+  };
+  const programs = Array.isArray(p.programs)
+    ? p.programs
+    : p.program
+      ? [p.program]
+      : [];
+  const categories = Array.isArray(p.categories) ? p.categories : [];
+  return { programs, categories };
 }
 
 export function useCrsProfile(): CrsProfile {
@@ -38,13 +53,7 @@ export function useCrsProfile(): CrsProfile {
   useEffect(() => {
     try {
       const raw = localStorage.getItem(ELIG_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as Partial<Eligibility>;
-        setElig({
-          program: parsed.program ?? null,
-          categories: Array.isArray(parsed.categories) ? parsed.categories : [],
-        });
-      }
+      if (raw) setElig(migrate(JSON.parse(raw)));
     } catch {
       /* ignore */
     }
@@ -55,29 +64,28 @@ export function useCrsProfile(): CrsProfile {
     if (!hydrated) return;
     localStorage.setItem(ELIG_KEY, JSON.stringify(elig));
     capture(EVENTS.WIHBI_ELIGIBILITY_CHANGED, {
-      programs: elig.program ? [elig.program] : [],
+      programs: elig.programs,
       categories: elig.categories,
     });
   }, [elig, hydrated]);
 
   const resetElig = useCallback(() => setElig(DEFAULT_ELIG), []);
 
-  const hasEligibility = elig.program !== null || elig.categories.length > 0;
+  const hasEligibility = elig.programs.length > 0 || elig.categories.length > 0;
   return { elig, setElig, resetElig, hydrated, hasEligibility };
 }
 
 // Filter predicate shared by every "is this draw relevant to me?" surface.
 //
-// Program:
-//   null            → "General only" — exclude program_specific rounds entirely
-//   'CEC' | ...     → include only that program's rounds (+ general always)
+// Programs:
+//   []              → "General only" — exclude program_specific rounds entirely
+//   ['CEC', ...]    → include only those programs' rounds (+ general always)
 //
 // Categories:
 //   []              → "All categories" — every category-based round passes
 //   [names]         → only those category families pass
 //
-// General rounds are always included. PNP is only included when the user has
-// explicitly selected PNP.
+// General rounds are always included.
 export function isRelevantDraw(d: Draw, elig: Eligibility): boolean {
   if (d.round_type === "general") return true;
   if (d.round_type === "category_based") {
@@ -85,7 +93,7 @@ export function isRelevantDraw(d: Draw, elig: Eligibility): boolean {
     return d.category !== null && elig.categories.includes(d.category);
   }
   if (d.round_type === "program_specific") {
-    return elig.program !== null && d.program === elig.program;
+    return elig.programs.length > 0 && d.program !== null && elig.programs.includes(d.program);
   }
   return false;
 }

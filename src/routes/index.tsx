@@ -12,9 +12,8 @@ import { PersonalScoreSection } from "@/components/PersonalScoreSection";
 import { drawsQuery } from "@/lib/queries";
 import { EVENTS, capture } from "@/lib/analytics";
 import { useCrsProfile, isRelevantDraw } from "@/lib/useCrsProfile";
+import { useScore } from "@/lib/useScore";
 import { CATEGORIES, type Program } from "@/data/round-types";
-
-const SCORE_KEY = "crsSignal.score";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -36,6 +35,9 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
+// Program chip definitions. `value: null` is the "General only" clear-all
+// action; every other entry is a specific program that can toggle on/off
+// alongside its siblings.
 const PROGRAM_CHIPS: { value: Program | null; label: string }[] = [
   { value: null, label: "General only" },
   { value: "CEC", label: "CEC" },
@@ -55,47 +57,85 @@ function HeroKicker({ children }: { children: React.ReactNode }) {
   );
 }
 
+// Action pill shared across the three actions under the result panel.
+function ActionPill({
+  children,
+  onClick,
+  to,
+  ariaExpanded,
+  muted = false,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  to?: string;
+  ariaExpanded?: boolean;
+  muted?: boolean;
+}) {
+  const base =
+    "inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-medium transition-colors";
+  const active =
+    "border-[color-mix(in_srgb,var(--brand)_28%,transparent)] text-[var(--brand)] hover:bg-[color-mix(in_srgb,var(--brand)_8%,transparent)]";
+  const dim =
+    "border-[var(--rule)] text-muted-foreground hover:text-foreground";
+  const cls = `${base} ${muted ? dim : active}`;
+
+  if (to) {
+    return (
+      <Link to={to} className={cls}>
+        {children}
+      </Link>
+    );
+  }
+  return (
+    <button type="button" onClick={onClick} aria-expanded={ariaExpanded} className={cls}>
+      {children}
+    </button>
+  );
+}
+
 function Index() {
   const { data, isLoading } = useQuery(drawsQuery(8));
-  const [raw, setRaw] = useState("");
+  const { raw, setRaw, score } = useScore();
   const { elig, setElig, resetElig, hasEligibility } = useCrsProfile();
   const [showMore, setShowMore] = useState(false);
 
   useEffect(() => {
     capture(EVENTS.LANDING_VIEWED);
-    try {
-      const stored = window.localStorage.getItem(SCORE_KEY);
-      if (stored) setRaw(stored);
-    } catch {
-      /* ignore */
-    }
   }, []);
-
-  useEffect(() => {
-    const id = window.setTimeout(() => {
-      try {
-        if (raw) window.localStorage.setItem(SCORE_KEY, raw);
-      } catch {
-        /* ignore */
-      }
-    }, 500);
-    return () => window.clearTimeout(id);
-  }, [raw]);
-
-  const parsed = Number.parseInt(raw, 10);
-  const score = Number.isFinite(parsed) && parsed > 0 && parsed <= 1200 ? parsed : null;
 
   const latestRelevant = data?.find((d) => isRelevantDraw(d, elig));
   const latestFallback = data?.[0];
   const latest = latestRelevant ?? latestFallback;
   const isRelevantLatest = latestRelevant !== undefined && latestRelevant === latest;
 
+  const generalOnlySelected = elig.programs.length === 0;
   const allCategoriesSelected = elig.categories.length === 0;
-  const canReset = hasEligibility;
+
+  const toggleProgram = (value: Program | null) => {
+    if (value === null) {
+      // "General only" is the clear-all action for the program dimension.
+      setElig((e) => ({ ...e, programs: [] }));
+      return;
+    }
+    setElig((e) => ({
+      ...e,
+      programs: e.programs.includes(value)
+        ? e.programs.filter((p) => p !== value)
+        : [...e.programs, value],
+    }));
+  };
+
+  const toggleCategory = (name: string) =>
+    setElig((e) => ({
+      ...e,
+      categories: e.categories.includes(name)
+        ? e.categories.filter((c) => c !== name)
+        : [...e.categories, name],
+    }));
 
   return (
     <div className="mx-auto max-w-6xl px-5 pt-8 pb-6">
-      {/* Hero — inputs only. No result metrics, no explanatory copy. */}
+      {/* Hero — inputs only. */}
       <section
         className="rounded-[calc(var(--radius)*1.5)] px-6 py-8 sm:px-10 sm:py-10"
         style={{ backgroundColor: "var(--brand)", color: "var(--paper)" }}
@@ -110,7 +150,7 @@ function Index() {
           <button
             type="button"
             onClick={resetElig}
-            disabled={!canReset}
+            disabled={!hasEligibility}
             className="inline-flex items-center gap-1.5 text-xs font-medium transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
             style={{ color: "var(--accent-soft)" }}
             aria-label="Reset eligibility to General only + All categories"
@@ -140,14 +180,14 @@ function Index() {
                 autoComplete="off"
                 placeholder="—"
                 value={raw}
-                onChange={(e) => setRaw(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                onChange={(e) => setRaw(e.target.value)}
                 className="figure w-full bg-transparent text-[2rem] leading-tight outline-none sm:text-[2.25rem]"
                 style={{ color: "var(--accent-soft)" }}
               />
             </div>
           </div>
 
-          {/* Program eligibility chips */}
+          {/* Program eligibility chips (multi-select; General only = clear all) */}
           <div className="md:col-span-4">
             <HeroKicker>Program eligibility</HeroKicker>
             <div className="mt-3 flex flex-wrap gap-2">
@@ -155,15 +195,17 @@ function Index() {
                 <FilterChip
                   key={p.label}
                   label={p.label}
-                  selected={elig.program === p.value}
-                  onClick={() => setElig((e) => ({ ...e, program: p.value }))}
+                  selected={
+                    p.value === null ? generalOnlySelected : elig.programs.includes(p.value)
+                  }
+                  onClick={() => toggleProgram(p.value)}
                   tone="dark"
                 />
               ))}
             </div>
           </div>
 
-          {/* Category eligibility chips */}
+          {/* Category eligibility chips (multi-select; All categories = clear all) */}
           <div className="md:col-span-5">
             <HeroKicker>Category eligibility</HeroKicker>
             <div className="mt-3 flex flex-wrap gap-2">
@@ -178,14 +220,7 @@ function Index() {
                   key={c}
                   label={c}
                   selected={elig.categories.includes(c)}
-                  onClick={() =>
-                    setElig((e) => ({
-                      ...e,
-                      categories: e.categories.includes(c)
-                        ? e.categories.filter((x) => x !== c)
-                        : [...e.categories, c],
-                    }))
-                  }
+                  onClick={() => toggleCategory(c)}
                   tone="dark"
                 />
               ))}
@@ -194,8 +229,7 @@ function Index() {
         </div>
       </section>
 
-      {/* Result panel — pale-green tint sits right under the hero. Shows the
-          answer produced by the hero's inputs; nothing more. */}
+      {/* Result panel — the answer produced by the hero's inputs. */}
       <section
         className="mt-4 rounded-[var(--radius)] border p-6 sm:p-8"
         style={{
@@ -254,9 +288,7 @@ function Index() {
                         );
                       if (diff < 0)
                         return (
-                          <span style={{ color: "var(--accent)" }}>
-                            {diff} below cutoff
-                          </span>
+                          <span style={{ color: "var(--accent)" }}>{diff} below cutoff</span>
                         );
                       return (
                         <span className="text-muted-foreground">
@@ -269,41 +301,32 @@ function Index() {
               </div>
             </div>
 
-            {/* PNP note — surfaces only when the user has opted into PNP.
-                Kept minimal and inline here (out of the hero) per the
-                "no explanatory copy in the hero" rule. */}
-            {elig.program === "PNP" && (
+            {elig.programs.includes("PNP") && (
               <p className="mt-6 text-xs leading-relaxed text-muted-foreground">
                 <strong className="text-ink">PNP:</strong> cutoffs include the automatic
                 600-point nomination bonus. Only meaningful if you actually hold a nomination.
               </p>
             )}
 
-            {/* Actions */}
-            <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-[color-mix(in_srgb,var(--brand)_18%,transparent)] pt-5 text-sm">
-              <button
-                type="button"
-                onClick={() => setShowMore((s) => !s)}
-                className="font-medium text-[var(--brand)] transition-opacity hover:opacity-70"
-                aria-expanded={showMore}
-              >
-                {showMore ? "Hide details ↑" : "More details ↓"}
-              </button>
-              <Link
-                to="/history"
-                className="font-medium text-[var(--brand)] transition-opacity hover:opacity-70"
-              >
-                View full history →
-              </Link>
-              <span
-                className="inline-flex items-center gap-1.5 text-muted-foreground/70"
-                title="Score sensitivity — try your score +5 / +10 / +20. Not built yet."
-              >
+            {/* Actions — three consistent pill controls. */}
+            <div className="mt-6 flex flex-wrap gap-2 border-t border-[color-mix(in_srgb,var(--brand)_18%,transparent)] pt-5">
+              <ActionPill onClick={() => setShowMore((s) => !s)} ariaExpanded={showMore}>
+                {showMore ? "Hide details" : "More details"}
+              </ActionPill>
+              <ActionPill to="/history">View full history</ActionPill>
+              <ActionPill to="/plan" muted>
                 Plan your score
-                <span className="rounded-full border border-[var(--rule)] px-1.5 py-0.5 text-[0.65rem] font-medium uppercase tracking-wider">
+                <span
+                  aria-label="Coming soon"
+                  className="rounded-full px-1.5 py-0.5 text-[0.6rem] font-medium uppercase tracking-wider"
+                  style={{
+                    backgroundColor: "color-mix(in srgb, var(--ink) 8%, transparent)",
+                    color: "var(--muted-foreground)",
+                  }}
+                >
                   Coming soon
                 </span>
-              </span>
+              </ActionPill>
             </div>
 
             {showMore && (
