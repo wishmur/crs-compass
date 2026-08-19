@@ -26,15 +26,16 @@ export function SiteHeader() {
         aria-label="Main"
         className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-5 gap-y-2 px-5 py-3.5"
       >
-        {/* Left cluster: wordmark + freshness readout */}
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        {/* Left cluster: wordmark + freshness readout.
+            Mobile: stacked (no separator). Desktop: inline with a subtle | between. */}
+        <div className="flex flex-col items-start gap-0.5 sm:flex-row sm:items-center sm:gap-3">
           <Link to="/" className="display text-[20px] leading-none text-brand">
             <span className="font-bold">CRS</span>{" "}
             <span className="font-medium">Compass</span>
           </Link>
           {pretty && (
             <>
-              <span aria-hidden className="text-hairline">
+              <span aria-hidden className="hidden text-hairline sm:inline">
                 |
               </span>
               <span className="text-xs tabular-nums text-muted-foreground">
