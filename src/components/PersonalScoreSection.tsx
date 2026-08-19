@@ -352,10 +352,10 @@ export function PersonalScoreSection({ score, elig }: Props) {
                   : "Back to the last 24 months →"}
               </button>
               <a
-                href="/about#methodology"
+                href="/about"
                 className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
               >
-                How this is calculated →
+                How this works →
               </a>
             </div>
 
