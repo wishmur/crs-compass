@@ -50,20 +50,33 @@ export function PersonalScoreSection({ score, elig }: Props) {
   const since = useMemo(() => monthsAgo(windowMonths), [windowMonths]);
 
   const validScore = score !== null && score >= 0 && score <= 1200;
+  const hasElig = elig.program !== null || elig.categories.length > 0;
 
+  // Round type selection — mirrors the isRelevantDraw semantics so Recent
+  // Draws and this section always agree about what "applies to you" means.
+  //   no eligibility  -> general + category-based (excludes PNP)
+  //   eligibility set -> general is always in, plus whatever branches the
+  //                      user opted into
   const roundTypes = useMemo(() => {
+    if (!hasElig) return ["general", "category_based"];
     const t = ["general"];
     if (elig.program) t.push("program_specific");
     if (elig.categories.length) t.push("category_based");
     return t;
-  }, [elig]);
+  }, [elig, hasElig]);
 
+  // When a program filter is passed, include the ANY_GENERAL sentinel so
+  // general rounds (which have d.program IS NULL) also match — otherwise a
+  // CEC user would silently miss any historical general round they were
+  // eligible for. Same trick for categories via ANY_NONCATEGORY.
   const params = validScore
     ? {
         score: score!,
         roundTypes,
-        programs: elig.program ? [elig.program] : null,
-        categories: elig.categories.length ? elig.categories : null,
+        programs: elig.program ? [elig.program, "ANY_GENERAL"] : null,
+        categories: elig.categories.length
+          ? [...elig.categories, "ANY_NONCATEGORY"]
+          : null,
         since,
       }
     : null;
@@ -76,6 +89,19 @@ export function PersonalScoreSection({ score, elig }: Props) {
   const ratio = total ? cleared / total : 0;
   const figureColor =
     cleared === 0 ? "var(--muted-foreground)" : ratio >= 0.5 ? "var(--brand)" : "var(--accent)";
+
+  // Median cutoff of the relevant rounds — one meaningful comparative
+  // baseline. Combined with the user's score, tells them how far from the
+  // "middle of the pack" they are, which is a different question from
+  // "how many did you clear."
+  const medianCutoff = useMemo(() => {
+    if (!results || results.length === 0) return null;
+    const sorted = results.map((r) => r.cutoff_score).sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    return sorted.length % 2 === 0
+      ? Math.round((sorted[mid - 1]! + sorted[mid]!) / 2)
+      : sorted[mid]!;
+  }, [results]);
 
   const analyticsFired = useRef<string>("");
   useEffect(() => {
@@ -135,6 +161,17 @@ export function PersonalScoreSection({ score, elig }: Props) {
       <section id="what-the-history-says" className="mt-14">
         <p className="kicker">What the history says</p>
 
+        {validScore && !hasElig && (
+          <div
+            className="mt-4 rounded-[var(--radius)] p-3 text-sm leading-relaxed text-ink"
+            style={{ backgroundColor: "var(--brand-soft)" }}
+          >
+            No eligibility selected — showing rounds anyone in the pool could benefit from
+            (general + category-based, excluding PNP). Set what applies to you above for a
+            personal view.
+          </div>
+        )}
+
         {!validScore ? (
           <p className="mt-3 text-[0.95rem] leading-relaxed text-muted-foreground">
             Enter your CRS score in the hero above to see how many of the last {windowMonths}{" "}
@@ -163,6 +200,25 @@ export function PersonalScoreSection({ score, elig }: Props) {
               </span>{" "}
               of {total} relevant rounds in the last {windowMonths} months.
             </h3>
+
+            {medianCutoff !== null && (
+              <p className="mt-3 text-sm text-muted-foreground">
+                Median cutoff across these rounds was{" "}
+                <span className="font-medium tabular-nums text-ink">{medianCutoff}</span>
+                {" — "}
+                your score is{" "}
+                <span
+                  className="font-semibold tabular-nums"
+                  style={{
+                    color: score! - medianCutoff >= 0 ? "var(--brand)" : "var(--accent)",
+                  }}
+                >
+                  {score! - medianCutoff >= 0 ? "+" : ""}
+                  {score! - medianCutoff}
+                </span>{" "}
+                {score! >= medianCutoff ? "above" : "below"} the median.
+              </p>
+            )}
 
             <div className="mt-6 flex flex-wrap gap-1.5">
               {pillGrid.map((r) => (

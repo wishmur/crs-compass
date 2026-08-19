@@ -16,7 +16,6 @@ import { ChipGroup, FilterChip } from "@/components/FilterChip";
 import { RoundBadge } from "@/components/RoundBadge";
 import { SourceLink, formatDate } from "@/components/DrawMeta";
 import { HistoryChart } from "@/components/HistoryChart";
-import { SecondaryLink } from "@/components/CTA";
 import { drawsQuery } from "@/lib/queries";
 import { EVENTS, capture } from "@/lib/analytics";
 import {
@@ -165,16 +164,22 @@ function History() {
 
   return (
     <div className="mx-auto max-w-6xl px-5 pt-10 pb-6 sm:pt-14">
-      <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6">
-        <h1 className="display text-3xl font-semibold tracking-tight sm:text-4xl">Draw History</h1>
-        <div className="flex items-baseline gap-6 sm:order-last">
-          {!isLoading && draws.length > 0 && (
-            <p className="text-sm text-muted-foreground tabular-nums">
-              {draws.length.toLocaleString("en-CA")} draws since 2015
-            </p>
-          )}
-          <SecondaryLink to="/would-i-have-made-it">Check my score →</SecondaryLink>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-8">
+        <div className="max-w-xl">
+          <p className="kicker">Explore the data</p>
+          <h1 className="display mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
+            Draw History
+          </h1>
+          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+            Every Express Entry round since IRCC began publishing them. Filter by year, type,
+            program or category — the chart and table update together.
+          </p>
         </div>
+        {!isLoading && draws.length > 0 && (
+          <p className="text-sm text-muted-foreground tabular-nums sm:mt-[2.4rem]">
+            {draws.length.toLocaleString("en-CA")} draws · 2015–{new Date().getFullYear()}
+          </p>
+        )}
       </div>
 
       <div className="mt-8 border-t border-[var(--rule)] pt-5">

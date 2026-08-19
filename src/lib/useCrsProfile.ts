@@ -53,11 +53,16 @@ export function useCrsProfile(): CrsProfile {
 }
 
 // Filter predicate shared by every "is this draw relevant to me?" surface.
-// General rounds always pass. If the user has selected no program AND no
-// category, every draw passes — otherwise only matching ones do.
+// General rounds always pass when eligibility is set. If the user has no
+// eligibility selected, we default to a safe "explore" view: general and
+// category-based rounds only — program-specific rounds (which include PNP
+// with its 600-point nomination bonus) are excluded because comparing your
+// score to a PNP cutoff without a nomination is meaningless.
 export function isRelevantDraw(d: Draw, elig: Eligibility): boolean {
   const hasElig = elig.program !== null || elig.categories.length > 0;
-  if (!hasElig) return true;
+  if (!hasElig) {
+    return d.round_type !== "program_specific";
+  }
   if (d.round_type === "general") return true;
   if (d.round_type === "program_specific") {
     return elig.program !== null && d.program === elig.program;

@@ -6,22 +6,128 @@ import { SecondaryLink } from "@/components/CTA";
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
-      { title: "About CRS Compass — what it is and isn't" },
+      { title: "About CRS Compass — sources and how the data works" },
       {
         name: "description",
         content:
-          "How Express Entry rounds work, why cutoffs differ across round types, the PNP trap, and why nobody can predict the next cutoff.",
+          "Common questions about Canadian Express Entry, with links to the official IRCC sources. Plus why this tracker exists.",
       },
       { property: "og:title", content: "About CRS Compass" },
       {
         property: "og:description",
         content:
-          "Plain-language explanation of Express Entry rounds, cutoff context, and the limits of this data.",
+          "Canadian Express Entry answered by IRCC, not by us. Plus a note on why a sibling built this.",
       },
     ],
   }),
   component: About,
 });
+
+interface FAQ {
+  q: string;
+  short: string;
+  links: { label: string; href: string }[];
+}
+
+const FAQS: FAQ[] = [
+  {
+    q: "What is Express Entry, in one sentence?",
+    short:
+      "Canada's ranked pool for skilled workers applying for permanent residence — you submit a profile, get a score, and wait to be invited.",
+    links: [
+      {
+        label: "IRCC — how Express Entry works",
+        href: "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry.html",
+      },
+    ],
+  },
+  {
+    q: "What is CRS?",
+    short:
+      "The Comprehensive Ranking System — a 0–1200 score IRCC uses to rank candidates. Points come from age, education, language, work experience and a few bonuses.",
+    links: [
+      {
+        label: "IRCC — full CRS criteria",
+        href: "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/eligibility/criteria-comprehensive-ranking-system.html",
+      },
+      {
+        label: "IRCC — official CRS calculator",
+        href: "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/eligibility/criteria-comprehensive-ranking-system/tool.html",
+      },
+    ],
+  },
+  {
+    q: "How does IRCC decide who gets invited?",
+    short:
+      "Periodically IRCC picks a number of candidates from the pool and invites the top-ranked ones in a specific round. The cutoff is whatever the last-invited person scored — it is an outcome, not a target.",
+    links: [
+      {
+        label: "IRCC — rounds of invitations",
+        href: "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/submit-profile/rounds-invitations.html",
+      },
+    ],
+  },
+  {
+    q: "Why are PNP cutoffs so much higher than everything else?",
+    short:
+      "Because every candidate in a PNP round has already received a 600-point nomination bonus. It is not that PNP candidates are extraordinary — they are all carrying the same +600. Never compare PNP cutoffs to CEC or category-based ones without understanding this.",
+    links: [
+      {
+        label: "IRCC — Provincial Nominee Program",
+        href: "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/provincial-nominees.html",
+      },
+    ],
+  },
+  {
+    q: "How do I improve my CRS score?",
+    short:
+      "Better language results, additional work experience, higher education, and a few structural factors. IRCC has a page on exactly this.",
+    links: [
+      {
+        label: "IRCC — improve your ranking",
+        href: "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/eligibility/criteria-comprehensive-ranking-system/improve-score.html",
+      },
+    ],
+  },
+  {
+    q: "Can anyone predict the next cutoff?",
+    short:
+      "No. Not us, not anyone. The cutoff is set after IRCC decides how many people to invite in a round. Anyone claiming to predict it is guessing.",
+    links: [],
+  },
+  {
+    q: "Where do the category-based eligibility criteria come from?",
+    short:
+      "IRCC publishes specific criteria for each category (French language, Healthcare, STEM, etc.). This site does not check whether you actually qualify — the chips are what you tell us.",
+    links: [
+      {
+        label: "IRCC — category-based selection",
+        href: "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/submit-profile/rounds-invitations/category-based-selection.html",
+      },
+    ],
+  },
+  {
+    q: "Is there a cutoff “for Ontario” or any other province?",
+    short:
+      "No. Federal Express Entry is a single national pool. Provincial programs are separate and out of scope here.",
+    links: [],
+  },
+  {
+    q: "Where does the data on this site come from?",
+    short:
+      "Directly from IRCC's own JSON feed, pulled once a day. If a number here ever disagrees with the official page, trust the official page.",
+    links: [
+      {
+        label: "IRCC — official rounds of invitations",
+        href: "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/submit-profile/rounds-invitations.html",
+      },
+      {
+        label: "Source code on GitHub",
+        href: "https://github.com/wishmur/crs-compass",
+      },
+    ],
+  },
+];
 
 function About() {
   useEffect(() => {
@@ -30,90 +136,68 @@ function About() {
 
   return (
     <div className="mx-auto max-w-6xl px-5 pt-10 pb-6 sm:pt-14">
-      <article className="mx-auto max-w-4xl">
-      <p className="kicker">About</p>
-      <h1 className="display mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">About CRS Compass</h1>
+      <div className="mx-auto max-w-3xl">
+        <p className="kicker">About</p>
+        <h1 className="display mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
+          About CRS Compass
+        </h1>
+        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+          Common questions about Canadian Express Entry, with links to the official IRCC pages
+          that actually answer them.
+        </p>
 
-      <h2 className="display mt-12 text-xl font-semibold text-ink">What Express Entry is</h2>
-      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-        Express Entry is how Canada manages applications for three federal permanent residence
-        programs: the Canadian Experience Class, the Federal Skilled Worker Program and the Federal
-        Skilled Trades Program. If you qualify for one of them, you submit a profile and join a
-        single national pool.
-      </p>
-      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-        Everyone in the pool gets a Comprehensive Ranking System (CRS) score based on age,
-        education, language ability, work experience and a few other factors. Periodically, IRCC
-        runs a round of invitations: it decides how many people to invite and from which group,
-        then invites the highest-ranked candidates in that group.
-      </p>
-      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-        The &ldquo;cutoff&rdquo; you see reported is not a target set in advance. It is the score of
-        the last candidate invited — an outcome, not a rule.
-      </p>
+        {/* Why was this made? */}
+        <section
+          className="mt-8 rounded-[var(--radius)] p-5 sm:p-6"
+          style={{ backgroundColor: "var(--brand-soft)" }}
+        >
+          <p className="kicker">Why was this made?</p>
+          <p className="mt-3 text-base leading-relaxed text-ink">
+            A sibling built this for another sibling navigating Canada&rsquo;s Express Entry pool
+            &mdash; after one too many conversations that ended with &ldquo;so where do I
+            actually stand?&rdquo; Now the answer is a page.
+          </p>
+        </section>
 
-      <h2 className="display mt-12 text-xl font-semibold text-ink">
-        Why cutoffs mean different things in different rounds
-      </h2>
-      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-        A cutoff only makes sense next to the round it came from. A general round draws from
-        everyone. A program-specific round draws only from candidates in that program. A
-        category-based round draws only from candidates who meet IRCC&apos;s criteria for that
-        category — French language ability, healthcare occupations, trades and so on.
-      </p>
-      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-        <strong>The PNP trap:</strong> candidates with a provincial nomination receive an automatic
-        600-point bonus. Every candidate in a PNP round carries it, so PNP cutoffs sit in the
-        700–800 range. If you do not hold a nomination, a PNP cutoff tells you nothing about your
-        chances. That is why this site keeps PNP visually separate and never includes it in your
-        personal results unless you say you hold a nomination.
-      </p>
+        {/* FAQ */}
+        <section className="mt-12">
+          <p className="kicker">Common questions</p>
+          <h2 className="display mt-2 text-2xl font-semibold text-ink">
+            Answered by IRCC, not by us.
+          </h2>
 
-      <h2 className="display mt-12 text-xl font-semibold text-ink">There is no cutoff &ldquo;for Ontario&rdquo;</h2>
-      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-        There is no such thing as a cutoff for Ontario — or any other province — in federal Express
-        Entry. The pool is national. Provinces only enter the picture through their separate
-        Provincial Nominee Programs, which are out of scope for this site.
-      </p>
+          <div className="mt-6 divide-y divide-[var(--rule)]">
+            {FAQS.map((f) => (
+              <article key={f.q} className="py-5">
+                <h3 className="display text-lg font-semibold text-ink">{f.q}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{f.short}</p>
+                {f.links.length > 0 && (
+                  <ul className="mt-3 space-y-1.5">
+                    {f.links.map((l) => (
+                      <li key={l.href}>
+                        <SecondaryLink href={l.href} target="_blank">
+                          {l.label} &rarr;
+                        </SecondaryLink>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </article>
+            ))}
+          </div>
+        </section>
 
-      <h2 className="display mt-12 text-xl font-semibold text-ink">Nobody can predict the next cutoff</h2>
-      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-        Including us. The cutoff is determined <em>after</em> IRCC decides how many people to invite
-        and from which group. Anyone selling you a forecast is selling you a guess dressed up as
-        data.
-      </p>
-
-      <h2 className="display mt-12 text-xl font-semibold text-ink">Disclaimer</h2>
-      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-        This site is not immigration advice. Data comes from IRCC and may be delayed or incomplete.
-        Always verify with the official Canadian government resources before making decisions.
-      </p>
-
-      <h2 className="display mt-12 text-xl font-semibold text-ink">Credits and sources</h2>
-      <ul className="mt-3 space-y-2">
-        <li>
-          <SecondaryLink
-            href="https://www.canada.ca/en/immigration-refugees-citizenship/corporate/mandate/policies-operational-instructions-agreements/ministerial-instructions/express-entry-rounds.html"
-            target="_blank"
-          >
-            IRCC — official rounds of invitations →
-          </SecondaryLink>
-        </li>
-        <li>
-          <SecondaryLink
-            href="https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/submit-profile/rounds-invitations/category-based-selection.html"
-            target="_blank"
-          >
-            IRCC — category-based selection criteria →
-          </SecondaryLink>
-        </li>
-        <li>
-          <SecondaryLink href="https://github.com/wishmur/crs-compass" target="_blank">
-            Source code on GitHub →
-          </SecondaryLink>
-        </li>
-      </ul>
-      </article>
+        {/* Disclaimer */}
+        <section className="mt-12">
+          <p className="kicker">One more thing</p>
+          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+            This is an information tool built by a person, not immigration advice. Data may be
+            delayed or incomplete. Always verify with the official Canadian government resources
+            &mdash; or a licensed immigration consultant &mdash; before making decisions that
+            depend on it.
+          </p>
+        </section>
+      </div>
     </div>
   );
 }
