@@ -36,31 +36,15 @@ function PlanPlaceholder() {
           Plan your score.
         </h1>
 
-        <p className="mt-4 text-base leading-relaxed text-ink">
-          A place to hold your current CRS constant and see how specific changes &mdash; a better
-          language result, another year of Canadian work experience, a completed credential
-          &mdash; would move your position against the rounds that apply to you.
-        </p>
-        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-          Historical comparison only. This won&rsquo;t predict future cutoffs, and it won&rsquo;t
-          submit anything to IRCC.
-        </p>
-
         <div
           className="mt-8 rounded-[var(--radius)] border border-dashed p-5 sm:p-6"
           style={{ borderColor: "var(--rule)" }}
         >
           <p className="kicker">What&rsquo;s coming</p>
-          <ul className="mt-3 space-y-2 text-sm leading-relaxed text-muted-foreground">
-            <li>Hold your known CRS score constant.</li>
-            <li>
-              Toggle hypothetical changes: language test result, work-experience years,
-              education level, provincial nomination.
-            </li>
-            <li>
-              See the projected new score under IRCC&rsquo;s published rules, and how it would
-              have compared against the last 24 months of relevant historical rounds.
-            </li>
+          <ul className="mt-3 space-y-2 text-[0.95rem] leading-relaxed text-ink">
+            <li>Hold your current CRS score constant.</li>
+            <li>Change one factor at a time and see how it affects your score.</li>
+            <li>Compare the result against the Express Entry rounds that apply to you.</li>
           </ul>
         </div>
 
