@@ -65,7 +65,7 @@ function About() {
             className="display mt-3 max-w-[22ch] text-[2.5rem] leading-[1.05] font-semibold sm:text-[3rem]"
             style={{ color: "var(--paper)" }}
           >
-            About CRS Compass
+            About: Why was this built?
           </h1>
           <p
             className="display mt-6 max-w-[52ch] text-[1.125rem] leading-[1.5] sm:text-[1.25rem]"
@@ -76,20 +76,17 @@ function About() {
           </p>
         </div>
 
-        <div className="relative mt-8 min-h-[220px] overflow-hidden md:mt-0 md:w-[40%] md:min-h-[260px] md:max-h-[280px]">
+        <div className="relative mt-8 min-h-[220px] overflow-hidden rounded-[var(--radius)] md:mt-0 md:w-[40%] md:min-h-[260px] md:max-h-[280px]">
           <img
             src={creatorsAsset.url}
             alt="Two people watching clouds roll over a mountain ridge"
             className="absolute inset-0 h-full w-full object-cover object-center"
             style={{
-              opacity: 0.72,
-              mixBlendMode: "multiply",
+              opacity: 0.92,
               maskImage:
-                "linear-gradient(to right, transparent 0%, black 18%, black 80%, transparent 100%), linear-gradient(to top, transparent 0%, black 28%)",
+                "linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)",
               WebkitMaskImage:
-                "linear-gradient(to right, transparent 0%, black 18%, black 80%, transparent 100%), linear-gradient(to top, transparent 0%, black 28%)",
-              maskComposite: "intersect",
-              WebkitMaskComposite: "source-in",
+                "linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)",
             }}
           />
         </div>
@@ -148,11 +145,9 @@ function About() {
         <p className="kicker">One important caveat</p>
         <p className="mt-4 text-[0.95rem] leading-relaxed text-ink">
           CRS Compass gives you context, not immigration advice. Historical cutoffs don&rsquo;t
-          predict future draws, and data can occasionally be delayed or incomplete.
-        </p>
-        <p className="mt-3 text-[0.95rem] leading-relaxed text-ink">
-          Before making any important decisions, verify against IRCC or speak with a licensed
-          immigration professional.
+          predict future draws, data can occasionally be delayed or incomplete, and important
+          decisions should always be verified against IRCC or a licensed immigration
+          professional.
         </p>
       </section>
     </div>

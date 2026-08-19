@@ -179,7 +179,7 @@ function History() {
   );
 
   return (
-    <div className="mx-auto max-w-6xl px-5 pt-10 pb-6 sm:pt-14">
+    <div className="mx-auto max-w-6xl px-5 pt-8 pb-6 sm:pt-14">
       <div className="flex flex-wrap items-baseline justify-between gap-4">
         <h1 className="display text-3xl font-semibold tracking-tight sm:text-4xl">Draw History</h1>
         {isLoading ? (

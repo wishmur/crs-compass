@@ -23,8 +23,8 @@ function PlanPlaceholder() {
   const { score } = useScore();
 
   return (
-    <div className="mx-auto max-w-6xl px-5 pt-10 pb-16 sm:pt-14">
-      <div className="mx-auto max-w-3xl">
+    <div className="mx-auto max-w-6xl px-5 pt-8 pb-16 sm:pt-14">
+      <div className="mx-auto max-w-4xl">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <p className="kicker">Plan</p>
           <span className="rounded-full border border-[var(--rule)] px-2 py-0.5 text-[0.65rem] font-medium uppercase tracking-wider text-muted-foreground">
