@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { RotateCcw } from "lucide-react";
@@ -97,7 +97,11 @@ function Index() {
   const { data, isLoading } = useQuery(drawsQuery(8));
   const { raw, setRaw, score } = useScore();
   const { elig, setElig, resetElig, hasEligibility } = useCrsProfile();
-  const [showMore, setShowMore] = useState(false);
+  const scrollToHistorySummary = () => {
+    document
+      .getElementById("what-the-history-says")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   useEffect(() => {
     capture(EVENTS.LANDING_VIEWED);
@@ -332,9 +336,7 @@ function Index() {
 
             {/* Actions — three consistent pill controls. */}
             <div className="mt-6 flex flex-wrap gap-2 border-t border-[color-mix(in_srgb,var(--brand)_18%,transparent)] pt-5">
-              <ActionPill onClick={() => setShowMore((s) => !s)} ariaExpanded={showMore}>
-                {showMore ? "Hide details" : "More details"}
-              </ActionPill>
+              <ActionPill onClick={scrollToHistorySummary}>More details</ActionPill>
               <ActionPill to="/history">View full history</ActionPill>
               <ActionPill to="/plan" muted>
                 Plan your score
@@ -350,35 +352,6 @@ function Index() {
                 </span>
               </ActionPill>
             </div>
-
-            {showMore && (
-              <div className="mt-5 text-sm leading-relaxed text-muted-foreground">
-                <ul className="space-y-2">
-                  <li>
-                    <strong className="text-ink">General rounds</strong> are always included in
-                    the view.
-                  </li>
-                  <li>
-                    <strong className="text-ink">General only</strong> excludes program-specific
-                    rounds — no PNP, CEC, FSW, or FST until you pick one.
-                  </li>
-                  <li>
-                    <strong className="text-ink">All categories</strong> passes every
-                    category-based round. Selecting specific categories narrows to those.
-                  </li>
-                  <li>
-                    Comparison states are <strong className="text-ink">above</strong>,{" "}
-                    <strong className="text-ink">matched</strong> (tie-break applies), and{" "}
-                    <strong className="text-ink">below</strong>. Historical outcomes only —
-                    cutoffs are not predictions.
-                  </li>
-                  <li>
-                    Data comes directly from IRCC and refreshes daily. See the footer for the
-                    last refresh timestamp.
-                  </li>
-                </ul>
-              </div>
-            )}
           </>
         )}
       </section>
