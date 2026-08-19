@@ -26,31 +26,38 @@ export function SiteHeader() {
         aria-label="Main"
         className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-5 gap-y-2 px-5 py-3.5"
       >
-        <Link to="/" className="display text-[20px] leading-none text-brand">
-          <span className="font-bold">CRS</span>{" "}
-          <span className="font-medium">Compass</span>
-        </Link>
-
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-          <ul className="flex items-center gap-1 text-sm">
-            {links.map((l) => (
-              <li key={l.to}>
-                <Link
-                  to={l.to}
-                  className="block rounded-md px-2.5 py-1.5 text-muted-foreground transition-colors hover:text-ink sm:px-3 [&.active]:bg-[var(--brand-soft)] [&.active]:font-medium [&.active]:text-brand"
-                  activeOptions={{ exact: l.to === "/" }}
-                >
-                  {l.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
+        {/* Left cluster: wordmark + freshness readout */}
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <Link to="/" className="display text-[20px] leading-none text-brand">
+            <span className="font-bold">CRS</span>{" "}
+            <span className="font-medium">Compass</span>
+          </Link>
           {pretty && (
-            <span className="text-xs tabular-nums text-muted-foreground">
-              Last updated: {pretty}
-            </span>
+            <>
+              <span aria-hidden className="text-hairline">
+                |
+              </span>
+              <span className="text-xs tabular-nums text-muted-foreground">
+                Last updated: {pretty}
+              </span>
+            </>
           )}
         </div>
+
+        {/* Right: nav */}
+        <ul className="flex items-center gap-1 text-sm">
+          {links.map((l) => (
+            <li key={l.to}>
+              <Link
+                to={l.to}
+                className="block rounded-md px-2.5 py-1.5 text-muted-foreground transition-colors hover:text-ink sm:px-3 [&.active]:bg-[var(--brand-soft)] [&.active]:font-medium [&.active]:text-brand"
+                activeOptions={{ exact: l.to === "/" }}
+              >
+                {l.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
       </nav>
     </header>
   );
