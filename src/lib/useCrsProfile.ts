@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { EVENTS, capture } from "@/lib/analytics";
 import type { Program, Draw } from "@/data/round-types";
 
@@ -9,32 +9,31 @@ import type { Program, Draw } from "@/data/round-types";
 export const ELIG_KEY = "crsSignal.eligibility";
 
 export interface Eligibility {
+  /** null = the "General only" default: no specific program selected, so
+      program-specific rounds (CEC/FSW/FST/PNP) are excluded from the view. */
   program: Program | null;
-  /** Only meaningful when program === null. 'none' = user explicitly does
-      not qualify for any listed program; 'unsure' = user is uncertain and
-      wants help. Both suppress the program filter, but 'unsure' surfaces
-      a help callout in the UI so the user isn't silently treated as
-      ineligible. */
-  programStance: "none" | "unsure";
+  /** Empty array = the "All categories" default: every category-based round
+      passes. A non-empty array narrows to just those category families. */
   categories: string[];
 }
+
+const DEFAULT_ELIG: Eligibility = { program: null, categories: [] };
 
 export interface CrsProfile {
   elig: Eligibility;
   setElig: React.Dispatch<React.SetStateAction<Eligibility>>;
-  /** True once we've read localStorage. Callers should render skeletons before this to avoid an SSR/CSR flash. */
+  resetElig: () => void;
+  /** True once we've read localStorage. */
   hydrated: boolean;
-  /** True when at least one program or category is selected. */
+  /** True when the user has narrowed away from the default view (any
+      specific program or specific category selected). Drives the "Latest
+      relevant cutoff" vs "Latest cutoff in this view" label. */
   hasEligibility: boolean;
 }
 
 export function useCrsProfile(): CrsProfile {
   const [hydrated, setHydrated] = useState(false);
-  const [elig, setElig] = useState<Eligibility>({
-    program: null,
-    programStance: "none",
-    categories: [],
-  });
+  const [elig, setElig] = useState<Eligibility>(DEFAULT_ELIG);
 
   useEffect(() => {
     try {
@@ -43,8 +42,7 @@ export function useCrsProfile(): CrsProfile {
         const parsed = JSON.parse(raw) as Partial<Eligibility>;
         setElig({
           program: parsed.program ?? null,
-          programStance: parsed.programStance === "unsure" ? "unsure" : "none",
-          categories: parsed.categories ?? [],
+          categories: Array.isArray(parsed.categories) ? parsed.categories : [],
         });
       }
     } catch {
@@ -62,27 +60,32 @@ export function useCrsProfile(): CrsProfile {
     });
   }, [elig, hydrated]);
 
+  const resetElig = useCallback(() => setElig(DEFAULT_ELIG), []);
+
   const hasEligibility = elig.program !== null || elig.categories.length > 0;
-  return { elig, setElig, hydrated, hasEligibility };
+  return { elig, setElig, resetElig, hydrated, hasEligibility };
 }
 
 // Filter predicate shared by every "is this draw relevant to me?" surface.
-// General rounds always pass when eligibility is set. If the user has no
-// eligibility selected, we default to a safe "explore" view: general and
-// category-based rounds only — program-specific rounds (which include PNP
-// with its 600-point nomination bonus) are excluded because comparing your
-// score to a PNP cutoff without a nomination is meaningless.
+//
+// Program:
+//   null            → "General only" — exclude program_specific rounds entirely
+//   'CEC' | ...     → include only that program's rounds (+ general always)
+//
+// Categories:
+//   []              → "All categories" — every category-based round passes
+//   [names]         → only those category families pass
+//
+// General rounds are always included. PNP is only included when the user has
+// explicitly selected PNP.
 export function isRelevantDraw(d: Draw, elig: Eligibility): boolean {
-  const hasElig = elig.program !== null || elig.categories.length > 0;
-  if (!hasElig) {
-    return d.round_type !== "program_specific";
-  }
   if (d.round_type === "general") return true;
+  if (d.round_type === "category_based") {
+    if (elig.categories.length === 0) return true;
+    return d.category !== null && elig.categories.includes(d.category);
+  }
   if (d.round_type === "program_specific") {
     return elig.program !== null && d.program === elig.program;
-  }
-  if (d.round_type === "category_based") {
-    return elig.categories.length > 0 && d.category !== null && elig.categories.includes(d.category);
   }
   return false;
 }

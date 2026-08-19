@@ -81,20 +81,17 @@ export function PersonalScoreSection({ score, elig }: Props) {
   const since = useMemo(() => monthsAgo(windowMonths), [windowMonths]);
 
   const validScore = score !== null && score >= 0 && score <= 1200;
-  const hasElig = elig.program !== null || elig.categories.length > 0;
 
-  // Round type selection — mirrors the isRelevantDraw semantics so Recent
-  // Draws and this section always agree about what "applies to you" means.
-  //   no eligibility  -> general + category-based (excludes PNP)
-  //   eligibility set -> general is always in, plus whatever branches the
-  //                      user opted into
+  // Round type selection — mirrors isRelevantDraw. General and category-based
+  // are always included (categories default to "All categories"); program-
+  // specific is only included when a specific program is picked. This keeps
+  // Recent Draws and this section in agreement about what "applies to you"
+  // means.
   const roundTypes = useMemo(() => {
-    if (!hasElig) return ["general", "category_based"];
-    const t = ["general"];
+    const t = ["general", "category_based"];
     if (elig.program) t.push("program_specific");
-    if (elig.categories.length) t.push("category_based");
     return t;
-  }, [elig, hasElig]);
+  }, [elig]);
 
   // When a program filter is passed, include the ANY_GENERAL sentinel so
   // general rounds (which have d.program IS NULL) also match — otherwise a
@@ -151,10 +148,8 @@ export function PersonalScoreSection({ score, elig }: Props) {
   // never has to wonder what N/M actually includes.
   const profileSummary = useMemo(() => {
     const parts: string[] = [`CRS ${score}`];
-    if (elig.program) parts.push(elig.program);
-    else parts.push("No program");
-    if (elig.categories.length) parts.push(elig.categories.join(", "));
-    else parts.push("No categories");
+    parts.push(elig.program ?? "General only");
+    parts.push(elig.categories.length ? elig.categories.join(", ") : "All categories");
     return parts.join(" · ");
   }, [score, elig]);
 
@@ -215,17 +210,6 @@ export function PersonalScoreSection({ score, elig }: Props) {
     <TooltipProvider>
       <section id="what-the-history-says" className="mt-14">
         <p className="kicker">What the history says</p>
-
-        {validScore && !hasElig && (
-          <div
-            className="mt-4 rounded-[var(--radius)] p-3 text-sm leading-relaxed text-ink"
-            style={{ backgroundColor: "var(--brand-soft)" }}
-          >
-            No eligibility selected — showing rounds anyone in the pool could benefit from
-            (general + category-based, excluding PNP). Set what applies to you above for a
-            personal view.
-          </div>
-        )}
 
         {!validScore ? (
           <p className="mt-3 text-[0.95rem] leading-relaxed text-muted-foreground">

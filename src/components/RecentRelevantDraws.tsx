@@ -49,15 +49,15 @@ export function RecentRelevantDraws({ elig, hasEligibility }: Props) {
     return data.filter((d) => isRelevantDraw(d, elig)).slice(0, MAX_CARDS);
   }, [data, elig]);
 
-  const heading = hasEligibility ? "Recent draws for you" : "Recent draws";
+  const heading = hasEligibility ? "Recent draws in this view" : "Recent draws";
 
   return (
     <section aria-labelledby="recent-heading" className="mt-14">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <h2 id="recent-heading" className="kicker">
-          {heading}
+          {heading} <span className="text-muted-foreground/70">(latest {recent.length || MAX_CARDS})</span>
         </h2>
-        <SecondaryLink to="/history">View full history →</SecondaryLink>
+        <SecondaryLink to="/history">View full history &rarr;</SecondaryLink>
       </div>
 
       {isLoading ? (
