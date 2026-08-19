@@ -22,7 +22,10 @@ export function initAnalytics() {
   posthog.init(key, {
     api_host: (import.meta.env['VITE_POSTHOG_HOST'] as string) || "https://us.i.posthog.com",
     capture_pageview: false,
-    person_profiles: "never",
+    // 'identified_only' is PostHog's default. 'never' silently drops events
+    // when the project has "Discard anonymous events" enabled — which it is
+    // by default — so we were capturing nothing.
+    person_profiles: "identified_only",
   });
   initialized = true;
 }
