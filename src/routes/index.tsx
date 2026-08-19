@@ -1,17 +1,18 @@
 import { useEffect, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { RotateCcw } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RoundBadge } from "@/components/RoundBadge";
 import { ScoreScale } from "@/components/ScoreScale";
 import { formatDate } from "@/components/DrawMeta";
-import { EligibilityInputs } from "@/components/EligibilityInputs";
+import { FilterChip } from "@/components/FilterChip";
 import { RecentRelevantDraws } from "@/components/RecentRelevantDraws";
 import { PersonalScoreSection } from "@/components/PersonalScoreSection";
 import { drawsQuery } from "@/lib/queries";
 import { EVENTS, capture } from "@/lib/analytics";
 import { useCrsProfile, isRelevantDraw } from "@/lib/useCrsProfile";
+import { CATEGORIES, type Program } from "@/data/round-types";
 
 const SCORE_KEY = "crsSignal.score";
 
@@ -35,22 +36,15 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-// ─── Hero-scoped subcomponents ────────────────────────────────────────────
-// Kept in this file (not extracted) because they only exist inside the hero
-// and their styling is tightly coupled to the deep-green surface.
+const PROGRAM_CHIPS: { value: Program | null; label: string }[] = [
+  { value: null, label: "General only" },
+  { value: "CEC", label: "CEC" },
+  { value: "FSW", label: "FSW" },
+  { value: "FST", label: "FST" },
+  { value: "PNP", label: "PNP (I hold a nomination)" },
+];
 
 function HeroKicker({ children }: { children: React.ReactNode }) {
-  return (
-    <p
-      className="text-[0.7rem] font-semibold tracking-[0.14em] uppercase"
-      style={{ color: "var(--accent-soft)" }}
-    >
-      {children}
-    </p>
-  );
-}
-
-function HeroTileLabel({ children }: { children: React.ReactNode }) {
   return (
     <p
       className="text-[0.65rem] font-semibold tracking-[0.14em] uppercase"
@@ -61,31 +55,11 @@ function HeroTileLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** Bordered inset used for the three YOUR VIEW tiles and the result panel. */
-function HeroInset({
-  className = "",
-  children,
-}: {
-  className?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div
-      className={`rounded-[var(--radius)] border ${className}`}
-      style={{
-        borderColor: "rgba(246,241,232,0.28)",
-        backgroundColor: "rgba(246,241,232,0.06)",
-      }}
-    >
-      {children}
-    </div>
-  );
-}
-
 function Index() {
   const { data, isLoading } = useQuery(drawsQuery(8));
   const [raw, setRaw] = useState("");
   const { elig, setElig, resetElig, hasEligibility } = useCrsProfile();
+  const [showMore, setShowMore] = useState(false);
 
   useEffect(() => {
     capture(EVENTS.LANDING_VIEWED);
@@ -111,190 +85,260 @@ function Index() {
   const parsed = Number.parseInt(raw, 10);
   const score = Number.isFinite(parsed) && parsed > 0 && parsed <= 1200 ? parsed : null;
 
-  // The single filter state — same instance drives Recent Draws and the
-  // historical summary below the hero. "Latest in this view" is the most
-  // recent draw matching that state.
   const latestRelevant = data?.find((d) => isRelevantDraw(d, elig));
   const latestFallback = data?.[0];
   const latest = latestRelevant ?? latestFallback;
   const isRelevantLatest = latestRelevant !== undefined && latestRelevant === latest;
 
-  const programLabel = elig.program ?? "General only";
-  const categoryLabel =
-    elig.categories.length === 0
-      ? "All categories"
-      : elig.categories.length === 1
-        ? elig.categories[0]!
-        : `${elig.categories.length} categories`;
-
+  const allCategoriesSelected = elig.categories.length === 0;
   const canReset = hasEligibility;
 
   return (
     <div className="mx-auto max-w-6xl px-5 pt-8 pb-6">
-      {/* Hero — deep teal surface */}
+      {/* Hero — inputs only. No result metrics, no explanatory copy. */}
       <section
-        className="rounded-[calc(var(--radius)*1.5)] px-6 py-10 sm:px-10 sm:py-12"
+        className="rounded-[calc(var(--radius)*1.5)] px-6 py-8 sm:px-10 sm:py-10"
         style={{ backgroundColor: "var(--brand)", color: "var(--paper)" }}
       >
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-12 md:gap-10">
-          {/* Left — title only, no marketing subtitle */}
-          <div className="md:col-span-5">
-            <HeroKicker>Express Entry, in context</HeroKicker>
-            <h1
-              className="display mt-3 max-w-[14ch] text-[2.5rem] leading-[1.05] font-semibold sm:text-[3rem]"
-              style={{ color: "var(--paper)" }}
+        <div className="flex flex-wrap items-baseline justify-between gap-4">
+          <h1
+            className="display max-w-[16ch] text-[2.25rem] leading-[1.05] font-semibold sm:text-[2.75rem]"
+            style={{ color: "var(--paper)" }}
+          >
+            See where your score lands.
+          </h1>
+          <button
+            type="button"
+            onClick={resetElig}
+            disabled={!canReset}
+            className="inline-flex items-center gap-1.5 text-xs font-medium transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
+            style={{ color: "var(--accent-soft)" }}
+            aria-label="Reset eligibility to General only + All categories"
+          >
+            <RotateCcw aria-hidden className="h-3 w-3" />
+            Reset
+          </button>
+        </div>
+
+        <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-12 md:gap-8">
+          {/* CRS score input */}
+          <div className="md:col-span-3">
+            <HeroKicker>CRS score</HeroKicker>
+            <label htmlFor="crs-score" className="sr-only">
+              Enter your CRS score
+            </label>
+            <div
+              className="mt-3 rounded-[var(--radius)] border px-4 py-2 transition-colors focus-within:border-[var(--accent-soft)]"
+              style={{
+                borderColor: "rgba(246,241,232,0.28)",
+                backgroundColor: "rgba(246,241,232,0.05)",
+              }}
             >
-              See where your score lands.
-            </h1>
+              <input
+                id="crs-score"
+                inputMode="numeric"
+                autoComplete="off"
+                placeholder="—"
+                value={raw}
+                onChange={(e) => setRaw(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                className="figure w-full bg-transparent text-[2rem] leading-tight outline-none sm:text-[2.25rem]"
+                style={{ color: "var(--accent-soft)" }}
+              />
+            </div>
           </div>
 
-          {/* Right — YOUR VIEW + result */}
-          <div className="md:col-span-7">
-            {/* YOUR VIEW panel: score input + program/category readouts + reset */}
-            <HeroInset className="p-5 sm:p-6">
-              <div className="flex items-center justify-between gap-4">
-                <HeroKicker>Your view</HeroKicker>
-                <button
-                  type="button"
-                  onClick={resetElig}
-                  disabled={!canReset}
-                  className="inline-flex items-center gap-1 text-xs font-medium transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
-                  style={{ color: "var(--accent-soft)" }}
-                  aria-label="Reset eligibility to General only + All categories"
-                >
-                  <RotateCcw aria-hidden className="h-3 w-3" />
-                  Reset
-                </button>
-              </div>
+          {/* Program eligibility chips */}
+          <div className="md:col-span-4">
+            <HeroKicker>Program eligibility</HeroKicker>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {PROGRAM_CHIPS.map((p) => (
+                <FilterChip
+                  key={p.label}
+                  label={p.label}
+                  selected={elig.program === p.value}
+                  onClick={() => setElig((e) => ({ ...e, program: p.value }))}
+                  tone="dark"
+                />
+              ))}
+            </div>
+          </div>
 
-              <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
-                {/* CRS score input */}
-                <div>
-                  <HeroTileLabel>CRS score</HeroTileLabel>
-                  <label htmlFor="crs-score" className="sr-only">
-                    Enter your CRS score
-                  </label>
-                  <div
-                    className="mt-1.5 rounded-[var(--radius)] border px-3 py-1.5 transition-colors focus-within:border-[var(--accent-soft)]"
-                    style={{
-                      borderColor: "rgba(246,241,232,0.28)",
-                      backgroundColor: "rgba(246,241,232,0.04)",
-                    }}
-                  >
-                    <input
-                      id="crs-score"
-                      inputMode="numeric"
-                      autoComplete="off"
-                      placeholder="—"
-                      value={raw}
-                      onChange={(e) => setRaw(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                      className="figure w-full bg-transparent text-[1.5rem] leading-tight outline-none"
-                      style={{ color: "var(--accent-soft)" }}
-                    />
-                  </div>
-                </div>
-
-                {/* Program readout */}
-                <div>
-                  <HeroTileLabel>Program eligibility</HeroTileLabel>
-                  <p
-                    className="mt-1.5 truncate text-[0.95rem] font-medium"
-                    style={{ color: "var(--paper)" }}
-                    title={programLabel}
-                  >
-                    {programLabel}
-                  </p>
-                </div>
-
-                {/* Category readout */}
-                <div>
-                  <HeroTileLabel>Category eligibility</HeroTileLabel>
-                  <p
-                    className="mt-1.5 truncate text-[0.95rem] font-medium"
-                    style={{ color: "var(--paper)" }}
-                    title={
-                      elig.categories.length > 1 ? elig.categories.join(", ") : categoryLabel
-                    }
-                  >
-                    {categoryLabel}
-                  </p>
-                </div>
-              </div>
-            </HeroInset>
-
-            {/* Result panel — cutoff + user score + scale */}
-            <div className="mt-4">
-              {isLoading ? (
-                <Skeleton className="h-40 w-full opacity-30" />
-              ) : !latest ? (
-                <HeroInset className="p-5 sm:p-6">
-                  <p className="text-sm" style={{ color: "rgba(246,241,232,0.75)" }}>
-                    Data not available yet — the daily refresh runs at ~9am ET.
-                  </p>
-                </HeroInset>
-              ) : (
-                <HeroInset className="p-5 sm:p-6">
-                  <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                    <div>
-                      <HeroTileLabel>
-                        {isRelevantLatest && hasEligibility
-                          ? "Latest relevant cutoff"
-                          : "Latest cutoff in this view"}
-                      </HeroTileLabel>
-                      <div
-                        className="figure mt-1 text-[2.75rem] leading-none sm:text-[3rem]"
-                        style={{ color: "var(--paper)" }}
-                      >
-                        {latest.cutoff_score}
-                      </div>
-                      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-                        <RoundBadge draw={latest} />
-                      </div>
-                      <p
-                        className="mt-1.5 text-xs"
-                        style={{ color: "rgba(246,241,232,0.65)" }}
-                      >
-                        {formatDate(latest.draw_date)}
-                      </p>
-                    </div>
-
-                    <div>
-                      <HeroTileLabel>Your score</HeroTileLabel>
-                      <div
-                        className="figure mt-1 text-[2.75rem] leading-none sm:text-[3rem]"
-                        style={{
-                          color: score != null ? "var(--accent-soft)" : "rgba(246,241,232,0.35)",
-                        }}
-                      >
-                        {score ?? "—"}
-                      </div>
-                      <div className="mt-3">
-                        <ScoreScale cutoffDraw={latest} score={score} tone="dark" />
-                      </div>
-                      {score != null && (
-                        <div
-                          className="mt-2 text-sm font-medium"
-                          style={{ color: "var(--accent-soft)" }}
-                        >
-                          {(() => {
-                            const diff = score - latest.cutoff_score;
-                            if (diff > 0) return `+${diff} above cutoff`;
-                            if (diff < 0) return `${diff} below cutoff`;
-                            return "Matched cutoff · tie-break applies";
-                          })()}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </HeroInset>
-              )}
+          {/* Category eligibility chips */}
+          <div className="md:col-span-5">
+            <HeroKicker>Category eligibility</HeroKicker>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <FilterChip
+                label="All categories"
+                selected={allCategoriesSelected}
+                onClick={() => setElig((e) => ({ ...e, categories: [] }))}
+                tone="dark"
+              />
+              {CATEGORIES.map((c) => (
+                <FilterChip
+                  key={c}
+                  label={c}
+                  selected={elig.categories.includes(c)}
+                  onClick={() =>
+                    setElig((e) => ({
+                      ...e,
+                      categories: e.categories.includes(c)
+                        ? e.categories.filter((x) => x !== c)
+                        : [...e.categories, c],
+                    }))
+                  }
+                  tone="dark"
+                />
+              ))}
             </div>
           </div>
         </div>
       </section>
 
-      {/* Same filter state drives all three sections below. */}
-      <EligibilityInputs elig={elig} setElig={setElig} />
+      {/* Result panel — pale-green tint sits right under the hero. Shows the
+          answer produced by the hero's inputs; nothing more. */}
+      <section
+        className="mt-4 rounded-[var(--radius)] border p-6 sm:p-8"
+        style={{
+          backgroundColor: "var(--brand-soft)",
+          borderColor: "color-mix(in srgb, var(--brand) 12%, transparent)",
+        }}
+      >
+        {isLoading ? (
+          <Skeleton className="h-40 w-full" />
+        ) : !latest ? (
+          <p className="text-sm text-muted-foreground">
+            Data not available yet — the daily refresh runs at ~9am ET.
+          </p>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+              {/* Cutoff */}
+              <div>
+                <p className="kicker">
+                  {isRelevantLatest && hasEligibility
+                    ? "Latest relevant cutoff"
+                    : "Latest cutoff in this view"}
+                </p>
+                <div className="figure mt-2 text-[2.75rem] leading-none text-ink sm:text-[3.25rem]">
+                  {latest.cutoff_score}
+                </div>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <RoundBadge draw={latest} />
+                </div>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {formatDate(latest.draw_date)}
+                </p>
+              </div>
+
+              {/* User score */}
+              <div>
+                <p className="kicker">Your score</p>
+                <div
+                  className="figure mt-2 text-[2.75rem] leading-none sm:text-[3.25rem]"
+                  style={{
+                    color: score != null ? "var(--brand)" : "var(--muted-foreground)",
+                  }}
+                >
+                  {score ?? "—"}
+                </div>
+                <div className="mt-3">
+                  <ScoreScale cutoffDraw={latest} score={score} tone="light" />
+                </div>
+                {score != null && (
+                  <p className="mt-3 text-sm font-medium">
+                    {(() => {
+                      const diff = score - latest.cutoff_score;
+                      if (diff > 0)
+                        return (
+                          <span style={{ color: "var(--brand)" }}>+{diff} above cutoff</span>
+                        );
+                      if (diff < 0)
+                        return (
+                          <span style={{ color: "var(--accent)" }}>
+                            {diff} below cutoff
+                          </span>
+                        );
+                      return (
+                        <span className="text-muted-foreground">
+                          Matched cutoff · tie-break applies
+                        </span>
+                      );
+                    })()}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* PNP note — surfaces only when the user has opted into PNP.
+                Kept minimal and inline here (out of the hero) per the
+                "no explanatory copy in the hero" rule. */}
+            {elig.program === "PNP" && (
+              <p className="mt-6 text-xs leading-relaxed text-muted-foreground">
+                <strong className="text-ink">PNP:</strong> cutoffs include the automatic
+                600-point nomination bonus. Only meaningful if you actually hold a nomination.
+              </p>
+            )}
+
+            {/* Actions */}
+            <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-[color-mix(in_srgb,var(--brand)_18%,transparent)] pt-5 text-sm">
+              <button
+                type="button"
+                onClick={() => setShowMore((s) => !s)}
+                className="font-medium text-[var(--brand)] transition-opacity hover:opacity-70"
+                aria-expanded={showMore}
+              >
+                {showMore ? "Hide details ↑" : "More details ↓"}
+              </button>
+              <Link
+                to="/history"
+                className="font-medium text-[var(--brand)] transition-opacity hover:opacity-70"
+              >
+                View full history →
+              </Link>
+              <span
+                className="inline-flex items-center gap-1.5 text-muted-foreground/70"
+                title="Score sensitivity — try your score +5 / +10 / +20. Not built yet."
+              >
+                Plan your score
+                <span className="rounded-full border border-[var(--rule)] px-1.5 py-0.5 text-[0.65rem] font-medium uppercase tracking-wider">
+                  Coming soon
+                </span>
+              </span>
+            </div>
+
+            {showMore && (
+              <div className="mt-5 text-sm leading-relaxed text-muted-foreground">
+                <ul className="space-y-2">
+                  <li>
+                    <strong className="text-ink">General rounds</strong> are always included in
+                    the view.
+                  </li>
+                  <li>
+                    <strong className="text-ink">General only</strong> excludes program-specific
+                    rounds — no PNP, CEC, FSW, or FST until you pick one.
+                  </li>
+                  <li>
+                    <strong className="text-ink">All categories</strong> passes every
+                    category-based round. Selecting specific categories narrows to those.
+                  </li>
+                  <li>
+                    Comparison states are <strong className="text-ink">above</strong>,{" "}
+                    <strong className="text-ink">matched</strong> (tie-break applies), and{" "}
+                    <strong className="text-ink">below</strong>. Historical outcomes only —
+                    cutoffs are not predictions.
+                  </li>
+                  <li>
+                    Data comes directly from IRCC and refreshes daily. See the footer for the
+                    last refresh timestamp.
+                  </li>
+                </ul>
+              </div>
+            )}
+          </>
+        )}
+      </section>
+
+      {/* Everything below stays unchanged — same filter state. */}
       <RecentRelevantDraws elig={elig} hasEligibility={hasEligibility} />
       <PersonalScoreSection score={score} elig={elig} />
     </div>

@@ -1,14 +1,20 @@
 import { cn } from "@/lib/utils";
 
-/** Canonical chip toggle for the whole app. */
+/** Canonical chip toggle for the whole app.
+ *
+ * tone="light" (default) — for the cream page surface.
+ * tone="dark" — for the deep-green hero surface.
+ */
 export function FilterChip({
   label,
   selected,
   onClick,
+  tone = "light",
 }: {
   label: string;
   selected: boolean;
   onClick: () => void;
+  tone?: "light" | "dark";
 }) {
   return (
     <button
@@ -17,9 +23,13 @@ export function FilterChip({
       onClick={onClick}
       className={cn(
         "inline-flex h-8 items-center rounded-full px-3.5 text-[0.8125rem] leading-none transition-colors",
-        selected
-          ? "bg-[var(--brand)] text-white"
-          : "border border-[var(--rule)] text-muted-foreground hover:text-foreground",
+        tone === "light"
+          ? selected
+            ? "bg-[var(--brand)] text-white"
+            : "border border-[var(--rule)] text-muted-foreground hover:text-foreground"
+          : selected
+            ? "bg-[var(--accent-soft)] font-medium text-[var(--brand)]"
+            : "border border-[rgba(246,241,232,0.28)] text-[rgba(246,241,232,0.72)] hover:border-[rgba(246,241,232,0.55)] hover:text-[var(--paper)]",
       )}
     >
       {label}
