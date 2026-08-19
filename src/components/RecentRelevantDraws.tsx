@@ -52,7 +52,11 @@ export function RecentRelevantDraws({ elig, hasEligibility }: Props) {
   const heading = hasEligibility ? "Recent draws in this view" : "Recent draws";
 
   return (
-    <section aria-labelledby="recent-heading" className="mt-14">
+    <section
+      id="recent-draws"
+      aria-labelledby="recent-heading"
+      className="mt-14 scroll-mt-24"
+    >
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <h2 id="recent-heading" className="kicker">
           {heading} <span className="text-muted-foreground/70">(latest {recent.length || MAX_CARDS})</span>

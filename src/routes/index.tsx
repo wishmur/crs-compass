@@ -97,9 +97,9 @@ function Index() {
   const { data, isLoading } = useQuery(drawsQuery(8));
   const { raw, setRaw, score } = useScore();
   const { elig, setElig, resetElig, hasEligibility } = useCrsProfile();
-  const scrollToHistorySummary = () => {
+  const scrollToDetails = () => {
     document
-      .getElementById("what-the-history-says")
+      .getElementById("recent-draws")
       ?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
@@ -336,8 +336,8 @@ function Index() {
 
             {/* Actions — three consistent pill controls. */}
             <div className="mt-6 flex flex-wrap gap-2 border-t border-[color-mix(in_srgb,var(--brand)_18%,transparent)] pt-5">
-              <ActionPill onClick={scrollToHistorySummary}>More details</ActionPill>
-              <ActionPill to="/history">View full history</ActionPill>
+              <ActionPill onClick={scrollToDetails}>More details</ActionPill>
+              <ActionPill to="/history">Check IRCC history</ActionPill>
               <ActionPill to="/plan" muted>
                 Plan your score
                 <span
