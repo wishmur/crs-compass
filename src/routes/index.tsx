@@ -245,6 +245,22 @@ function Index() {
           </p>
         ) : (
           <>
+            {/* Absolute-latest signal — surfaces when the user's filter
+                excludes a more recent draw than the one they're looking at.
+                Prevents someone in "General only" from thinking the site is
+                stale when IRCC actually just ran a CEC round today. */}
+            {latestFallback && latestFallback !== latest && (
+              <div className="mb-5 flex flex-wrap items-baseline gap-x-2 gap-y-1 border-b border-[color-mix(in_srgb,var(--brand)_15%,transparent)] pb-4 text-xs text-muted-foreground">
+                <span className="uppercase tracking-[0.14em]">
+                  Most recent IRCC round overall:
+                </span>
+                <span className="tabular-nums text-ink">
+                  {formatDate(latestFallback.draw_date)} · {latestFallback.cutoff_score}
+                </span>
+                <RoundBadge draw={latestFallback} />
+              </div>
+            )}
+
             <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
               {/* Cutoff */}
               <div>

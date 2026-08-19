@@ -39,7 +39,7 @@ export function SiteHeader() {
                 |
               </span>
               <span className="text-xs tabular-nums text-muted-foreground">
-                Last updated: {pretty}
+                Data checked: {pretty}
               </span>
             </>
           )}
