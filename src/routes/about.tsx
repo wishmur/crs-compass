@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { EVENTS, capture } from "@/lib/analytics";
+import creatorsAsset from "@/assets/creators.png.asset.json";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
