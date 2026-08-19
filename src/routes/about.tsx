@@ -59,14 +59,8 @@ function About() {
             className="text-[0.7rem] font-semibold tracking-[0.14em] uppercase"
             style={{ color: "var(--accent-soft)" }}
           >
-            About
+            About &mdash; why was it built
           </p>
-          <h1
-            className="display mt-3 max-w-[22ch] text-[2.5rem] leading-[1.05] font-semibold sm:text-[3rem]"
-            style={{ color: "var(--paper)" }}
-          >
-            About: Why was this built?
-          </h1>
           <p
             className="display mt-6 max-w-[52ch] text-[1.125rem] leading-[1.5] sm:text-[1.25rem]"
             style={{ color: "rgba(246,241,232,0.92)" }}
