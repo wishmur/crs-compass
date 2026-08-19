@@ -169,7 +169,7 @@
 
   --tone-general-bg: var(--brand-soft);
   --tone-general-fg: var(--rt-general);
-  --tone-cec-bg: var(--brand-soft);
+  --tone-cec-bg: #dce6ea;
   --tone-cec-fg: var(--rt-cec);
   --tone-fsw-bg: var(--brand-soft);
   --tone-fsw-fg: var(--rt-fsw);
