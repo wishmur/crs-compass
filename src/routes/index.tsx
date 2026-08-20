@@ -329,19 +329,7 @@ function Index() {
             <div className="mt-6 flex flex-wrap gap-2 border-t border-[color-mix(in_srgb,var(--brand)_18%,transparent)] pt-5">
               <ActionPill onClick={scrollToDetails}>More details</ActionPill>
               <ActionPill to="/history">Check IRCC history</ActionPill>
-              <ActionPill to="/plan" muted>
-                Plan your score
-                <span
-                  aria-label="Coming soon"
-                  className="rounded-full px-1.5 py-0.5 text-[0.6rem] font-medium uppercase tracking-wider"
-                  style={{
-                    backgroundColor: "color-mix(in srgb, var(--ink) 8%, transparent)",
-                    color: "var(--muted-foreground)",
-                  }}
-                >
-                  Coming soon
-                </span>
-              </ActionPill>
+              <ActionPill to="/plan">Plan your score</ActionPill>
             </div>
           </>
         )}
