@@ -46,6 +46,21 @@ function summarizeAbilities(scores: AbilityScores, prefix: "CLB" | "NCLC"): stri
   return ABILITIES.map((a) => `${labels[a]} ${prefix} ${bandLabel(scores[a])}`).join(", ");
 }
 
+/** Collapsed-step summary for step 3: mentions the starting point only when
+    the user actually entered one, since the common case (no current French
+    result) has nothing worth restating. */
+function summarizeFrenchTarget(
+  hasCurrentFrench: boolean,
+  currentFrench: AbilityScores,
+  target: AbilityScores,
+): string {
+  const targetSummary = summarizeAbilities(target, "NCLC");
+  if (hasCurrentFrench) {
+    return `${summarizeAbilities(currentFrench, "NCLC")} → targeting ${targetSummary}.`;
+  }
+  return `Targeting ${targetSummary}.`;
+}
+
 interface Props {
   baseScore: number;
   elig: Eligibility;
@@ -57,11 +72,15 @@ interface Props {
 
     Renders two separate light-green panels: a "questions" panel with the
     3-step progressive accordion (no per-step cards inside it — just
-    kickers, whitespace, and thin dividers; only one step shows its full
-    controls at a time, completed steps before it collapse to a one-line
-    summary with Edit), and — once there's enough to calculate — a second,
-    visually distinct "result" panel below it, so a generated result reads
-    as its own answer rather than more of the form. */
+    kickers, whitespace, and thin dividers), and — once there's enough to
+    calculate — a second, visually distinct "result" panel below it, so a
+    generated result reads as its own answer rather than more of the form.
+
+    The accordion is strict: exactly one step shows its full controls at a
+    time (including step 3), everything else that's complete collapses to a
+    one-line summary with Edit. Editing an earlier step collapses/hides the
+    later ones without clearing their values — completing it again jumps
+    straight back to wherever the flow left off. */
 export function FrenchScenarioFlow({ baseScore, elig }: Props) {
   const { setProfile } = usePlannerProfile();
 
@@ -77,7 +96,8 @@ export function FrenchScenarioFlow({ baseScore, elig }: Props) {
   const step1Complete = spouse !== null;
   const step2Complete = englishMode === "none" || (englishMode === "has" && isComplete(englishClb));
   const currentFrenchReady = !hasCurrentFrench || isComplete(currentFrench);
-  const canCalculate = step1Complete && step2Complete && currentFrenchReady && isComplete(target);
+  const step3Complete = currentFrenchReady && isComplete(target);
+  const canCalculate = step1Complete && step2Complete && step3Complete;
 
   const result = useMemo(() => {
     if (!canCalculate || spouse === null) return null;
@@ -157,7 +177,7 @@ export function FrenchScenarioFlow({ baseScore, elig }: Props) {
               <p className="font-medium text-ink">
                 Do you have a spouse or partner coming with you to Canada?
               </p>
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="mt-1 text-sm text-muted-foreground">
                 The point tables — and caps — differ with and without a spouse or common-law
                 partner.
               </p>
@@ -199,7 +219,7 @@ export function FrenchScenarioFlow({ baseScore, elig }: Props) {
             {activeStep === 2 ? (
               <div className="mt-3">
                 <p className="font-medium text-ink">What&rsquo;s your current English result?</p>
-                <p className="mt-1 text-xs text-muted-foreground">
+                <p className="mt-1 text-sm text-muted-foreground">
                   The French bonus depends on how strong your English is, not just your French.
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
@@ -243,144 +263,172 @@ export function FrenchScenarioFlow({ baseScore, elig }: Props) {
           </div>
         )}
 
-        {/* 03 — French target. The most visually prominent step, and the only
-          one that never collapses — the result populates directly beneath
-          it once it's answered. */}
+        {/* 03 — French target. The most visually prominent step while it's
+          active; collapses like the others once complete and another step
+          is being edited. */}
         {step1Complete && step2Complete && (
           <div className="mt-8 border-t pt-8" style={DIVIDER_STYLE}>
             <p className="kicker">03 &middot; French target</p>
-            <p className="mt-3 text-[1.05rem] font-semibold text-ink sm:text-[1.15rem]">
-              What French result are you aiming for?
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Enter your target as NCLC levels. If you know a TEF Canada or TCF Canada score
-              instead, convert it first using{" "}
-              <a
-                href="https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/documents/language-test.html"
-                target="_blank"
-                rel="noreferrer"
-                className="underline underline-offset-2"
-              >
-                IRCC&rsquo;s official comparison chart
-              </a>
-              .
-            </p>
-
-            <div className="mt-3 text-xs text-muted-foreground">
-              {!hasCurrentFrench ? (
-                <span>
-                  Starting from no French result counted in your score yet.{" "}
-                  <button
-                    type="button"
-                    className="underline underline-offset-2 hover:text-foreground"
-                    onClick={() => setHasCurrentFrench(true)}
+            {activeStep === 3 ? (
+              <div className="mt-3">
+                <p className="text-[1.05rem] font-semibold text-ink sm:text-[1.15rem]">
+                  What French result are you aiming for?
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Enter your target as NCLC levels. If you know a TEF Canada or TCF Canada score
+                  instead, convert it first using{" "}
+                  <a
+                    href="https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/documents/language-test.html"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="underline underline-offset-2"
                   >
-                    Already have a French result counted in your score? Add it →
-                  </button>
-                </span>
-              ) : (
-                <span>
-                  Starting point: your current French result, already counted in your score above.{" "}
-                  <button
-                    type="button"
-                    className="underline underline-offset-2 hover:text-foreground"
-                    onClick={() => {
-                      setHasCurrentFrench(false);
-                      setCurrentFrench(EMPTY_PARTIAL_ABILITIES);
-                      setProfile((p) => ({ ...p, currentFrenchNclc: EMPTY_ZERO }));
-                    }}
-                  >
-                    Remove
-                  </button>
-                </span>
-              )}
-            </div>
+                    IRCC&rsquo;s official comparison chart
+                  </a>
+                  .
+                </p>
 
-            {hasCurrentFrench && (
-              <div className="mt-4">
-                <AbilityLevelPicker
-                  levelLabel="NCLC"
-                  value={currentFrench}
-                  onChange={(next) => {
-                    setCurrentFrench(next);
-                    persist({ currentFrench: next });
-                  }}
-                />
+                <div className="mt-3 text-sm text-muted-foreground">
+                  {!hasCurrentFrench ? (
+                    <span>
+                      Starting from no French result counted in your score yet.{" "}
+                      <button
+                        type="button"
+                        className="underline underline-offset-2 hover:text-foreground"
+                        onClick={() => setHasCurrentFrench(true)}
+                      >
+                        Already have a French result counted in your score? Add it →
+                      </button>
+                    </span>
+                  ) : (
+                    <span>
+                      Starting point: your current French result, already counted in your score
+                      above.{" "}
+                      <button
+                        type="button"
+                        className="underline underline-offset-2 hover:text-foreground"
+                        onClick={() => {
+                          setHasCurrentFrench(false);
+                          setCurrentFrench(EMPTY_PARTIAL_ABILITIES);
+                          setProfile((p) => ({ ...p, currentFrenchNclc: EMPTY_ZERO }));
+                        }}
+                      >
+                        Remove
+                      </button>
+                    </span>
+                  )}
+                </div>
+
+                {hasCurrentFrench && (
+                  <div className="mt-4">
+                    <AbilityLevelPicker
+                      levelLabel="NCLC"
+                      value={currentFrench}
+                      onChange={(next) => {
+                        setCurrentFrench(next);
+                        persist({ currentFrench: next });
+                      }}
+                    />
+                  </div>
+                )}
+
+                <div className="mt-4">
+                  <AbilityLevelPicker levelLabel="NCLC" value={target} onChange={setTarget} />
+                </div>
               </div>
-            )}
-
-            <div className="mt-4">
-              <AbilityLevelPicker levelLabel="NCLC" value={target} onChange={setTarget} />
-            </div>
+            ) : step3Complete ? (
+              <div className="mt-2 flex items-center justify-between gap-4">
+                <p className="text-[0.95rem] text-ink">
+                  {summarizeFrenchTarget(
+                    hasCurrentFrench,
+                    currentFrench as AbilityScores,
+                    target as AbilityScores,
+                  )}
+                </p>
+                <button
+                  type="button"
+                  className="shrink-0 text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                  onClick={() => setActiveStep(3)}
+                >
+                  Edit
+                </button>
+              </div>
+            ) : null}
           </div>
         )}
       </section>
 
       {/* Result — a separate panel from the questions above, so a generated
-          result reads as its own answer rather than more of the form.
-          Typography only inside it, no nested boxes. */}
+          result reads as its own answer rather than more of the form. Two
+          columns on desktop (planned score+breakdown / historical impact),
+          separated only by whitespace and one subtle vertical rule — no
+          nested boxes. Stacks to one column on mobile. */}
       {result && (
         <section
           ref={resultRef}
           className="mt-4 rounded-[var(--radius)] border p-6 sm:p-8"
           style={PANEL_STYLE}
         >
-          <p className="kicker">Your planned score</p>
-          <p className="display mt-3 text-[1.75rem] leading-[1.15] text-ink sm:text-[2.25rem]">
-            {result.baseScore}{" "}
-            <span aria-hidden className="text-muted-foreground">
-              →
-            </span>{" "}
-            <span style={{ color: result.delta >= 0 ? "var(--brand)" : "var(--accent)" }}>
-              {result.projectedScore}
-            </span>
-          </p>
-          <p
-            className="figure mt-1 text-xl"
-            style={{ color: result.delta >= 0 ? "var(--brand)" : "var(--accent)" }}
-          >
-            {result.delta >= 0 ? "+" : ""}
-            {result.delta} CRS
-          </p>
-
-          <div className="mt-6 space-y-3">
-            {result.breakdown.map((line) => (
-              <div key={line.label} className="flex items-center justify-between gap-4 text-sm">
-                <span className="text-muted-foreground">{line.label}</span>
-                <span className="num text-ink">
-                  {line.before} → {line.after}{" "}
-                  <span className="text-muted-foreground">
-                    ({line.delta >= 0 ? "+" : ""}
-                    {line.delta})
-                  </span>
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 md:gap-10">
+            <div>
+              <p className="kicker">Your planned score</p>
+              <p className="display mt-3 text-[1.75rem] leading-[1.15] text-ink sm:text-[2.25rem]">
+                {result.baseScore}{" "}
+                <span aria-hidden className="text-muted-foreground">
+                  →
+                </span>{" "}
+                <span style={{ color: result.delta >= 0 ? "var(--brand)" : "var(--accent)" }}>
+                  {result.projectedScore}
                 </span>
+              </p>
+              <p
+                className="figure mt-1 text-xl"
+                style={{ color: result.delta >= 0 ? "var(--brand)" : "var(--accent)" }}
+              >
+                {result.delta >= 0 ? "+" : ""}
+                {result.delta} CRS
+              </p>
+
+              <div className="mt-6 space-y-3">
+                {result.breakdown.map((line) => (
+                  <div key={line.label} className="flex items-center justify-between gap-4 text-sm">
+                    <span className="text-muted-foreground">{line.label}</span>
+                    <span className="num text-ink">
+                      {line.before} → {line.after}{" "}
+                      <span className="text-muted-foreground">
+                        ({line.delta >= 0 ? "+" : ""}
+                        {line.delta})
+                      </span>
+                    </span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
 
-          <p className="mt-6 text-xs text-muted-foreground">
-            Calculated using CRS rules verified {result.ruleset.verifiedAt}.{" "}
-            <a
-              href={result.ruleset.sources[0]?.url}
-              target="_blank"
-              rel="noreferrer"
-              className="underline underline-offset-2"
-            >
-              See the official criteria →
-            </a>
-          </p>
-          <p className="mt-2 text-xs text-muted-foreground">
-            This assumes English is your first official language and French your second — the common
-            case. If French is actually your stronger language, other CRS factors could also shift
-            and this number would understate the effect.
-          </p>
+              <p className="mt-6 text-xs text-muted-foreground">
+                Calculated using CRS rules verified {result.ruleset.verifiedAt}.{" "}
+                <a
+                  href={result.ruleset.sources[0]?.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="underline underline-offset-2"
+                >
+                  See the official criteria →
+                </a>
+              </p>
+              <p className="mt-2 text-xs text-muted-foreground">
+                This assumes English is your first official language and French your second — the
+                common case. If French is actually your stronger language, other CRS factors could
+                also shift and this number would understate the effect.
+              </p>
+            </div>
 
-          <div className="mt-8 border-t pt-8" style={DIVIDER_STYLE}>
-            <PlanHistoricalComparison
-              currentScore={result.baseScore}
-              plannedScore={result.projectedScore}
-              elig={elig}
-            />
+            <div className="md:border-l md:pl-10" style={DIVIDER_STYLE}>
+              <PlanHistoricalComparison
+                currentScore={result.baseScore}
+                plannedScore={result.projectedScore}
+                elig={elig}
+              />
+            </div>
           </div>
         </section>
       )}
