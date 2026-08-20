@@ -10,19 +10,22 @@ export function FilterChip({
   selected,
   onClick,
   tone = "light",
+  disabled = false,
 }: {
   label: string;
   selected: boolean;
-  onClick: () => void;
-  tone?: "light" | "dark";
+  onClick?: (() => void) | undefined;
+  tone?: "light" | "dark" | undefined;
+  disabled?: boolean | undefined;
 }) {
   return (
     <button
       type="button"
       aria-pressed={selected}
+      disabled={disabled}
       onClick={onClick}
       className={cn(
-        "inline-flex h-8 items-center rounded-full px-3.5 text-[0.8125rem] leading-none transition-colors",
+        "inline-flex h-8 items-center rounded-full px-3.5 text-[0.8125rem] leading-none transition-colors disabled:pointer-events-none disabled:opacity-40",
         tone === "light"
           ? selected
             ? "bg-[var(--brand)] text-white"
@@ -37,13 +40,7 @@ export function FilterChip({
   );
 }
 
-export function ChipGroup({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
+export function ChipGroup({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
       <span className="kicker w-32 shrink-0">{title}</span>

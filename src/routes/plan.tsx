@@ -1,9 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { useScore } from "@/lib/useScore";
 import { useCrsProfile } from "@/lib/useCrsProfile";
-import { ScenarioCard } from "@/components/plan/ScenarioCard";
+import { FilterChip } from "@/components/FilterChip";
 import { FrenchScenarioFlow } from "@/components/plan/FrenchScenarioFlow";
-import { useState } from "react";
 
 export const Route = createFileRoute("/plan")({
   head: () => ({
@@ -21,107 +21,139 @@ export const Route = createFileRoute("/plan")({
 
 type Goal = "pr";
 
-const SCENARIOS = [
-  {
-    key: "french",
-    title: "Improve my French",
-    description: "Model a French test result.",
-    active: true,
-  },
-  { key: "english", title: "Improve my English", active: false },
-  { key: "cec", title: "More Canadian work experience", active: false },
-  { key: "foreign_work", title: "More foreign work experience", active: false },
-  { key: "education", title: "New education credential", active: false },
-  { key: "pnp", title: "Provincial nomination", active: false },
+const GOAL_CHIPS: { value: Goal | "citizenship"; label: string; disabled?: boolean }[] = [
+  { value: "pr", label: "Permanent residency" },
+  { value: "citizenship", label: "Citizenship (coming later)", disabled: true },
+];
+
+const SCENARIO_CHIPS = [
+  { key: "french", label: "Improve my French", active: true },
+  { key: "english", label: "Improve my English (coming soon)", active: false },
+  { key: "cec", label: "More Canadian work experience (coming soon)", active: false },
+  { key: "foreign_work", label: "More foreign work experience (coming soon)", active: false },
+  { key: "education", label: "New education credential (coming soon)", active: false },
+  { key: "pnp", label: "Provincial nomination (coming soon)", active: false },
 ] as const;
 
 function Plan() {
   const { raw, setRaw, score } = useScore();
   const { elig } = useCrsProfile();
   const [goal, setGoal] = useState<Goal>("pr");
-  const [scenario, setScenario] = useState<(typeof SCENARIOS)[number]["key"] | null>(null);
+  const [scenario, setScenario] = useState<(typeof SCENARIO_CHIPS)[number]["key"] | null>(null);
 
   return (
-    <div className="mx-auto max-w-6xl px-5 pt-8 pb-16 sm:pt-14">
-      <div className="mx-auto max-w-4xl">
-        <p className="kicker">Plan</p>
-        <h1 className="display mt-3 text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
+    <div className="mx-auto max-w-6xl px-5 pt-8 pb-6">
+      {/* Hero — same shape as Home: title, then a 12-col grid with the score
+          input in the same column position (col-span-3). */}
+      <section
+        className="rounded-[calc(var(--radius)*1.5)] px-6 py-8 sm:px-10 sm:py-10"
+        style={{ backgroundColor: "var(--brand)", color: "var(--paper)" }}
+      >
+        <h1
+          className="display max-w-[16ch] text-[2.25rem] leading-[1.05] font-semibold sm:text-[2.75rem]"
+          style={{ color: "var(--paper)" }}
+        >
           Plan your score.
         </h1>
-        <p className="mt-3 max-w-[52ch] text-[0.95rem] leading-relaxed text-muted-foreground">
-          Start with the CRS score you already know. Try a change you&rsquo;re considering and see
-          exactly how it affects your score — and whether it would have mattered against real
-          historical draws.
-        </p>
 
-        {/* Step 1 — current score */}
-        <div className="mt-10">
-          <p className="kicker">Your current CRS</p>
-          <div
-            className="mt-3 inline-flex rounded-[var(--radius)] border px-4 py-2 focus-within:border-[var(--brand)]"
-            style={{ borderColor: "var(--rule)" }}
-          >
+        <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-12 md:gap-8">
+          {/* CRS score input — same position and markup as Home's hero. */}
+          <div className="md:col-span-3">
+            <p
+              className="text-[0.65rem] font-semibold tracking-[0.14em] uppercase"
+              style={{ color: "rgba(246,241,232,0.6)" }}
+            >
+              CRS score
+            </p>
             <label htmlFor="plan-score" className="sr-only">
               Enter your CRS score
             </label>
-            <input
-              id="plan-score"
-              inputMode="numeric"
-              autoComplete="off"
-              placeholder="—"
-              value={raw}
-              onChange={(e) => setRaw(e.target.value)}
-              className="figure w-28 bg-transparent text-[2rem] leading-tight text-ink outline-none"
-            />
+            <div
+              className="mt-3 rounded-[var(--radius)] border px-4 py-2 transition-colors focus-within:border-[var(--accent-soft)]"
+              style={{
+                borderColor: "rgba(246,241,232,0.28)",
+                backgroundColor: "rgba(246,241,232,0.05)",
+              }}
+            >
+              <input
+                id="plan-score"
+                inputMode="numeric"
+                autoComplete="off"
+                placeholder="—"
+                value={raw}
+                onChange={(e) => setRaw(e.target.value)}
+                className="figure w-full bg-transparent text-[2rem] leading-tight outline-none sm:text-[2.25rem]"
+                style={{ color: "var(--accent-soft)" }}
+              />
+            </div>
+            {score === null && (
+              <p className="mt-2 text-xs" style={{ color: "rgba(246,241,232,0.6)" }}>
+                <Link to="/" className="underline underline-offset-2 hover:opacity-80">
+                  Check your score on Home →
+                </Link>
+              </p>
+            )}
           </div>
-          {score === null && (
-            <p className="mt-2 text-xs text-muted-foreground">
-              Don&rsquo;t know your score yet?{" "}
-              <Link to="/" className="underline underline-offset-2">
-                Check it on Home →
-              </Link>
+
+          {/* What are you working towards? */}
+          <div className="md:col-span-4">
+            <p
+              className="text-[0.65rem] font-semibold tracking-[0.14em] uppercase"
+              style={{ color: "rgba(246,241,232,0.6)" }}
+            >
+              What are you working towards?
             </p>
-          )}
-        </div>
-
-        {/* Step 2 — goal */}
-        <div className="mt-10">
-          <p className="kicker">What are you working toward?</p>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            <ScenarioCard
-              title="Permanent residency"
-              description="Express Entry — federal programs."
-              selected={goal === "pr"}
-              onClick={() => setGoal("pr")}
-            />
-            <ScenarioCard title="Citizenship" badge="Coming later" disabled />
-          </div>
-        </div>
-
-        {/* Step 3 — scenario */}
-        {score !== null && (
-          <div className="mt-10">
-            <p className="kicker">What are you considering?</p>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
-              {SCENARIOS.map((s) => (
-                <ScenarioCard
-                  key={s.key}
-                  title={s.title}
-                  description={s.active ? s.description : undefined}
-                  badge={s.active ? undefined : "Coming soon"}
-                  disabled={!s.active}
-                  selected={scenario === s.key}
-                  onClick={
-                    s.active ? () => setScenario(s.key === scenario ? null : s.key) : undefined
-                  }
+            <div className="mt-3 flex flex-wrap gap-2">
+              {GOAL_CHIPS.map((g) => (
+                <FilterChip
+                  key={g.label}
+                  label={g.label}
+                  selected={goal === g.value}
+                  disabled={g.disabled}
+                  onClick={g.disabled ? undefined : () => setGoal(g.value as Goal)}
+                  tone="dark"
                 />
               ))}
             </div>
-
-            {scenario === "french" && <FrenchScenarioFlow baseScore={score} elig={elig} />}
           </div>
-        )}
-      </div>
+
+          {/* What are you considering? */}
+          <div className="md:col-span-5">
+            <p
+              className="text-[0.65rem] font-semibold tracking-[0.14em] uppercase"
+              style={{ color: "rgba(246,241,232,0.6)" }}
+            >
+              What are you considering?
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {SCENARIO_CHIPS.map((s) => (
+                <FilterChip
+                  key={s.key}
+                  label={s.label}
+                  selected={scenario === s.key}
+                  disabled={!s.active || score === null}
+                  onClick={() => setScenario(s.key === scenario ? null : s.key)}
+                  tone="dark"
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Result panel — same brand-soft treatment as Home's result panel,
+          holding the active scenario's questions and outcome. */}
+      {score !== null && scenario === "french" && (
+        <section
+          className="mt-4 rounded-[var(--radius)] border p-6 sm:p-8"
+          style={{
+            backgroundColor: "var(--brand-soft)",
+            borderColor: "color-mix(in srgb, var(--brand) 12%, transparent)",
+          }}
+        >
+          <FrenchScenarioFlow baseScore={score} elig={elig} />
+        </section>
+      )}
     </div>
   );
 }

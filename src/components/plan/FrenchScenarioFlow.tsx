@@ -147,36 +147,10 @@ export function FrenchScenarioFlow({ baseScore, elig }: Props) {
         )}
       </div>
 
-      {/* Q3 — current French */}
-      <div>
-        <p className="font-medium text-ink">Do you already have French test results?</p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <FilterChip
-            label="Not yet"
-            selected={!hasCurrentFrench}
-            onClick={() => setHasCurrentFrench(false)}
-          />
-          <FilterChip
-            label="Yes, I have results"
-            selected={hasCurrentFrench}
-            onClick={() => setHasCurrentFrench(true)}
-          />
-        </div>
-        {hasCurrentFrench && (
-          <div className="mt-4">
-            <AbilityLevelPicker
-              levelLabel="NCLC"
-              value={currentFrench}
-              onChange={(next) => {
-                setCurrentFrench(next);
-                persist({ currentFrench: next });
-              }}
-            />
-          </div>
-        )}
-      </div>
-
-      {/* Q4 — target */}
+      {/* Q3 — target, with current French folded in as an optional toggle.
+          Defaults closed: a score not yet counted for French is assumed to
+          be 0 across all four abilities unless the user opens this and says
+          otherwise. */}
       <div>
         <p className="font-medium text-ink">What French result are you aiming for?</p>
         <p className="mt-1 text-xs text-muted-foreground">
@@ -192,6 +166,50 @@ export function FrenchScenarioFlow({ baseScore, elig }: Props) {
           </a>
           .
         </p>
+
+        <div className="mt-3 text-xs text-muted-foreground">
+          {!hasCurrentFrench ? (
+            <span>
+              Starting from no French result counted in your score yet.{" "}
+              <button
+                type="button"
+                className="underline underline-offset-2 hover:text-foreground"
+                onClick={() => setHasCurrentFrench(true)}
+              >
+                Already have a French result counted in your score? Add it →
+              </button>
+            </span>
+          ) : (
+            <span>
+              Starting point: your current French result, already counted in your score above.{" "}
+              <button
+                type="button"
+                className="underline underline-offset-2 hover:text-foreground"
+                onClick={() => {
+                  setHasCurrentFrench(false);
+                  setCurrentFrench(EMPTY_PARTIAL_ABILITIES);
+                  setProfile((p) => ({ ...p, currentFrenchNclc: EMPTY_ZERO }));
+                }}
+              >
+                Remove
+              </button>
+            </span>
+          )}
+        </div>
+
+        {hasCurrentFrench && (
+          <div className="mt-4">
+            <AbilityLevelPicker
+              levelLabel="NCLC"
+              value={currentFrench}
+              onChange={(next) => {
+                setCurrentFrench(next);
+                persist({ currentFrench: next });
+              }}
+            />
+          </div>
+        )}
+
         <div className="mt-4">
           <AbilityLevelPicker levelLabel="NCLC" value={target} onChange={setTarget} />
         </div>
