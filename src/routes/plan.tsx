@@ -21,8 +21,9 @@ export const Route = createFileRoute("/plan")({
 
 type Goal = "pr";
 
-const GOAL_CHIPS: { value: Goal; label: string }[] = [
+const GOAL_CHIPS: { value: Goal | "citizenship"; label: string; disabled?: boolean }[] = [
   { value: "pr", label: "Permanent residency" },
+  { value: "citizenship", label: "Citizenship (TBD)", disabled: true },
 ];
 
 const SCENARIO_CHIPS = [{ key: "french", label: "Improve my French" }] as const;
@@ -34,7 +35,7 @@ function Plan() {
   const { raw, setRaw, score } = useScore();
   const { elig } = useCrsProfile();
   const [goal, setGoal] = useState<Goal>("pr");
-  const [scenario, setScenario] = useState<(typeof SCENARIO_CHIPS)[number]["key"] | null>(null);
+  const [scenario, setScenario] = useState<(typeof SCENARIO_CHIPS)[number]["key"] | null>("french");
 
   return (
     <div className="mx-auto max-w-6xl px-5 pt-8 pb-6">
@@ -104,14 +105,12 @@ function Plan() {
                   key={g.label}
                   label={g.label}
                   selected={goal === g.value}
-                  onClick={() => setGoal(g.value)}
+                  disabled={g.disabled}
+                  onClick={g.disabled ? undefined : () => setGoal(g.value as Goal)}
                   tone="dark"
                 />
               ))}
             </div>
-            <p className="mt-2 text-xs" style={{ color: "rgba(246,241,232,0.6)" }}>
-              Citizenship · TBD
-            </p>
           </div>
 
           {/* What are you considering? */}
@@ -135,9 +134,6 @@ function Plan() {
               ))}
             </div>
             <p className="mt-2 text-xs" style={{ color: "rgba(246,241,232,0.6)" }}>
-              More scenarios: {MORE_SCENARIOS}
-            </p>
-            <p className="mt-1 text-xs" style={{ color: "rgba(246,241,232,0.6)" }}>
               <a
                 href="https://form.typeform.com/to/sS3VEFtC"
                 target="_blank"
@@ -146,6 +142,9 @@ function Plan() {
               >
                 Want something added? Tell me what you&rsquo;d use →
               </a>
+            </p>
+            <p className="mt-1 text-xs" style={{ color: "rgba(246,241,232,0.6)" }}>
+              More scenarios: {MORE_SCENARIOS}
             </p>
           </div>
         </div>
