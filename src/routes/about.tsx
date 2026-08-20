@@ -80,7 +80,7 @@ function About() {
             className="text-[0.7rem] font-semibold tracking-[0.14em] uppercase"
             style={{ color: "var(--accent-soft)" }}
           >
-            About &mdash; why was it built
+            Why was CRS Compass built
           </p>
           <p
             className="display mt-6 max-w-[52ch] text-[1.125rem] leading-[1.5] sm:text-[1.25rem]"
@@ -112,26 +112,28 @@ function About() {
         <article className="rounded-[var(--radius)] border border-[var(--rule)] bg-[var(--card)] p-6 sm:p-8">
           <p className="kicker">What it does</p>
           <p className="mt-4 text-[0.95rem] leading-relaxed text-ink">
-            Enter your CRS score, choose the rounds that apply to you, and see how your score
-            compares with recent Express Entry cutoffs.
+            CRS Compass helps you understand where your Express Entry score stands and what could
+            actually move it.
           </p>
           <p className="mt-3 text-[0.95rem] leading-relaxed text-ink">
-            Want the rabbit hole? <em>History</em> has every IRCC round since 2015, filterable,
-            charted, and sourced.
+            Enter your current score, tell it what applies to you, then test changes like improving
+            your French to see how your score and position would change.
           </p>
         </article>
 
         <article className="rounded-[var(--radius)] border border-[var(--rule)] bg-[var(--card)] p-6 sm:p-8">
-          <p className="kicker">How does this make money?</p>
+          <p className="kicker">How it makes $$$</p>
           <p className="mt-4 text-[0.95rem] leading-relaxed text-ink">It doesn&rsquo;t.</p>
           <p className="mt-3 text-[0.95rem] leading-relaxed text-ink">
-            CRS Compass is a personal project. There are no ads, subscriptions, affiliate links, or
-            paid immigration services behind it. I built it because someone in my family needed it,
-            and I figured other people might too.
+            No ads, subscriptions, affiliate links, or paid services.
           </p>
           <p className="mt-3 text-[0.95rem] leading-relaxed text-ink">
-            If flexing my engineering skills here eventually helps me land a better job in this
-            shitty market, I&rsquo;ll call that the business model.
+            Built because someone needed it, and because a small hosting bill feels like a pretty
+            good trade if the thing is useful to a lot of people.
+          </p>
+          <p className="mt-3 text-[0.95rem] leading-relaxed text-ink">
+            If the engineering also helps me land a better job in this shitty market, I&rsquo;ll
+            call that the business model.
           </p>
         </article>
       </div>
@@ -140,8 +142,12 @@ function About() {
       <section className="mt-5 rounded-[var(--radius)] border border-[var(--rule)] bg-[var(--card)] p-6 sm:p-8">
         <p className="kicker">How it works</p>
         <p className="mt-4 max-w-[60ch] text-[0.95rem] leading-relaxed text-ink">
-          Everything here comes from IRCC&rsquo;s own data. If CRS Compass and the Government of
-          Canada ever disagree, Canada wins.
+          IRCC publishes the rules and draw data. CRS Compass checks for updates, cleans and
+          validates the data, then uses it to power the score comparisons and planning tools you see
+          here.
+        </p>
+        <p className="mt-3 max-w-[60ch] text-[0.95rem] leading-relaxed text-ink">
+          If CRS Compass and Canada ever disagree, Canada wins.
         </p>
 
         <div className="mt-8 flex flex-col gap-8 sm:flex-row sm:gap-8">
