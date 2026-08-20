@@ -18,10 +18,11 @@ import {
 import { RoundBadge } from "@/components/RoundBadge";
 import { SourceLink, formatDate } from "@/components/DrawMeta";
 import { TablePagination } from "@/components/TablePagination";
-import { relevantDrawsQuery, drawsQuery } from "@/lib/queries";
+import { drawsQuery } from "@/lib/queries";
 import { EVENTS, capture } from "@/lib/analytics";
 import { roundLabel } from "@/data/round-types";
 import type { Eligibility } from "@/lib/useCrsProfile";
+import { compareToCutoff, monthsAgo, useRelevantComparison } from "@/lib/useRelevantComparison";
 
 // "What the history says" — the result of applying the user's score to the
 // rounds their eligibility makes relevant. Renders:
@@ -32,12 +33,6 @@ import type { Eligibility } from "@/lib/useCrsProfile";
 //   - an honest zero-callout when nothing has been within reach recently
 
 const TABLE_PAGE_SIZE = 15;
-
-function monthsAgo(n: number): string {
-  const d = new Date();
-  d.setMonth(d.getMonth() - n);
-  return d.toISOString().slice(0, 10);
-}
 
 function formatTieBreak(ts: string | null): string | null {
   if (!ts) return null;
@@ -82,52 +77,10 @@ export function PersonalScoreSection({ score, elig }: Props) {
 
   const validScore = score !== null && score >= 0 && score <= 1200;
 
-  // Round type selection — mirrors isRelevantDraw. General and category-based
-  // are always included (categories default to "All categories"); program-
-  // specific is only included when a specific program is picked. This keeps
-  // Recent Draws and this section in agreement about what "applies to you"
-  // means.
-  const roundTypes = useMemo(() => {
-    const t = ["general", "category_based"];
-    if (elig.programs.length > 0) t.push("program_specific");
-    return t;
-  }, [elig]);
-
-  // When a program filter is passed, include the ANY_GENERAL sentinel so
-  // general rounds (which have d.program IS NULL) also match — otherwise a
-  // CEC user would silently miss any historical general round they were
-  // eligible for. Same trick for categories via ANY_NONCATEGORY.
-  const params = validScore
-    ? {
-        score: score!,
-        roundTypes,
-        programs: elig.programs.length
-          ? [...elig.programs, "ANY_GENERAL"]
-          : null,
-        categories: elig.categories.length
-          ? [...elig.categories, "ANY_NONCATEGORY"]
-          : null,
-        since,
-      }
-    : null;
-
-  const { data: results, isLoading } = useQuery(relevantDrawsQuery(params));
+  const { results, isLoading, above, matched, total } = useRelevantComparison(score, elig, since);
   const { data: allDraws } = useQuery(drawsQuery());
 
-  // Three-state comparison — precise about "above" vs "matched exactly"
-  // (which triggers the tie-break rule). The RPC's would_have_cleared is
-  // (score >= cutoff) and lumps matches with above; we split them here so
-  // the UI can be honest about tie-break cases.
-  type Compare = "above" | "matched" | "below";
-  const compare = (cutoff: number): Compare => {
-    if (score === null) return "below";
-    if (score > cutoff) return "above";
-    if (score < cutoff) return "below";
-    return "matched";
-  };
-  const above = results?.filter((r) => compare(r.cutoff_score) === "above").length ?? 0;
-  const matched = results?.filter((r) => compare(r.cutoff_score) === "matched").length ?? 0;
-  const total = results?.length ?? 0;
+  const compare = (cutoff: number) => compareToCutoff(score, cutoff);
   const ratio = total ? above / total : 0;
   const figureColor =
     above === 0 ? "var(--muted-foreground)" : ratio >= 0.5 ? "var(--brand)" : "var(--accent)";
