@@ -21,19 +21,14 @@ export const Route = createFileRoute("/plan")({
 
 type Goal = "pr";
 
-const GOAL_CHIPS: { value: Goal | "citizenship"; label: string; disabled?: boolean }[] = [
+const GOAL_CHIPS: { value: Goal; label: string }[] = [
   { value: "pr", label: "Permanent residency" },
-  { value: "citizenship", label: "Citizenship (TBD)", disabled: true },
 ];
 
-const SCENARIO_CHIPS = [
-  { key: "french", label: "Improve my French", active: true },
-  { key: "english", label: "Improve my English (TBD)", active: false },
-  { key: "cec", label: "More Canadian work experience (TBD)", active: false },
-  { key: "foreign_work", label: "More foreign work experience (TBD)", active: false },
-  { key: "education", label: "New education credential (TBD)", active: false },
-  { key: "pnp", label: "Provincial nomination (TBD)", active: false },
-] as const;
+const SCENARIO_CHIPS = [{ key: "french", label: "Improve my French" }] as const;
+
+const MORE_SCENARIOS =
+  "English · Canadian work experience · Foreign work experience · Education · Provincial nomination";
 
 function Plan() {
   const { raw, setRaw, score } = useScore();
@@ -109,12 +104,14 @@ function Plan() {
                   key={g.label}
                   label={g.label}
                   selected={goal === g.value}
-                  disabled={g.disabled}
-                  onClick={g.disabled ? undefined : () => setGoal(g.value as Goal)}
+                  onClick={() => setGoal(g.value)}
                   tone="dark"
                 />
               ))}
             </div>
+            <p className="mt-2 text-xs" style={{ color: "rgba(246,241,232,0.6)" }}>
+              Citizenship · TBD
+            </p>
           </div>
 
           {/* What are you considering? */}
@@ -131,13 +128,16 @@ function Plan() {
                   key={s.key}
                   label={s.label}
                   selected={scenario === s.key}
-                  disabled={!s.active || score === null}
+                  disabled={score === null}
                   onClick={() => setScenario(s.key === scenario ? null : s.key)}
                   tone="dark"
                 />
               ))}
             </div>
             <p className="mt-2 text-xs" style={{ color: "rgba(246,241,232,0.6)" }}>
+              More scenarios: {MORE_SCENARIOS}
+            </p>
+            <p className="mt-1 text-xs" style={{ color: "rgba(246,241,232,0.6)" }}>
               <a
                 href="https://form.typeform.com/to/sS3VEFtC"
                 target="_blank"
