@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AbilityLevelPicker } from "@/components/plan/AbilityLevelPicker";
 import { PlanHistoricalComparison } from "@/components/plan/PlanHistoricalComparison";
 import { FilterChip } from "@/components/FilterChip";
@@ -15,6 +15,10 @@ import type { Eligibility } from "@/lib/useCrsProfile";
 
 const EMPTY_ZERO = { speaking: 0, listening: 0, reading: 0, writing: 0 };
 const DIVIDER_STYLE = { borderColor: "color-mix(in srgb, var(--brand) 14%, transparent)" };
+const PANEL_STYLE = {
+  backgroundColor: "var(--brand-soft)",
+  borderColor: "color-mix(in srgb, var(--brand) 12%, transparent)",
+};
 
 type StepId = 1 | 2 | 3;
 
@@ -51,14 +55,13 @@ interface Props {
     other scenario card on /plan is a visible placeholder — this is the real
     thing, end to end.
 
-    A 3-step progressive accordion living directly in the Plan page's
-    light-green result panel — no per-step cards, just kickers, whitespace,
-    and thin dividers. Only one step shows its full controls at a time;
-    completed steps before it collapse to a one-line summary with an Edit
-    action that reopens them without clearing anything. Step 3 (French
-    target) never collapses — it's the step the whole flow is building
-    toward, and the result populates directly beneath it as soon as it's
-    answered. */
+    Renders two separate light-green panels: a "questions" panel with the
+    3-step progressive accordion (no per-step cards inside it — just
+    kickers, whitespace, and thin dividers; only one step shows its full
+    controls at a time, completed steps before it collapse to a one-line
+    summary with Edit), and — once there's enough to calculate — a second,
+    visually distinct "result" panel below it, so a generated result reads
+    as its own answer rather than more of the form. */
 export function FrenchScenarioFlow({ baseScore, elig }: Props) {
   const { setProfile } = usePlannerProfile();
 
@@ -95,6 +98,14 @@ export function FrenchScenarioFlow({ baseScore, elig }: Props) {
     currentFrench,
     target,
   ]);
+
+  // Nudge the result panel into view the moment it first appears — not on
+  // every recalculation while editing, only the false -> true transition.
+  const hasResult = result !== null;
+  const resultRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (hasResult) resultRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [hasResult]);
 
   const persist = (next: {
     spouse?: boolean;
@@ -136,175 +147,184 @@ export function FrenchScenarioFlow({ baseScore, elig }: Props) {
   };
 
   return (
-    <div className="mt-8">
-      {/* 01 — Profile context */}
-      <div>
-        <p className="kicker">01 &middot; Profile context</p>
-        {activeStep === 1 ? (
-          <div className="mt-3">
-            <p className="font-medium text-ink">
-              Do you have a spouse or partner coming with you to Canada?
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              The point tables — and caps — differ with and without a spouse or common-law partner.
-            </p>
-            <div className="mt-3 flex gap-2">
-              <FilterChip
-                label="Yes"
-                selected={spouse === true}
-                onClick={() => handleSpouse(true)}
-              />
-              <FilterChip
-                label="No"
-                selected={spouse === false}
-                onClick={() => handleSpouse(false)}
-              />
-            </div>
-          </div>
-        ) : step1Complete ? (
-          <div className="mt-2 flex items-center justify-between gap-4">
-            <p className="text-[0.95rem] text-ink">
-              {spouse
-                ? "Has a spouse or common-law partner coming to Canada."
-                : "No spouse or common-law partner coming to Canada."}
-            </p>
-            <button
-              type="button"
-              className="shrink-0 text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
-              onClick={() => setActiveStep(1)}
-            >
-              Edit
-            </button>
-          </div>
-        ) : null}
-      </div>
-
-      {/* 02 — Current English */}
-      {step1Complete && (
-        <div className="mt-8 border-t pt-8" style={DIVIDER_STYLE}>
-          <p className="kicker">02 &middot; Current English</p>
-          {activeStep === 2 ? (
+    <>
+      <section className="mt-4 rounded-[var(--radius)] border p-6 sm:p-8" style={PANEL_STYLE}>
+        {/* 01 — Profile context */}
+        <div>
+          <p className="kicker">01 &middot; Profile context</p>
+          {activeStep === 1 ? (
             <div className="mt-3">
-              <p className="font-medium text-ink">What&rsquo;s your current English result?</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                The French bonus depends on how strong your English is, not just your French.
+              <p className="font-medium text-ink">
+                Do you have a spouse or partner coming with you to Canada?
               </p>
-              <div className="mt-3 flex flex-wrap gap-2">
+              <p className="mt-1 text-xs text-muted-foreground">
+                The point tables — and caps — differ with and without a spouse or common-law
+                partner.
+              </p>
+              <div className="mt-3 flex gap-2">
                 <FilterChip
-                  label="I haven't taken an English test"
-                  selected={englishMode === "none"}
-                  onClick={() => handleEnglishMode("none")}
+                  label="Yes"
+                  selected={spouse === true}
+                  onClick={() => handleSpouse(true)}
                 />
                 <FilterChip
-                  label="I have English results"
-                  selected={englishMode === "has"}
-                  onClick={() => handleEnglishMode("has")}
+                  label="No"
+                  selected={spouse === false}
+                  onClick={() => handleSpouse(false)}
                 />
               </div>
-              {englishMode === "has" && (
-                <div className="mt-4">
-                  <AbilityLevelPicker
-                    levelLabel="CLB"
-                    value={englishClb}
-                    onChange={handleEnglishClb}
-                  />
-                </div>
-              )}
             </div>
-          ) : step2Complete ? (
+          ) : step1Complete ? (
             <div className="mt-2 flex items-center justify-between gap-4">
               <p className="text-[0.95rem] text-ink">
-                {englishMode === "none"
-                  ? "Hasn't taken an English test yet."
-                  : `English results: ${summarizeAbilities(englishClb as AbilityScores, "CLB")}.`}
+                {spouse
+                  ? "Has a spouse or common-law partner coming to Canada."
+                  : "No spouse or common-law partner coming to Canada."}
               </p>
               <button
                 type="button"
                 className="shrink-0 text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
-                onClick={() => setActiveStep(2)}
+                onClick={() => setActiveStep(1)}
               >
                 Edit
               </button>
             </div>
           ) : null}
         </div>
-      )}
 
-      {/* 03 — French target. The most visually prominent step, and the only
+        {/* 02 — Current English */}
+        {step1Complete && (
+          <div className="mt-8 border-t pt-8" style={DIVIDER_STYLE}>
+            <p className="kicker">02 &middot; Current English</p>
+            {activeStep === 2 ? (
+              <div className="mt-3">
+                <p className="font-medium text-ink">What&rsquo;s your current English result?</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  The French bonus depends on how strong your English is, not just your French.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <FilterChip
+                    label="I haven't taken an English test"
+                    selected={englishMode === "none"}
+                    onClick={() => handleEnglishMode("none")}
+                  />
+                  <FilterChip
+                    label="I have English results"
+                    selected={englishMode === "has"}
+                    onClick={() => handleEnglishMode("has")}
+                  />
+                </div>
+                {englishMode === "has" && (
+                  <div className="mt-4">
+                    <AbilityLevelPicker
+                      levelLabel="CLB"
+                      value={englishClb}
+                      onChange={handleEnglishClb}
+                    />
+                  </div>
+                )}
+              </div>
+            ) : step2Complete ? (
+              <div className="mt-2 flex items-center justify-between gap-4">
+                <p className="text-[0.95rem] text-ink">
+                  {englishMode === "none"
+                    ? "Hasn't taken an English test yet."
+                    : `English results: ${summarizeAbilities(englishClb as AbilityScores, "CLB")}.`}
+                </p>
+                <button
+                  type="button"
+                  className="shrink-0 text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                  onClick={() => setActiveStep(2)}
+                >
+                  Edit
+                </button>
+              </div>
+            ) : null}
+          </div>
+        )}
+
+        {/* 03 — French target. The most visually prominent step, and the only
           one that never collapses — the result populates directly beneath
           it once it's answered. */}
-      {step1Complete && step2Complete && (
-        <div className="mt-8 border-t pt-8" style={DIVIDER_STYLE}>
-          <p className="kicker">03 &middot; French target</p>
-          <p className="mt-3 text-[1.05rem] font-semibold text-ink sm:text-[1.15rem]">
-            What French result are you aiming for?
-          </p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Enter your target as NCLC levels. If you know a TEF Canada or TCF Canada score instead,
-            convert it first using{" "}
-            <a
-              href="https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/documents/language-test.html"
-              target="_blank"
-              rel="noreferrer"
-              className="underline underline-offset-2"
-            >
-              IRCC&rsquo;s official comparison chart
-            </a>
-            .
-          </p>
+        {step1Complete && step2Complete && (
+          <div className="mt-8 border-t pt-8" style={DIVIDER_STYLE}>
+            <p className="kicker">03 &middot; French target</p>
+            <p className="mt-3 text-[1.05rem] font-semibold text-ink sm:text-[1.15rem]">
+              What French result are you aiming for?
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Enter your target as NCLC levels. If you know a TEF Canada or TCF Canada score
+              instead, convert it first using{" "}
+              <a
+                href="https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/documents/language-test.html"
+                target="_blank"
+                rel="noreferrer"
+                className="underline underline-offset-2"
+              >
+                IRCC&rsquo;s official comparison chart
+              </a>
+              .
+            </p>
 
-          <div className="mt-3 text-xs text-muted-foreground">
-            {!hasCurrentFrench ? (
-              <span>
-                Starting from no French result counted in your score yet.{" "}
-                <button
-                  type="button"
-                  className="underline underline-offset-2 hover:text-foreground"
-                  onClick={() => setHasCurrentFrench(true)}
-                >
-                  Already have a French result counted in your score? Add it →
-                </button>
-              </span>
-            ) : (
-              <span>
-                Starting point: your current French result, already counted in your score above.{" "}
-                <button
-                  type="button"
-                  className="underline underline-offset-2 hover:text-foreground"
-                  onClick={() => {
-                    setHasCurrentFrench(false);
-                    setCurrentFrench(EMPTY_PARTIAL_ABILITIES);
-                    setProfile((p) => ({ ...p, currentFrenchNclc: EMPTY_ZERO }));
-                  }}
-                >
-                  Remove
-                </button>
-              </span>
-            )}
-          </div>
-
-          {hasCurrentFrench && (
-            <div className="mt-4">
-              <AbilityLevelPicker
-                levelLabel="NCLC"
-                value={currentFrench}
-                onChange={(next) => {
-                  setCurrentFrench(next);
-                  persist({ currentFrench: next });
-                }}
-              />
+            <div className="mt-3 text-xs text-muted-foreground">
+              {!hasCurrentFrench ? (
+                <span>
+                  Starting from no French result counted in your score yet.{" "}
+                  <button
+                    type="button"
+                    className="underline underline-offset-2 hover:text-foreground"
+                    onClick={() => setHasCurrentFrench(true)}
+                  >
+                    Already have a French result counted in your score? Add it →
+                  </button>
+                </span>
+              ) : (
+                <span>
+                  Starting point: your current French result, already counted in your score above.{" "}
+                  <button
+                    type="button"
+                    className="underline underline-offset-2 hover:text-foreground"
+                    onClick={() => {
+                      setHasCurrentFrench(false);
+                      setCurrentFrench(EMPTY_PARTIAL_ABILITIES);
+                      setProfile((p) => ({ ...p, currentFrenchNclc: EMPTY_ZERO }));
+                    }}
+                  >
+                    Remove
+                  </button>
+                </span>
+              )}
             </div>
-          )}
 
-          <div className="mt-4">
-            <AbilityLevelPicker levelLabel="NCLC" value={target} onChange={setTarget} />
+            {hasCurrentFrench && (
+              <div className="mt-4">
+                <AbilityLevelPicker
+                  levelLabel="NCLC"
+                  value={currentFrench}
+                  onChange={(next) => {
+                    setCurrentFrench(next);
+                    persist({ currentFrench: next });
+                  }}
+                />
+              </div>
+            )}
+
+            <div className="mt-4">
+              <AbilityLevelPicker levelLabel="NCLC" value={target} onChange={setTarget} />
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </section>
 
-      {/* Result — full-width typography, no boxes. */}
+      {/* Result — a separate panel from the questions above, so a generated
+          result reads as its own answer rather than more of the form.
+          Typography only inside it, no nested boxes. */}
       {result && (
-        <div className="mt-10 border-t pt-8" style={DIVIDER_STYLE}>
+        <section
+          ref={resultRef}
+          className="mt-4 rounded-[var(--radius)] border p-6 sm:p-8"
+          style={PANEL_STYLE}
+        >
           <p className="kicker">Your planned score</p>
           <p className="display mt-3 text-[1.75rem] leading-[1.15] text-ink sm:text-[2.25rem]">
             {result.baseScore}{" "}
@@ -362,8 +382,8 @@ export function FrenchScenarioFlow({ baseScore, elig }: Props) {
               elig={elig}
             />
           </div>
-        </div>
+        </section>
       )}
-    </div>
+    </>
   );
 }
