@@ -123,9 +123,7 @@ function About() {
 
         <article className="rounded-[var(--radius)] border border-[var(--rule)] bg-[var(--card)] p-6 sm:p-8">
           <p className="kicker">How does this make money?</p>
-          <p className="mt-4 text-[0.95rem] font-medium leading-relaxed text-ink">
-            It doesn&rsquo;t.
-          </p>
+          <p className="mt-4 text-[0.95rem] leading-relaxed text-ink">It doesn&rsquo;t.</p>
           <p className="mt-3 text-[0.95rem] leading-relaxed text-ink">
             CRS Compass is a personal project. There are no ads, subscriptions, affiliate links, or
             paid immigration services behind it. I built it because someone in my family needed it,
@@ -146,23 +144,24 @@ function About() {
           Canada ever disagree, Canada wins.
         </p>
 
-        <div className="mt-8 flex flex-col gap-8 sm:flex-row sm:items-start sm:gap-0">
+        <div className="mt-8 flex flex-col gap-8 sm:flex-row sm:gap-8">
           {PIPELINE_STEPS.map((step, i) => (
-            <div key={step.number} className="flex sm:flex-1 sm:items-start">
-              <div>
+            <div key={step.number} className="sm:flex-1">
+              <div className="flex items-center gap-2">
                 <p className="figure text-[1.5rem]" style={{ color: "var(--brand)" }}>
                   {step.number}
                 </p>
-                <p className="mt-2 font-medium text-ink">{step.title}</p>
-                <p className="mt-1 max-w-[22ch] text-sm leading-relaxed text-muted-foreground">
-                  {step.description}
-                </p>
+                {i < PIPELINE_STEPS.length - 1 && (
+                  <ArrowRight
+                    aria-hidden
+                    className="hidden h-4 w-4 shrink-0 text-[var(--rule)] sm:block"
+                  />
+                )}
               </div>
-              {i < PIPELINE_STEPS.length - 1 && (
-                <div aria-hidden className="mt-1.5 hidden shrink-0 px-3 text-[var(--rule)] sm:flex">
-                  <ArrowRight className="h-4 w-4" />
-                </div>
-              )}
+              <p className="mt-2 text-[0.95rem] font-medium text-ink">{step.title}</p>
+              <p className="mt-1 max-w-[22ch] text-[0.95rem] leading-relaxed text-ink">
+                {step.description}
+              </p>
             </div>
           ))}
         </div>
