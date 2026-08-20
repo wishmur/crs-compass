@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { ArrowRight } from "lucide-react";
 import { EVENTS, capture } from "@/lib/analytics";
 import creatorsAsset from "@/assets/creators.png.asset.json";
 
@@ -9,8 +10,7 @@ export const Route = createFileRoute("/about")({
       { title: "About CRS Compass" },
       {
         name: "description",
-        content:
-          "How this Express Entry tracker works and where its data comes from.",
+        content: "How this Express Entry tracker works and where its data comes from.",
       },
     ],
   }),
@@ -21,6 +21,27 @@ interface Source {
   label: string;
   href: string;
 }
+
+interface PipelineStep {
+  number: string;
+  title: string;
+  description: string;
+}
+
+const PIPELINE_STEPS: PipelineStep[] = [
+  { number: "01", title: "IRCC", description: "Official draw data and CRS rules." },
+  { number: "02", title: "Refresh", description: "A scheduled process checks for new draw data." },
+  {
+    number: "03",
+    title: "Process",
+    description: "Data is cleaned, structured, validated, and stored.",
+  },
+  {
+    number: "04",
+    title: "CRS Compass",
+    description: "The processed data powers score comparisons, history, and planning.",
+  },
+];
 
 const SOURCES: Source[] = [
   {
@@ -86,7 +107,7 @@ function About() {
         </div>
       </section>
 
-      {/* Two-column: What it does + Where the numbers come from */}
+      {/* Two-column: What it does + How does this make money */}
       <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2">
         <article className="rounded-[var(--radius)] border border-[var(--rule)] bg-[var(--card)] p-6 sm:p-8">
           <p className="kicker">What it does</p>
@@ -101,34 +122,77 @@ function About() {
         </article>
 
         <article className="rounded-[var(--radius)] border border-[var(--rule)] bg-[var(--card)] p-6 sm:p-8">
-          <p className="kicker">Where the numbers come from</p>
-          <p className="mt-4 text-[0.95rem] leading-relaxed text-ink">
-            Everything here comes from IRCC&rsquo;s own data and is refreshed daily. If CRS
-            Compass and the Government of Canada ever disagree, Canada wins.
+          <p className="kicker">How does this make money?</p>
+          <p className="mt-4 text-[0.95rem] font-medium leading-relaxed text-ink">
+            It doesn&rsquo;t.
           </p>
-
-          <ul className="mt-5 -mx-2 divide-y divide-[var(--rule)]">
-            {SOURCES.map((s) => (
-              <li key={s.href}>
-                <a
-                  href={s.href}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="group flex items-center justify-between gap-4 rounded-md px-2 py-3 text-[0.9rem] text-ink transition-colors hover:bg-[var(--brand-soft)]"
-                >
-                  <span>{s.label}</span>
-                  <span
-                    aria-hidden
-                    className="shrink-0 text-[var(--brand)] transition-transform group-hover:translate-x-0.5"
-                  >
-                    &rarr;
-                  </span>
-                </a>
-              </li>
-            ))}
-          </ul>
+          <p className="mt-3 text-[0.95rem] leading-relaxed text-ink">
+            CRS Compass is a personal project. There are no ads, subscriptions, affiliate links, or
+            paid immigration services behind it. I built it because someone in my family needed it,
+            and I figured other people might too.
+          </p>
+          <p className="mt-3 text-[0.95rem] leading-relaxed text-ink">
+            If flexing my engineering skills here eventually helps me land a better job in this
+            shitty market, I&rsquo;ll call that the business model.
+          </p>
         </article>
       </div>
+
+      {/* How it works — a lightweight visual of the pipeline, not documentation. */}
+      <section className="mt-5 rounded-[var(--radius)] border border-[var(--rule)] bg-[var(--card)] p-6 sm:p-8">
+        <p className="kicker">How it works</p>
+        <p className="mt-4 max-w-[60ch] text-[0.95rem] leading-relaxed text-ink">
+          Everything here comes from IRCC&rsquo;s own data. If CRS Compass and the Government of
+          Canada ever disagree, Canada wins.
+        </p>
+
+        <div className="mt-8 flex flex-col gap-8 sm:flex-row sm:items-start sm:gap-0">
+          {PIPELINE_STEPS.map((step, i) => (
+            <div key={step.number} className="flex sm:flex-1 sm:items-start">
+              <div>
+                <p className="figure text-[1.5rem]" style={{ color: "var(--brand)" }}>
+                  {step.number}
+                </p>
+                <p className="mt-2 font-medium text-ink">{step.title}</p>
+                <p className="mt-1 max-w-[22ch] text-sm leading-relaxed text-muted-foreground">
+                  {step.description}
+                </p>
+              </div>
+              {i < PIPELINE_STEPS.length - 1 && (
+                <div aria-hidden className="mt-1.5 hidden shrink-0 px-3 text-[var(--rule)] sm:flex">
+                  <ArrowRight className="h-4 w-4" />
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <p className="mt-8 border-t border-[var(--rule)] pt-5 text-xs leading-relaxed text-muted-foreground">
+          Draw data refreshes daily. CRS scoring rules are versioned and reviewed separately before
+          they affect calculations.
+        </p>
+
+        <ul className="mt-6 -mx-2 divide-y divide-[var(--rule)]">
+          {SOURCES.map((s) => (
+            <li key={s.href}>
+              <a
+                href={s.href}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="group flex items-center justify-between gap-4 rounded-md px-2 py-3 text-[0.9rem] text-ink transition-colors hover:bg-[var(--brand-soft)]"
+              >
+                <span>{s.label}</span>
+                <span
+                  aria-hidden
+                  className="shrink-0 text-[var(--brand)] transition-transform group-hover:translate-x-0.5"
+                >
+                  &rarr;
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
 
       {/* Full-width caveat — visible without alarming. Uses --brand-soft for
           subtle contrast; --accent-soft would have read as warning. */}
@@ -140,8 +204,7 @@ function About() {
         <p className="mt-4 text-[0.95rem] leading-relaxed text-ink">
           CRS Compass gives you context, not immigration advice. Historical cutoffs don&rsquo;t
           predict future draws, data can occasionally be delayed or incomplete, and important
-          decisions should always be verified against IRCC or a licensed immigration
-          professional.
+          decisions should always be verified against IRCC or a licensed immigration professional.
         </p>
       </section>
     </div>
