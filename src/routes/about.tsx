@@ -50,7 +50,7 @@ const SOURCES: Source[] = [
   },
   {
     label: "IRCC — CRS criteria",
-    href: "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/eligibility/criteria-comprehensive-ranking-system.html",
+    href: "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/check-score/crs-criteria.html",
   },
   {
     label: "IRCC — category-based selection",
@@ -132,7 +132,7 @@ function About() {
             good trade if the thing is useful to a lot of people.
           </p>
           <p className="mt-3 text-[0.95rem] leading-relaxed text-ink">
-            If the engineering also helps me land a better job in this shitty market, I&rsquo;ll
+            If the engineering also helps me land a better job in this brutal market, I&rsquo;ll
             call that the business model.
           </p>
         </article>
