@@ -23,16 +23,16 @@ type Goal = "pr";
 
 const GOAL_CHIPS: { value: Goal | "citizenship"; label: string; disabled?: boolean }[] = [
   { value: "pr", label: "Permanent residency" },
-  { value: "citizenship", label: "Citizenship (coming later)", disabled: true },
+  { value: "citizenship", label: "Citizenship (TBD)", disabled: true },
 ];
 
 const SCENARIO_CHIPS = [
   { key: "french", label: "Improve my French", active: true },
-  { key: "english", label: "Improve my English (coming soon)", active: false },
-  { key: "cec", label: "More Canadian work experience (coming soon)", active: false },
-  { key: "foreign_work", label: "More foreign work experience (coming soon)", active: false },
-  { key: "education", label: "New education credential (coming soon)", active: false },
-  { key: "pnp", label: "Provincial nomination (coming soon)", active: false },
+  { key: "english", label: "Improve my English (TBD)", active: false },
+  { key: "cec", label: "More Canadian work experience (TBD)", active: false },
+  { key: "foreign_work", label: "More foreign work experience (TBD)", active: false },
+  { key: "education", label: "New education credential (TBD)", active: false },
+  { key: "pnp", label: "Provincial nomination (TBD)", active: false },
 ] as const;
 
 function Plan() {
@@ -137,6 +137,16 @@ function Plan() {
                 />
               ))}
             </div>
+            <p className="mt-2 text-xs" style={{ color: "rgba(246,241,232,0.6)" }}>
+              <a
+                href="https://form.typeform.com/to/sS3VEFtC"
+                target="_blank"
+                rel="noreferrer noopener"
+                className="underline underline-offset-2 hover:opacity-80"
+              >
+                Want something added? Tell me what you&rsquo;d use →
+              </a>
+            </p>
           </div>
         </div>
       </section>
