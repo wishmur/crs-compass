@@ -75,8 +75,7 @@ function ActionPill({
     "inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-medium transition-colors";
   const active =
     "border-[color-mix(in_srgb,var(--brand)_28%,transparent)] text-[var(--brand)] hover:bg-[color-mix(in_srgb,var(--brand)_8%,transparent)]";
-  const dim =
-    "border-[var(--rule)] text-muted-foreground hover:text-foreground";
+  const dim = "border-[var(--rule)] text-muted-foreground hover:text-foreground";
   const cls = `${base} ${muted ? dim : active}`;
 
   if (to) {
@@ -98,9 +97,7 @@ function Index() {
   const { raw, setRaw, score } = useScore();
   const { elig, setElig, resetElig, hasEligibility } = useCrsProfile();
   const scrollToDetails = () => {
-    document
-      .getElementById("recent-draws")
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    document.getElementById("recent-draws")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   useEffect(() => {
@@ -146,7 +143,7 @@ function Index() {
       >
         <div className="flex flex-wrap items-baseline justify-between gap-4">
           <h1
-            className="display max-w-[16ch] text-[2.25rem] leading-[1.05] font-semibold sm:text-[2.75rem]"
+            className="display text-[2.25rem] leading-[1.05] font-semibold sm:text-[2.75rem]"
             style={{ color: "var(--paper)" }}
           >
             See where your score lands.
@@ -285,9 +282,7 @@ function Index() {
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   <RoundBadge draw={latest} />
                 </div>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {formatDate(latest.draw_date)}
-                </p>
+                <p className="mt-2 text-sm text-muted-foreground">{formatDate(latest.draw_date)}</p>
               </div>
 
               {/* User score */}
@@ -309,13 +304,9 @@ function Index() {
                     {(() => {
                       const diff = score - latest.cutoff_score;
                       if (diff > 0)
-                        return (
-                          <span style={{ color: "var(--brand)" }}>+{diff} above cutoff</span>
-                        );
+                        return <span style={{ color: "var(--brand)" }}>+{diff} above cutoff</span>;
                       if (diff < 0)
-                        return (
-                          <span style={{ color: "var(--accent)" }}>{diff} below cutoff</span>
-                        );
+                        return <span style={{ color: "var(--accent)" }}>{diff} below cutoff</span>;
                       return (
                         <span className="text-muted-foreground">
                           Matched cutoff · tie-break applies
@@ -329,8 +320,8 @@ function Index() {
 
             {elig.programs.includes("PNP") && (
               <p className="mt-6 text-xs leading-relaxed text-muted-foreground">
-                <strong className="text-ink">PNP:</strong> cutoffs include the automatic
-                600-point nomination bonus. Only meaningful if you actually hold a nomination.
+                <strong className="text-ink">PNP:</strong> cutoffs include the automatic 600-point
+                nomination bonus. Only meaningful if you actually hold a nomination.
               </p>
             )}
 

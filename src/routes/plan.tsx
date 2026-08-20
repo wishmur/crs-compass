@@ -50,7 +50,7 @@ function Plan() {
         style={{ backgroundColor: "var(--brand)", color: "var(--paper)" }}
       >
         <h1
-          className="display max-w-[16ch] text-[2.25rem] leading-[1.05] font-semibold sm:text-[2.75rem]"
+          className="display text-[2.25rem] leading-[1.05] font-semibold sm:text-[2.75rem]"
           style={{ color: "var(--paper)" }}
         >
           Plan your score.
@@ -141,18 +141,10 @@ function Plan() {
         </div>
       </section>
 
-      {/* Result panel — same brand-soft treatment as Home's result panel,
-          holding the active scenario's questions and outcome. */}
+      {/* FrenchScenarioFlow renders its own panels: a questions panel and,
+          once there's a result, a separate result panel below it. */}
       {score !== null && scenario === "french" && (
-        <section
-          className="mt-4 rounded-[var(--radius)] border p-6 sm:p-8"
-          style={{
-            backgroundColor: "var(--brand-soft)",
-            borderColor: "color-mix(in srgb, var(--brand) 12%, transparent)",
-          }}
-        >
-          <FrenchScenarioFlow baseScore={score} elig={elig} />
-        </section>
+        <FrenchScenarioFlow baseScore={score} elig={elig} />
       )}
     </div>
   );
