@@ -13,19 +13,28 @@ create or replace view public.v_latest_draw as
 comment on view public.v_latest_draw is 'Most recent draw. Read by the landing page hero card.';
 
 -- =====================================================================
--- v_data_freshness — safe surface of the latest successful ingest run.
--- The base table has no anon SELECT policy; this view exposes only the fields
--- the UI needs (no notes, no ids) and only the most recent OK row.
+-- v_data_freshness — safe surface of the latest ingest run that actually
+-- checked IRCC. The base table has no anon SELECT policy; this view exposes
+-- only the fields the UI needs (no notes, no ids) and only the most recent
+-- qualifying row.
+--
+-- 'ok' and 'skipped_unchanged' both count: 'skipped_unchanged' means the
+-- ingester fetched IRCC, hashed the payload, and found it identical to the
+-- last successful run — a real, successful check that correctly chose not
+-- to write (draws only change every couple of weeks, so most days look like
+-- this). Excluding it made the "Data checked" badge understate freshness on
+-- every day without a new draw. Genuine failures (shape_mismatch/http_error/
+-- db_error) are still excluded, so a broken pipeline still reads as stale.
 -- =====================================================================
 create or replace view public.v_data_freshness
 with (security_invoker = true) as
   select finished_at as last_updated
   from public.ingest_runs
-  where status = 'ok'
+  where status in ('ok', 'skipped_unchanged')
   order by started_at desc
   limit 1;
 
-comment on view public.v_data_freshness is 'Timestamp of the most recent successful ingest, for the "last updated" badge.';
+comment on view public.v_data_freshness is 'Timestamp of the most recent ingest run that successfully checked IRCC (ok or skipped_unchanged), for the "last updated" badge. Not the same as "when did the data last change."';
 
 -- Views inherit RLS from their base tables under security_invoker; the
 -- ingest_runs table has RLS on but no SELECT policy for anon, so this view
@@ -34,6 +43,8 @@ comment on view public.v_data_freshness is 'Timestamp of the most recent success
 grant select on public.v_data_freshness to anon, authenticated;
 
 -- Workaround: a security-definer function is simpler than juggling view RLS.
+-- Same status filter as v_data_freshness above, and for the same reason —
+-- this is what SiteHeader's "Data checked" badge actually calls.
 create or replace function public.get_last_updated()
 returns timestamptz
 language sql
@@ -42,14 +53,14 @@ set search_path = public
 as $$
   select finished_at
   from public.ingest_runs
-  where status = 'ok'
+  where status in ('ok', 'skipped_unchanged')
   order by started_at desc
   limit 1;
 $$;
 
 grant execute on function public.get_last_updated() to anon, authenticated;
 
-comment on function public.get_last_updated() is 'Returns the timestamp of the most recent successful ingest. Safe for anon: exposes only a single timestamp, nothing else about the ingest_runs table.';
+comment on function public.get_last_updated() is 'Returns the timestamp of the most recent ingest run that successfully checked IRCC (status ok or skipped_unchanged) — i.e. "did we check recently," not "did the data change." Safe for anon: exposes only a single timestamp, nothing else about the ingest_runs table.';
 
 -- =====================================================================
 -- fn_relevant_draws — the "Would I have been invited?" query
