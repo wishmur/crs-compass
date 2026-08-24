@@ -147,3 +147,22 @@ export interface ForeignWorkExperienceScenarioProfile {
   currentForeignWorkYears: number;
   targetForeignWorkYears: number;
 }
+
+/** Supporting profile inputs the education scenario needs. Education pairs
+    with language (s.21) and Canadian work experience (s.22) in skill
+    transferability — NOT with foreign work experience, so unlike the
+    Canadian work experience scenario, this one doesn't need
+    foreignWorkYears at all. Separately, a Canadian-EARNED credential
+    (studied for in Canada, not just any credential at that level) earns
+    its own additional-points bonus (s.30) on top of everything else —
+    tracked per side (current/target) since a candidate's existing
+    credential and a prospective new one aren't necessarily both Canadian. */
+export interface EducationScenarioProfile {
+  hasSpouseOrPartner: boolean;
+  firstLanguageClb: AbilityScores;
+  canadianWorkYears: number;
+  currentEducationLevel: EducationLevel;
+  currentEducationIsCanadian: boolean;
+  targetEducationLevel: EducationLevel;
+  targetEducationIsCanadian: boolean;
+}

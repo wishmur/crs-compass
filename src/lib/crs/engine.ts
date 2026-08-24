@@ -1,6 +1,8 @@
 import {
+  canadianCredentialBonusForLevel,
   canadianWorkExperiencePoints,
   educationLanguageTransferability,
+  educationPoints,
   educationWorkTransferability,
   firstLanguagePoints,
   foreignCanadianWorkTransferability,
@@ -16,6 +18,7 @@ import {
 import type {
   BreakdownLine,
   CanadianWorkExperienceScenarioProfile,
+  EducationScenarioProfile,
   EnglishScenarioProfile,
   ForeignWorkExperienceScenarioProfile,
   FrenchScenarioProfile,
@@ -309,6 +312,85 @@ export function calculateForeignWorkExperienceScenario(
       before: beforeGroup,
       after: afterGroup,
       delta: afterGroup - beforeGroup,
+    },
+  ];
+
+  const delta = breakdown.reduce((total, line) => total + line.delta, 0);
+  const projectedScore = Math.max(0, Math.min(CRS_MAX, baseScore + delta));
+
+  return {
+    baseScore,
+    projectedScore,
+    delta: projectedScore - baseScore,
+    breakdown,
+    ruleset: RULESET_MINISTERIAL_INSTRUCTIONS,
+  };
+}
+
+// Education pairs with language (s.21) and Canadian work experience (s.22)
+// in skill transferability — not with foreign work experience, so this
+// scenario doesn't ask about it at all. Separately, a Canadian-EARNED
+// credential (not just any credential at that level) earns its own
+// additional-points bonus (s.30) — tracked per side since the candidate's
+// current credential and a prospective target aren't necessarily both
+// Canadian.
+export function calculateEducationScenario(
+  baseScore: number,
+  profile: EducationScenarioProfile,
+): ScenarioResult {
+  const beforeCore = educationPoints(profile.currentEducationLevel, profile.hasSpouseOrPartner);
+  const afterCore = educationPoints(profile.targetEducationLevel, profile.hasSpouseOrPartner);
+
+  const beforeEducationLanguage = educationLanguageTransferability(
+    profile.currentEducationLevel,
+    profile.firstLanguageClb,
+  );
+  const afterEducationLanguage = educationLanguageTransferability(
+    profile.targetEducationLevel,
+    profile.firstLanguageClb,
+  );
+  const beforeEducationWork = educationWorkTransferability(
+    profile.currentEducationLevel,
+    profile.canadianWorkYears,
+  );
+  const afterEducationWork = educationWorkTransferability(
+    profile.targetEducationLevel,
+    profile.canadianWorkYears,
+  );
+  const beforeGroup = Math.min(
+    TRANSFERABILITY_GROUP_CAP,
+    beforeEducationLanguage + beforeEducationWork,
+  );
+  const afterGroup = Math.min(
+    TRANSFERABILITY_GROUP_CAP,
+    afterEducationLanguage + afterEducationWork,
+  );
+
+  const beforeCanadianBonus = profile.currentEducationIsCanadian
+    ? canadianCredentialBonusForLevel(profile.currentEducationLevel)
+    : 0;
+  const afterCanadianBonus = profile.targetEducationIsCanadian
+    ? canadianCredentialBonusForLevel(profile.targetEducationLevel)
+    : 0;
+
+  const breakdown: BreakdownLine[] = [
+    {
+      label: "Level of education points",
+      before: beforeCore,
+      after: afterCore,
+      delta: afterCore - beforeCore,
+    },
+    {
+      label: "Skill transferability — education",
+      before: beforeGroup,
+      after: afterGroup,
+      delta: afterGroup - beforeGroup,
+    },
+    {
+      label: "Canadian educational credential (additional points)",
+      before: beforeCanadianBonus,
+      after: afterCanadianBonus,
+      delta: afterCanadianBonus - beforeCanadianBonus,
     },
   ];
 
