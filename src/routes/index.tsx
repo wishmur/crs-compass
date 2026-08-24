@@ -7,6 +7,7 @@ import { RoundBadge } from "@/components/RoundBadge";
 import { ScoreScale } from "@/components/ScoreScale";
 import { formatDate } from "@/components/DrawMeta";
 import { FilterChip } from "@/components/FilterChip";
+import { PrimaryCTA } from "@/components/CTA";
 import { RecentRelevantDraws } from "@/components/RecentRelevantDraws";
 import { PersonalScoreSection } from "@/components/PersonalScoreSection";
 import { PoolContext } from "@/components/PoolContext";
@@ -98,9 +99,6 @@ function Index() {
   const { raw, setRaw, score } = useScore();
   const { elig, setElig, resetElig, hasEligibility } = useCrsProfile();
   const [linkCopied, setLinkCopied] = useState(false);
-  const scrollToDetails = () => {
-    document.getElementById("recent-draws")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
 
   useEffect(() => {
     capture(EVENTS.LANDING_VIEWED);
@@ -391,14 +389,19 @@ function Index() {
 
             <PoolContext score={score} />
 
-            {/* Actions — four consistent pill controls. */}
-            <div className="mt-6 flex flex-wrap gap-2 border-t border-[color-mix(in_srgb,var(--brand)_18%,transparent)] pt-5">
-              <ActionPill onClick={scrollToDetails}>More details</ActionPill>
+            {/* Actions — Plan is the site's most differentiated feature, so
+                it leads and reads as a filled button; everything else is
+                secondary. */}
+            <div className="mt-6 flex flex-wrap items-center gap-4 border-t border-[color-mix(in_srgb,var(--brand)_18%,transparent)] pt-5">
+              <PrimaryCTA to="/plan">Plan your score &rarr;</PrimaryCTA>
               <ActionPill to="/history">Check IRCC history</ActionPill>
-              <ActionPill to="/plan">Plan your score</ActionPill>
-              <ActionPill onClick={copyShareLink} muted>
+              <button
+                type="button"
+                onClick={copyShareLink}
+                className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+              >
                 {linkCopied ? "Link copied ✓" : "Copy link to this view"}
-              </ActionPill>
+              </button>
             </div>
           </>
         )}
