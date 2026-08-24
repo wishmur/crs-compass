@@ -1,5 +1,7 @@
 import { useMemo } from "react";
 import { monthsAgo, useRelevantComparison } from "@/lib/useRelevantComparison";
+import { useAge } from "@/lib/useAge";
+import { agePointsForAge } from "@/lib/crs/age";
 import type { Eligibility } from "@/lib/useCrsProfile";
 
 const WINDOW_MONTHS = 36;
@@ -8,6 +10,24 @@ interface Props {
   currentScore: number;
   plannedScore: number;
   elig: Eligibility;
+}
+
+/** Age points at the user's next birthday, if they've entered an age on
+    Home (age is shared via localStorage, same as score) and that birthday
+    actually changes anything. Returns null otherwise — most of the 20-29
+    plateau, and anyone who hasn't entered an age, have nothing to say
+    here. Deliberately not a new input: Home already owns collecting age. */
+function useNextBirthdayNote() {
+  const { age } = useAge();
+  return useMemo(() => {
+    if (age === null) return null;
+    const current = agePointsForAge(age);
+    const next = agePointsForAge(age + 1);
+    if (current.withoutSpouse === next.withoutSpouse && current.withSpouse === next.withSpouse) {
+      return null;
+    }
+    return { nextAge: age + 1, current, next };
+  }, [age]);
 }
 
 /** "Would this scenario have mattered?" — the same relevant-draws RPC Home
@@ -22,6 +42,7 @@ export function PlanHistoricalComparison({ currentScore, plannedScore, elig }: P
 
   const current = useRelevantComparison(currentScore, elig, since);
   const planned = useRelevantComparison(plannedScore, elig, since);
+  const nextBirthday = useNextBirthdayNote();
 
   if (current.isLoading || planned.isLoading) {
     return <p className="text-sm text-muted-foreground">Comparing against historical draws…</p>;
@@ -63,6 +84,15 @@ export function PlanHistoricalComparison({ currentScore, plannedScore, elig }: P
         <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
           This scenario wouldn&rsquo;t have changed how many relevant historical rounds your score
           cleared in the last {WINDOW_MONTHS} months.
+        </p>
+      )}
+
+      {nextBirthday && (
+        <p className="mt-6 text-xs leading-relaxed text-muted-foreground">
+          Independent of this scenario: turning {nextBirthday.nextAge} moves your age points{" "}
+          {nextBirthday.current.withoutSpouse} &rarr; {nextBirthday.next.withoutSpouse} (
+          {nextBirthday.current.withSpouse} &rarr; {nextBirthday.next.withSpouse} with a spouse or
+          partner) — from the age insight on Home.
         </p>
       )}
     </div>
