@@ -11,6 +11,7 @@ import { PrimaryCTA } from "@/components/CTA";
 import { RecentRelevantDraws } from "@/components/RecentRelevantDraws";
 import { PersonalScoreSection } from "@/components/PersonalScoreSection";
 import { PoolContext } from "@/components/PoolContext";
+import { AgeInsight } from "@/components/AgeInsight";
 import { drawsQuery } from "@/lib/queries";
 import { EVENTS, capture } from "@/lib/analytics";
 import { useCrsProfile, isRelevantDraw } from "@/lib/useCrsProfile";
@@ -388,6 +389,7 @@ function Index() {
             )}
 
             <PoolContext score={score} />
+            <AgeInsight />
 
             {/* Actions — Plan is the site's most differentiated feature, so
                 it leads and reads as a filled button; everything else is
