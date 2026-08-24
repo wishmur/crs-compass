@@ -5,6 +5,7 @@ import { useCrsProfile } from "@/lib/useCrsProfile";
 import { FilterChip } from "@/components/FilterChip";
 import { FrenchScenarioFlow } from "@/components/plan/FrenchScenarioFlow";
 import { PnpScenarioFlow } from "@/components/plan/PnpScenarioFlow";
+import { EnglishScenarioFlow } from "@/components/plan/EnglishScenarioFlow";
 
 export const Route = createFileRoute("/plan")({
   head: () => ({
@@ -29,10 +30,11 @@ const GOAL_CHIPS: { value: Goal | "citizenship"; label: string; disabled?: boole
 
 const SCENARIO_CHIPS = [
   { key: "french", label: "Improve my French" },
+  { key: "english", label: "Improve my English" },
   { key: "pnp", label: "Provincial nomination" },
 ] as const;
 
-const MORE_SCENARIOS = "English · Canadian work experience · Foreign work experience · Education";
+const MORE_SCENARIOS = "Canadian work experience · Foreign work experience · Education";
 
 function Plan() {
   const { raw, setRaw, score } = useScore();
@@ -157,6 +159,9 @@ function Plan() {
           once there's a result, a separate result panel below it. */}
       {score !== null && scenario === "french" && (
         <FrenchScenarioFlow baseScore={score} elig={elig} />
+      )}
+      {score !== null && scenario === "english" && (
+        <EnglishScenarioFlow baseScore={score} elig={elig} />
       )}
       {score !== null && scenario === "pnp" && <PnpScenarioFlow baseScore={score} elig={elig} />}
     </div>

@@ -70,3 +70,43 @@ export interface FrenchScenarioProfile {
   currentFrenchNclc: AbilityScores;
   targetFrenchNclc: AbilityScores;
 }
+
+/** IRCC's "level of education" bands — Ministerial Instructions s.11. Feeds
+    both Core education points directly and skill-transferability (paired
+    with first-official-language and Canadian work experience). */
+export type EducationLevel =
+  | "none" // less than a secondary school credential
+  | "secondary"
+  | "one-year" // one-year post-secondary program credential
+  | "two-year" // two-year post-secondary program credential
+  | "three-year" // post-secondary program credential of 3+ years
+  | "two-credentials" // 2+ post-secondary credentials, one 3+ years
+  | "masters" // master's, or an entry-to-practice professional degree
+  | "doctoral";
+
+export const EDUCATION_LEVELS: readonly EducationLevel[] = [
+  "none",
+  "secondary",
+  "one-year",
+  "two-year",
+  "three-year",
+  "two-credentials",
+  "masters",
+  "doctoral",
+];
+
+/** Supporting profile inputs the English scenario needs. Unlike French,
+    English is assumed to be the candidate's FIRST official language (see
+    engine.ts) — so improving it moves Core first-language points AND two
+    of the four skill-transferability combinations (paired with education,
+    and with foreign work experience). Education and work experience are
+    held fixed at their current values throughout — this scenario answers
+    "what if just my English changes," not "what if everything does." */
+export interface EnglishScenarioProfile {
+  hasSpouseOrPartner: boolean;
+  educationLevel: EducationLevel;
+  canadianWorkYears: number;
+  foreignWorkYears: number;
+  currentEnglishClb: AbilityScores;
+  targetEnglishClb: AbilityScores;
+}

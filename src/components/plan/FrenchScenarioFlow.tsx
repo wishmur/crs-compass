@@ -134,6 +134,7 @@ export function FrenchScenarioFlow({ baseScore, elig }: Props) {
     currentFrench?: PartialAbilityScores;
   }) => {
     setProfile((p) => ({
+      ...p,
       hasSpouseOrPartner: next.spouse ?? p.hasSpouseOrPartner,
       hasEnglishResults: next.englishMode ? next.englishMode === "has" : p.hasEnglishResults,
       englishClb: next.englishClb && isComplete(next.englishClb) ? next.englishClb : p.englishClb,

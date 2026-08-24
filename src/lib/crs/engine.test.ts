@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { calculateFrenchScenario, calculatePnpScenario } from "./engine";
+import { calculateEnglishScenario, calculateFrenchScenario, calculatePnpScenario } from "./engine";
 import { frenchBonusPoints, secondLanguageAbilityPoints, secondLanguagePoints } from "./language";
-import type { AbilityScores, FrenchScenarioProfile } from "./types";
+import type { AbilityScores, EnglishScenarioProfile, FrenchScenarioProfile } from "./types";
 
 const abilities = (
   speaking: number,
@@ -178,5 +178,96 @@ describe("calculatePnpScenario", () => {
     const result = calculatePnpScenario(0);
     expect(result.projectedScore).toBe(600);
     expect(result.delta).toBe(600);
+  });
+});
+
+describe("calculateEnglishScenario", () => {
+  function baseEnglishProfile(
+    overrides: Partial<EnglishScenarioProfile> = {},
+  ): EnglishScenarioProfile {
+    return {
+      hasSpouseOrPartner: false,
+      educationLevel: "none",
+      canadianWorkYears: 0,
+      foreignWorkYears: 0,
+      currentEnglishClb: noResult,
+      targetEnglishClb: noResult,
+      ...overrides,
+    };
+  }
+
+  it("moves only Core language points when education/work experience don't qualify for transferability", () => {
+    const result = calculateEnglishScenario(
+      450,
+      baseEnglishProfile({ targetEnglishClb: nclc9 }), // reuse the all-9s fixture as CLB9
+    );
+    expect(result.breakdown).toEqual([
+      { label: "First official language points", before: 0, after: 124, delta: 124 },
+      { label: "Skill transferability — education × language", before: 0, after: 0, delta: 0 },
+      {
+        label: "Skill transferability — foreign work experience × language",
+        before: 0,
+        after: 0,
+        delta: 0,
+      },
+    ]);
+    expect(result.delta).toBe(124);
+  });
+
+  it("moves education transferability alongside Core points when education qualifies", () => {
+    const result = calculateEnglishScenario(
+      450,
+      baseEnglishProfile({ educationLevel: "three-year", targetEnglishClb: nclc9 }),
+    );
+    const eduLine = result.breakdown[1]!;
+    expect(eduLine.before).toBe(0);
+    expect(eduLine.after).toBe(25); // one-plus-year tier, CLB9+ -> 25
+  });
+
+  it("moves foreign-experience transferability alongside Core points when foreign experience qualifies", () => {
+    const result = calculateEnglishScenario(
+      450,
+      baseEnglishProfile({ foreignWorkYears: 3, targetEnglishClb: nclc9 }),
+    );
+    const foreignLine = result.breakdown[2]!;
+    expect(foreignLine.before).toBe(0);
+    expect(foreignLine.after).toBe(50); // 3+ years foreign, CLB9+ -> 50
+  });
+
+  it("caps the education group at 50 even when Canadian work experience alone already maxes it", () => {
+    // doctoral + 2yr Canadian work experience = 50 (educationWork) on its own,
+    // regardless of language -> improving English can't push the group past 50.
+    const result = calculateEnglishScenario(
+      450,
+      baseEnglishProfile({
+        educationLevel: "doctoral",
+        canadianWorkYears: 2,
+        targetEnglishClb: nclc9,
+      }),
+    );
+    const eduLine = result.breakdown[1]!;
+    expect(eduLine.before).toBe(50);
+    expect(eduLine.after).toBe(50);
+    expect(eduLine.delta).toBe(0);
+  });
+
+  it("clamps the projected score at the 1200 maximum", () => {
+    const result = calculateEnglishScenario(
+      1190,
+      baseEnglishProfile({
+        educationLevel: "doctoral",
+        foreignWorkYears: 5,
+        targetEnglishClb: nclc9,
+      }),
+    );
+    expect(result.projectedScore).toBe(1200);
+  });
+
+  it("delta is 0 when the target matches the current result", () => {
+    const result = calculateEnglishScenario(
+      450,
+      baseEnglishProfile({ currentEnglishClb: nclc7, targetEnglishClb: nclc7 }),
+    );
+    expect(result.delta).toBe(0);
   });
 });
