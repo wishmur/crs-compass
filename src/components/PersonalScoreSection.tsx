@@ -9,12 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { RoundBadge } from "@/components/RoundBadge";
 import { SourceLink, formatDate } from "@/components/DrawMeta";
 import { TablePagination } from "@/components/TablePagination";
@@ -93,10 +88,18 @@ export function PersonalScoreSection({ score, elig }: Props) {
     const sorted = results.map((r) => r.cutoff_score).sort((a, b) => a - b);
     const mid = Math.floor(sorted.length / 2);
     const median =
-      sorted.length % 2 === 0
-        ? Math.round((sorted[mid - 1]! + sorted[mid]!) / 2)
-        : sorted[mid]!;
+      sorted.length % 2 === 0 ? Math.round((sorted[mid - 1]! + sorted[mid]!) / 2) : sorted[mid]!;
     return { median, lowest: sorted[0]!, highest: sorted[sorted.length - 1]! };
+  }, [results]);
+
+  // Average gap between consecutive relevant rounds in the window — sets
+  // expectations about how often a round like this actually comes up,
+  // without predicting when the next one lands.
+  const cadenceDays = useMemo(() => {
+    if (!results || results.length < 2) return null;
+    const dates = results.map((r) => new Date(r.draw_date).getTime()).sort((a, b) => a - b);
+    const span = dates[dates.length - 1]! - dates[0]!;
+    return Math.round(span / (dates.length - 1) / (1000 * 60 * 60 * 24));
   }, [results]);
 
   // Human-readable summary of what the calculation is based on — so the user
@@ -167,9 +170,7 @@ export function PersonalScoreSection({ score, elig }: Props) {
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <p className="kicker">What the history says</p>
           {validScore && (
-            <p className="text-[0.7rem] tabular-nums text-muted-foreground/80">
-              {profileSummary}
-            </p>
+            <p className="text-[0.7rem] tabular-nums text-muted-foreground/80">{profileSummary}</p>
           )}
         </div>
 
@@ -186,8 +187,8 @@ export function PersonalScoreSection({ score, elig }: Props) {
           </div>
         ) : total === 0 ? (
           <p className="mt-4 text-sm text-muted-foreground">
-            No relevant rounds found since {formatDate(since)} for these selections — or data is
-            not available yet (the daily refresh runs at ~9am ET).
+            No relevant rounds found since {formatDate(since)} for these selections — or data is not
+            available yet (the daily refresh runs at ~9am ET).
           </p>
         ) : (
           <>
@@ -218,8 +219,7 @@ export function PersonalScoreSection({ score, elig }: Props) {
                   ·
                 </span>
                 <span>
-                  Median{" "}
-                  <span className="tabular-nums text-ink">{cutoffStats.median}</span>
+                  Median <span className="tabular-nums text-ink">{cutoffStats.median}</span>
                 </span>
                 <span aria-hidden className="text-muted-foreground/50">
                   ·
@@ -245,6 +245,17 @@ export function PersonalScoreSection({ score, elig }: Props) {
                     <span>
                       <span className="tabular-nums text-ink">{matched}</span> matched exactly
                       (tie-break)
+                    </span>
+                  </>
+                )}
+                {cadenceDays !== null && (
+                  <>
+                    <span aria-hidden className="text-muted-foreground/50">
+                      ·
+                    </span>
+                    <span>
+                      Rounds ~<span className="tabular-nums text-ink">{cadenceDays}</span> days
+                      apart
                     </span>
                   </>
                 )}
@@ -298,8 +309,8 @@ export function PersonalScoreSection({ score, elig }: Props) {
                 {topUncheckedFamilies.length > 0 && (
                   <>
                     {" "}
-                    In {currentYear}, most invitations went to{" "}
-                    {topUncheckedFamilies.join(" and ")} category rounds.
+                    In {currentYear}, most invitations went to {topUncheckedFamilies.join(" and ")}{" "}
+                    category rounds.
                   </>
                 )}
               </div>
@@ -426,17 +437,11 @@ export function PersonalScoreSection({ score, elig }: Props) {
                           className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
                           style={{ backgroundColor: s.bg, color: s.fg }}
                         >
-                          {state === "above"
-                            ? "Above"
-                            : state === "matched"
-                              ? "Matched"
-                              : "Below"}
+                          {state === "above" ? "Above" : state === "matched" ? "Matched" : "Below"}
                         </span>
                       </div>
                       {state === "matched" && tieBreak && (
-                        <p className="mt-2 text-xs text-muted-foreground">
-                          Tie-break: {tieBreak}
-                        </p>
+                        <p className="mt-2 text-xs text-muted-foreground">Tie-break: {tieBreak}</p>
                       )}
                       <div className="mt-2 text-xs">
                         <SourceLink url={d.source_url} from="wihbi" roundNumber={d.round_number} />
