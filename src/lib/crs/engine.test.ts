@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calculateFrenchScenario } from "./engine";
+import { calculateFrenchScenario, calculatePnpScenario } from "./engine";
 import { frenchBonusPoints, secondLanguageAbilityPoints, secondLanguagePoints } from "./language";
 import type { AbilityScores, FrenchScenarioProfile } from "./types";
 
@@ -155,5 +155,28 @@ describe("calculateFrenchScenario — end-to-end scenarios", () => {
     );
     expect(result.delta).toBe(0);
     expect(result.projectedScore).toBe(487);
+  });
+});
+
+describe("calculatePnpScenario", () => {
+  it("adds a flat 600 points", () => {
+    const result = calculatePnpScenario(450);
+    expect(result.breakdown).toEqual([
+      { label: "Provincial nomination (additional points)", before: 0, after: 600, delta: 600 },
+    ]);
+    expect(result.delta).toBe(600);
+    expect(result.projectedScore).toBe(1050);
+  });
+
+  it("clamps the projected score at the 1200 maximum", () => {
+    const result = calculatePnpScenario(700);
+    expect(result.projectedScore).toBe(1200);
+    expect(result.delta).toBe(500);
+  });
+
+  it("clamps even from a very low base score", () => {
+    const result = calculatePnpScenario(0);
+    expect(result.projectedScore).toBe(600);
+    expect(result.delta).toBe(600);
   });
 });

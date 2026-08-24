@@ -41,3 +41,10 @@ export const SECOND_LANGUAGE_CAP = { withSpouse: 22, withoutSpouse: 24 };
 export const FRENCH_BONUS_NCLC_THRESHOLD = 7;
 export const FRENCH_BONUS_ENGLISH_CLB_THRESHOLD = 5;
 export const FRENCH_BONUS_POINTS = { partial: 25, full: 50 };
+
+// --- Additional points — provincial/territorial nomination (D) ------------
+// Flat 600, regardless of any other factor. Unlike education and work
+// experience, a nomination is NOT one of IRCC's skill-transferability
+// combination inputs (those only combine education/experience with
+// language), so it never interacts with transferability points.
+export const PNP_NOMINATION_POINTS = 600;
