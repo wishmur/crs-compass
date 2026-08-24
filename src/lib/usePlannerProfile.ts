@@ -1,11 +1,25 @@
 import { useEffect, useState } from "react";
-import { ABILITIES, type AbilityScores } from "@/lib/crs/types";
+import {
+  ABILITIES,
+  EDUCATION_LEVELS,
+  type AbilityScores,
+  type EducationLevel,
+} from "@/lib/crs/types";
 
 // Supporting profile inputs the planner's scenario flows need, persisted to
 // localStorage the same way useScore/useCrsProfile are. Deliberately narrow
-// — only what a scenario's math actually depends on. The French scenario's
-// target result is NOT stored here; it's transient per-session state local
-// to that flow, so a stale target never silently reappears next visit.
+// — only what a scenario's math actually depends on. Each scenario's own
+// target (French target, English target, etc.) is NOT stored here; it's
+// transient per-session state local to that flow, so a stale target never
+// silently reappears next visit.
+//
+// NOTE: scenario flows currently only WRITE here — none of them read this
+// profile back in to prefill their own accordion state, so the same
+// "do you have a spouse" question still gets asked fresh in every scenario
+// within a session even though the answer is already known. That's an
+// existing gap (not something this comment is papering over), worth fixing
+// once there are enough scenarios that re-asking becomes actively annoying
+// rather than a one-time redundancy.
 
 const PLANNER_PROFILE_KEY = "crsSignal.plannerProfile";
 const WRITE_DEBOUNCE_MS = 500;
@@ -17,6 +31,9 @@ export interface PlannerProfile {
   hasEnglishResults: boolean;
   englishClb: AbilityScores;
   currentFrenchNclc: AbilityScores;
+  educationLevel: EducationLevel;
+  canadianWorkYears: number;
+  foreignWorkYears: number;
 }
 
 const DEFAULT_PROFILE: PlannerProfile = {
@@ -24,11 +41,22 @@ const DEFAULT_PROFILE: PlannerProfile = {
   hasEnglishResults: true,
   englishClb: ZERO_ABILITIES,
   currentFrenchNclc: ZERO_ABILITIES,
+  educationLevel: "none",
+  canadianWorkYears: 0,
+  foreignWorkYears: 0,
 };
 
 function isAbilityScores(value: unknown): value is AbilityScores {
   if (!value || typeof value !== "object") return false;
   return ABILITIES.every((a) => typeof (value as Record<string, unknown>)[a] === "number");
+}
+
+function isEducationLevel(value: unknown): value is EducationLevel {
+  return typeof value === "string" && (EDUCATION_LEVELS as readonly string[]).includes(value);
+}
+
+function isWorkYears(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0;
 }
 
 function migrate(parsed: unknown): PlannerProfile {
@@ -45,6 +73,15 @@ function migrate(parsed: unknown): PlannerProfile {
         : DEFAULT_PROFILE.hasEnglishResults,
     englishClb: isAbilityScores(p.englishClb) ? p.englishClb : ZERO_ABILITIES,
     currentFrenchNclc: isAbilityScores(p.currentFrenchNclc) ? p.currentFrenchNclc : ZERO_ABILITIES,
+    educationLevel: isEducationLevel(p.educationLevel)
+      ? p.educationLevel
+      : DEFAULT_PROFILE.educationLevel,
+    canadianWorkYears: isWorkYears(p.canadianWorkYears)
+      ? p.canadianWorkYears
+      : DEFAULT_PROFILE.canadianWorkYears,
+    foreignWorkYears: isWorkYears(p.foreignWorkYears)
+      ? p.foreignWorkYears
+      : DEFAULT_PROFILE.foreignWorkYears,
   };
 }
 

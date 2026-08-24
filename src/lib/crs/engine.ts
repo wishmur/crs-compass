@@ -1,6 +1,23 @@
+import {
+  educationLanguageTransferability,
+  educationWorkTransferability,
+  firstLanguagePoints,
+  foreignCanadianWorkTransferability,
+  foreignWorkLanguageTransferability,
+} from "./core";
 import { frenchBonusPoints, secondLanguagePoints } from "./language";
-import { PNP_NOMINATION_POINTS, RULESET_2026_08 } from "./ruleset-2026-08";
-import type { BreakdownLine, FrenchScenarioProfile, ScenarioResult } from "./types";
+import {
+  PNP_NOMINATION_POINTS,
+  RULESET_2026_08,
+  RULESET_MINISTERIAL_INSTRUCTIONS,
+  TRANSFERABILITY_GROUP_CAP,
+} from "./ruleset-2026-08";
+import type {
+  BreakdownLine,
+  EnglishScenarioProfile,
+  FrenchScenarioProfile,
+  ScenarioResult,
+} from "./types";
 
 const CRS_MAX = 1200;
 
@@ -60,6 +77,99 @@ export function calculateFrenchScenario(
     delta: projectedScore - baseScore,
     breakdown,
     ruleset: RULESET_2026_08,
+  };
+}
+
+// English is treated as the candidate's FIRST official language throughout
+// this app (see calculateFrenchScenario above) — so improving it moves Core
+// first-language points AND the two skill-transferability groups that pair
+// language with education and with foreign work experience. Education,
+// Canadian work experience, and foreign work experience are held fixed at
+// their current values: this answers "what if just my English changes,"
+// not "what if everything does" (that's the combination-scenarios idea,
+// deliberately not built yet). One more thing this does NOT recalculate:
+// the French-language bonus, even if the candidate also has a qualifying
+// French result — that bonus's English-CLB-5+ qualifier is a live
+// dependency this scenario doesn't touch. The UI says so.
+export function calculateEnglishScenario(
+  baseScore: number,
+  profile: EnglishScenarioProfile,
+): ScenarioResult {
+  const beforeLanguage = firstLanguagePoints(profile.currentEnglishClb, profile.hasSpouseOrPartner);
+  const afterLanguage = firstLanguagePoints(profile.targetEnglishClb, profile.hasSpouseOrPartner);
+
+  const educationWork = educationWorkTransferability(
+    profile.educationLevel,
+    profile.canadianWorkYears,
+  );
+  const beforeEducationLanguage = educationLanguageTransferability(
+    profile.educationLevel,
+    profile.currentEnglishClb,
+  );
+  const afterEducationLanguage = educationLanguageTransferability(
+    profile.educationLevel,
+    profile.targetEnglishClb,
+  );
+  const beforeEducationGroup = Math.min(
+    TRANSFERABILITY_GROUP_CAP,
+    beforeEducationLanguage + educationWork,
+  );
+  const afterEducationGroup = Math.min(
+    TRANSFERABILITY_GROUP_CAP,
+    afterEducationLanguage + educationWork,
+  );
+
+  const foreignCanadianWork = foreignCanadianWorkTransferability(
+    profile.foreignWorkYears,
+    profile.canadianWorkYears,
+  );
+  const beforeForeignLanguage = foreignWorkLanguageTransferability(
+    profile.foreignWorkYears,
+    profile.currentEnglishClb,
+  );
+  const afterForeignLanguage = foreignWorkLanguageTransferability(
+    profile.foreignWorkYears,
+    profile.targetEnglishClb,
+  );
+  const beforeForeignGroup = Math.min(
+    TRANSFERABILITY_GROUP_CAP,
+    beforeForeignLanguage + foreignCanadianWork,
+  );
+  const afterForeignGroup = Math.min(
+    TRANSFERABILITY_GROUP_CAP,
+    afterForeignLanguage + foreignCanadianWork,
+  );
+
+  const breakdown: BreakdownLine[] = [
+    {
+      label: "First official language points",
+      before: beforeLanguage,
+      after: afterLanguage,
+      delta: afterLanguage - beforeLanguage,
+    },
+    {
+      label: "Skill transferability — education × language",
+      before: beforeEducationGroup,
+      after: afterEducationGroup,
+      delta: afterEducationGroup - beforeEducationGroup,
+    },
+    {
+      label: "Skill transferability — foreign work experience × language",
+      before: beforeForeignGroup,
+      after: afterForeignGroup,
+      delta: afterForeignGroup - beforeForeignGroup,
+    },
+  ];
+
+  const delta = breakdown.reduce((total, line) => total + line.delta, 0);
+  const projectedScore = Math.max(0, Math.min(CRS_MAX, baseScore + delta));
+
+  return {
+    baseScore,
+    projectedScore,
+    delta: projectedScore - baseScore,
+    breakdown,
+    ruleset: RULESET_MINISTERIAL_INSTRUCTIONS,
   };
 }
 
