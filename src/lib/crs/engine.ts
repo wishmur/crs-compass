@@ -1,5 +1,5 @@
 import { frenchBonusPoints, secondLanguagePoints } from "./language";
-import { RULESET_2026_08 } from "./ruleset-2026-08";
+import { PNP_NOMINATION_POINTS, RULESET_2026_08 } from "./ruleset-2026-08";
 import type { BreakdownLine, FrenchScenarioProfile, ScenarioResult } from "./types";
 
 const CRS_MAX = 1200;
@@ -57,6 +57,30 @@ export function calculateFrenchScenario(
     projectedScore,
     // Report the delta actually applied (post-cap), not the raw component
     // sum, so the headline number and the breakdown never disagree.
+    delta: projectedScore - baseScore,
+    breakdown,
+    ruleset: RULESET_2026_08,
+  };
+}
+
+// A provincial nomination adds a flat 600 points and touches nothing else —
+// no skill-transferability recalculation, unlike French/English/work
+// experience. This is the simplest possible scenario: one yes/no input.
+export function calculatePnpScenario(baseScore: number): ScenarioResult {
+  const breakdown: BreakdownLine[] = [
+    {
+      label: "Provincial nomination (additional points)",
+      before: 0,
+      after: PNP_NOMINATION_POINTS,
+      delta: PNP_NOMINATION_POINTS,
+    },
+  ];
+
+  const projectedScore = Math.max(0, Math.min(CRS_MAX, baseScore + PNP_NOMINATION_POINTS));
+
+  return {
+    baseScore,
+    projectedScore,
     delta: projectedScore - baseScore,
     breakdown,
     ruleset: RULESET_2026_08,

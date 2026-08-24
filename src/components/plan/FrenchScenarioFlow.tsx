@@ -420,6 +420,18 @@ export function FrenchScenarioFlow({ baseScore, elig }: Props) {
                 common case. If French is actually your stronger language, other CRS factors could
                 also shift and this number would understate the effect.
               </p>
+              <p className="mt-4 text-xs text-muted-foreground">
+                Next step: French results come from an IRCC-approved TEF Canada or TCF Canada test
+                centre.{" "}
+                <a
+                  href="https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/documents/language-test.html"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="underline underline-offset-2"
+                >
+                  See IRCC&rsquo;s language testing info →
+                </a>
+              </p>
             </div>
 
             <div className="md:border-l md:pl-10" style={DIVIDER_STYLE}>
