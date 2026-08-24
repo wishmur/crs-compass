@@ -8,6 +8,7 @@ import { PnpScenarioFlow } from "@/components/plan/PnpScenarioFlow";
 import { EnglishScenarioFlow } from "@/components/plan/EnglishScenarioFlow";
 import { CanadianWorkExperienceScenarioFlow } from "@/components/plan/CanadianWorkExperienceScenarioFlow";
 import { ForeignWorkExperienceScenarioFlow } from "@/components/plan/ForeignWorkExperienceScenarioFlow";
+import { EducationScenarioFlow } from "@/components/plan/EducationScenarioFlow";
 
 export const Route = createFileRoute("/plan")({
   head: () => ({
@@ -35,10 +36,9 @@ const SCENARIO_CHIPS = [
   { key: "english", label: "Improve my English" },
   { key: "canadianWork", label: "Canadian work experience" },
   { key: "foreignWork", label: "Foreign work experience" },
+  { key: "education", label: "Education" },
   { key: "pnp", label: "Provincial nomination" },
 ] as const;
-
-const MORE_SCENARIOS = "Education";
 
 function Plan() {
   const { raw, setRaw, score } = useScore();
@@ -152,9 +152,6 @@ function Plan() {
                 Want something added? Tell me what you&rsquo;d use →
               </a>
             </p>
-            <p className="mt-1 text-xs" style={{ color: "rgba(246,241,232,0.6)" }}>
-              More scenarios: {MORE_SCENARIOS}
-            </p>
           </div>
         </div>
       </section>
@@ -172,6 +169,9 @@ function Plan() {
       )}
       {score !== null && scenario === "foreignWork" && (
         <ForeignWorkExperienceScenarioFlow baseScore={score} elig={elig} />
+      )}
+      {score !== null && scenario === "education" && (
+        <EducationScenarioFlow baseScore={score} elig={elig} />
       )}
       {score !== null && scenario === "pnp" && <PnpScenarioFlow baseScore={score} elig={elig} />}
     </div>

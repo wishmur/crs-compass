@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   calculateCanadianWorkExperienceScenario,
+  calculateEducationScenario,
   calculateEnglishScenario,
   calculateForeignWorkExperienceScenario,
   calculateFrenchScenario,
@@ -10,6 +11,7 @@ import { frenchBonusPoints, secondLanguageAbilityPoints, secondLanguagePoints } 
 import type {
   AbilityScores,
   CanadianWorkExperienceScenarioProfile,
+  EducationScenarioProfile,
   EnglishScenarioProfile,
   ForeignWorkExperienceScenarioProfile,
   FrenchScenarioProfile,
@@ -454,6 +456,107 @@ describe("calculateForeignWorkExperienceScenario", () => {
     const result = calculateForeignWorkExperienceScenario(
       450,
       baseProfile({ currentForeignWorkYears: 1, targetForeignWorkYears: 1 }),
+    );
+    expect(result.delta).toBe(0);
+  });
+});
+
+describe("calculateEducationScenario", () => {
+  function baseProfile(
+    overrides: Partial<EducationScenarioProfile> = {},
+  ): EducationScenarioProfile {
+    return {
+      hasSpouseOrPartner: false,
+      firstLanguageClb: noResult,
+      canadianWorkYears: 0,
+      currentEducationLevel: "secondary",
+      currentEducationIsCanadian: false,
+      targetEducationLevel: "secondary",
+      targetEducationIsCanadian: false,
+      ...overrides,
+    };
+  }
+
+  it("moves Core points and education transferability when language qualifies", () => {
+    const result = calculateEducationScenario(
+      450,
+      baseProfile({ firstLanguageClb: nclc9, targetEducationLevel: "three-year" }),
+    );
+    expect(result.breakdown).toEqual([
+      { label: "Level of education points", before: 30, after: 120, delta: 90 },
+      { label: "Skill transferability — education", before: 0, after: 25, delta: 25 },
+      {
+        label: "Canadian educational credential (additional points)",
+        before: 0,
+        after: 0,
+        delta: 0,
+      },
+    ]);
+    expect(result.delta).toBe(115);
+  });
+
+  it("adds the Canadian credential bonus only when the target is flagged as Canadian-earned", () => {
+    const result = calculateEducationScenario(
+      450,
+      baseProfile({ targetEducationLevel: "two-year", targetEducationIsCanadian: true }),
+    );
+    const bonusLine = result.breakdown[2]!;
+    expect(bonusLine.before).toBe(0);
+    expect(bonusLine.after).toBe(15);
+    expect(result.delta).toBe(68 + 15); // Core: 98 - 30 = 68, plus the +15 bonus
+  });
+
+  it("isolates the Canadian credential bonus when the education level itself doesn't change", () => {
+    const result = calculateEducationScenario(
+      450,
+      baseProfile({
+        firstLanguageClb: nclc9,
+        canadianWorkYears: 5,
+        currentEducationLevel: "doctoral",
+        targetEducationLevel: "doctoral",
+        targetEducationIsCanadian: true,
+      }),
+    );
+    expect(result.breakdown[0]!.delta).toBe(0); // Core unchanged, same level both sides
+    expect(result.breakdown[1]!.delta).toBe(0); // transferability unchanged, same level both sides
+    expect(result.breakdown[2]!.delta).toBe(30); // only the Canadian bonus moves
+    expect(result.delta).toBe(30);
+  });
+
+  it("caps the transferability group at 50 — moving to a higher tier adds nothing once saturated", () => {
+    const result = calculateEducationScenario(
+      450,
+      baseProfile({
+        firstLanguageClb: nclc9,
+        canadianWorkYears: 2,
+        currentEducationLevel: "three-year",
+        targetEducationLevel: "two-credentials",
+      }),
+    );
+    expect(result.breakdown[1]!.before).toBe(50);
+    expect(result.breakdown[1]!.after).toBe(50);
+    expect(result.breakdown[1]!.delta).toBe(0);
+    // Core points still move normally even though transferability is saturated.
+    expect(result.breakdown[0]!.delta).toBe(8);
+  });
+
+  it("clamps the projected score at the 1200 maximum", () => {
+    const result = calculateEducationScenario(
+      1150,
+      baseProfile({
+        firstLanguageClb: nclc9,
+        canadianWorkYears: 5,
+        targetEducationLevel: "doctoral",
+        targetEducationIsCanadian: true,
+      }),
+    );
+    expect(result.projectedScore).toBe(1200);
+  });
+
+  it("delta is 0 when the target matches the current level and Canadian status", () => {
+    const result = calculateEducationScenario(
+      450,
+      baseProfile({ currentEducationLevel: "one-year", targetEducationLevel: "one-year" }),
     );
     expect(result.delta).toBe(0);
   });

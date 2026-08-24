@@ -1,5 +1,6 @@
 import { ABILITIES, type AbilityScores, type EducationLevel } from "./types";
 import {
+  CANADIAN_CREDENTIAL_BONUS,
   CANADIAN_WORK_EXPERIENCE_POINTS,
   EDUCATION_CANADIAN_WORK_TRANSFERABILITY,
   EDUCATION_LANGUAGE_TRANSFERABILITY,
@@ -45,6 +46,22 @@ export function canadianWorkExperiencePoints(years: number, hasSpouseOrPartner: 
   const banded = Math.max(0, Math.min(5, Math.floor(years)));
   const points = CANADIAN_WORK_EXPERIENCE_POINTS[banded]!;
   return hasSpouseOrPartner ? points.withSpouse : points.withoutSpouse;
+}
+
+/** Additional points for a Canadian-earned educational credential
+    (Ministerial Instructions s.30) — a different factor from Core
+    education points above, and keyed to a slightly different tier
+    boundary than skill-transferability's "advanced" tier: a standalone
+    3-year credential earns the 30-point tier here (unlike transferability,
+    where it's grouped with 1-2 year credentials at the lower tier). Does
+    NOT vary by spouse status. Only meaningful when the credential this
+    level represents was actually studied for in Canada — callers must
+    gate on that separately, since a foreign credential at the same level
+    earns 0 here regardless of level. */
+export function canadianCredentialBonusForLevel(level: EducationLevel): number {
+  if (level === "none" || level === "secondary") return 0;
+  if (level === "one-year" || level === "two-year") return CANADIAN_CREDENTIAL_BONUS.oneOrTwoYear;
+  return CANADIAN_CREDENTIAL_BONUS.threeYearPlus;
 }
 
 /** IRCC's skill-transferability tables collapse first-language proficiency

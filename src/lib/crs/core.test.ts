@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  canadianCredentialBonusForLevel,
   canadianWorkExperiencePoints,
   educationLanguageTransferability,
   educationPoints,
@@ -230,5 +231,28 @@ describe("totalTransferabilityPoints — group caps (Ministerial Instructions s.
     expect(result.foreignLanguage).toBe(0);
     expect(result.foreignCanadianWork).toBe(0);
     expect(result.total).toBe(26);
+  });
+});
+
+describe("canadianCredentialBonusForLevel (Ministerial Instructions s.30)", () => {
+  it.each([
+    ["none", 0],
+    ["secondary", 0],
+    ["one-year", 15],
+    ["two-year", 15],
+    ["three-year", 30],
+    ["two-credentials", 30],
+    ["masters", 30],
+    ["doctoral", 30],
+  ] as const)("%s -> %i", (level, expected) => {
+    expect(canadianCredentialBonusForLevel(level)).toBe(expected);
+  });
+
+  it("puts a standalone 3-year credential in the 30-point tier, unlike transferability's 'advanced' tier", () => {
+    // Transferability's educationTransferTier groups "three-year" with
+    // "one-plus-year" (not "advanced") — this bonus tier boundary is
+    // different, and it's easy to accidentally reuse the wrong one.
+    expect(canadianCredentialBonusForLevel("three-year")).toBe(30);
+    expect(educationLanguageTransferability("three-year", clb9)).toBe(25); // one-plus-year tier, not advanced (50)
   });
 });
