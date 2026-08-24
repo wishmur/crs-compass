@@ -21,14 +21,35 @@ export const drawsQuery = (limit?: number) =>
     staleTime: 5 * 60 * 1000,
   });
 
+// "Data checked" badge: the timestamp of the most recent successful ingest
+// run, read straight from GitHub Actions' own run history — not from
+// Supabase. The ingest script exits 0 on both a real update ('ok') and a
+// no-op day where the payload hash matched last time ('skipped_unchanged'),
+// and exits 1 on any real failure — so GitHub's own success/failure
+// verdict already is the "did we successfully check IRCC" signal, with no
+// need to duplicate that logic in a database view. Public repo, unauthenticated
+// GitHub API, no token, no backend, no manual migration step to keep it honest.
+const INGEST_RUNS_URL =
+  "https://api.github.com/repos/wishmur/crs-compass/actions/workflows/ingest.yml/runs?status=success&per_page=1";
+
+interface WorkflowRunsResponse {
+  workflow_runs?: { run_started_at?: string }[];
+}
+
 export const lastUpdatedQuery = () =>
   queryOptions({
     queryKey: ["last_updated"],
     queryFn: async (): Promise<string | null> => {
-      if (!isSupabaseConfigured) return null;
-      const { data, error } = await supabase.rpc("get_last_updated");
-      if (error) return null;
-      return (data as string | null) ?? null;
+      try {
+        const res = await fetch(INGEST_RUNS_URL, {
+          headers: { Accept: "application/vnd.github+json" },
+        });
+        if (!res.ok) return null;
+        const data = (await res.json()) as WorkflowRunsResponse;
+        return data.workflow_runs?.[0]?.run_started_at ?? null;
+      } catch {
+        return null;
+      }
     },
     staleTime: 5 * 60 * 1000,
   });
