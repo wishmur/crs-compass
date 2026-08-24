@@ -4,8 +4,8 @@ import { lastUpdatedQuery } from "@/lib/queries";
 
 const links = [
   { to: "/", label: "Home" },
-  { to: "/history", label: "History" },
   { to: "/plan", label: "Plan" },
+  { to: "/history", label: "History" },
   { to: "/about", label: "About" },
 ] as const;
 
@@ -30,8 +30,7 @@ export function SiteHeader() {
             Mobile: stacked (no separator). Desktop: inline with a subtle | between. */}
         <div className="flex flex-col items-start gap-0.5 sm:flex-row sm:items-center sm:gap-3">
           <Link to="/" className="display text-[20px] leading-none text-brand">
-            <span className="font-bold">CRS</span>{" "}
-            <span className="font-medium">Compass</span>
+            <span className="font-bold">CRS</span> <span className="font-medium">Compass</span>
           </Link>
           {pretty && (
             <>
