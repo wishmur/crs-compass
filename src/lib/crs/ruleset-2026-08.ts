@@ -30,6 +30,31 @@ export const SECOND_LANGUAGE_PER_ABILITY: { min: number; points: number }[] = [
 
 export const SECOND_LANGUAGE_CAP = { withSpouse: 22, withoutSpouse: 24 };
 
+// --- Age points (Core/human capital factors, A) ----------------------------
+// Flat at the 20-29 plateau, then a fixed per-age table on both sides. Ages
+// 18-19 are rising toward the plateau; 30+ is the decline most candidates
+// never notice until they check.
+export const AGE_POINTS_PLATEAU = { minAge: 20, maxAge: 29, withSpouse: 100, withoutSpouse: 110 };
+export const AGE_POINTS_TABLE: Record<number, { withSpouse: number; withoutSpouse: number }> = {
+  18: { withSpouse: 90, withoutSpouse: 99 },
+  19: { withSpouse: 95, withoutSpouse: 105 },
+  30: { withSpouse: 95, withoutSpouse: 105 },
+  31: { withSpouse: 90, withoutSpouse: 99 },
+  32: { withSpouse: 85, withoutSpouse: 94 },
+  33: { withSpouse: 80, withoutSpouse: 88 },
+  34: { withSpouse: 75, withoutSpouse: 83 },
+  35: { withSpouse: 70, withoutSpouse: 77 },
+  36: { withSpouse: 65, withoutSpouse: 72 },
+  37: { withSpouse: 60, withoutSpouse: 66 },
+  38: { withSpouse: 55, withoutSpouse: 61 },
+  39: { withSpouse: 50, withoutSpouse: 55 },
+  40: { withSpouse: 45, withoutSpouse: 50 },
+  41: { withSpouse: 35, withoutSpouse: 39 },
+  42: { withSpouse: 25, withoutSpouse: 28 },
+  43: { withSpouse: 15, withoutSpouse: 17 },
+  44: { withSpouse: 5, withoutSpouse: 6 },
+};
+
 // --- Additional points — French language skills (D) -----------------------
 // "Scored NCLC 7 or higher on all four French language skills and scored
 // CLB 4 or lower in English (or didn't take an English test)" -> 25.

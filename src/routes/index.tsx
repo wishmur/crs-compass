@@ -10,6 +10,7 @@ import { FilterChip } from "@/components/FilterChip";
 import { RecentRelevantDraws } from "@/components/RecentRelevantDraws";
 import { PersonalScoreSection } from "@/components/PersonalScoreSection";
 import { PoolContext } from "@/components/PoolContext";
+import { AgeInsight } from "@/components/AgeInsight";
 import { drawsQuery } from "@/lib/queries";
 import { EVENTS, capture } from "@/lib/analytics";
 import { useCrsProfile, isRelevantDraw } from "@/lib/useCrsProfile";
@@ -390,6 +391,7 @@ function Index() {
             )}
 
             <PoolContext score={score} />
+            <AgeInsight />
 
             {/* Actions — four consistent pill controls. */}
             <div className="mt-6 flex flex-wrap gap-2 border-t border-[color-mix(in_srgb,var(--brand)_18%,transparent)] pt-5">
