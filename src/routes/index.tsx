@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { RotateCcw } from "lucide-react";
@@ -9,6 +9,7 @@ import { formatDate } from "@/components/DrawMeta";
 import { FilterChip } from "@/components/FilterChip";
 import { RecentRelevantDraws } from "@/components/RecentRelevantDraws";
 import { PersonalScoreSection } from "@/components/PersonalScoreSection";
+import { PoolContext } from "@/components/PoolContext";
 import { drawsQuery } from "@/lib/queries";
 import { EVENTS, capture } from "@/lib/analytics";
 import { useCrsProfile, isRelevantDraw } from "@/lib/useCrsProfile";
@@ -96,6 +97,7 @@ function Index() {
   const { data, isLoading } = useQuery(drawsQuery(8));
   const { raw, setRaw, score } = useScore();
   const { elig, setElig, resetElig, hasEligibility } = useCrsProfile();
+  const [linkCopied, setLinkCopied] = useState(false);
   const scrollToDetails = () => {
     document.getElementById("recent-draws")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
@@ -104,10 +106,60 @@ function Index() {
     capture(EVENTS.LANDING_VIEWED);
   }, []);
 
-  const latestRelevant = data?.find((d) => isRelevantDraw(d, elig));
+  // Seed from a shared link's query params, once, on first load — lets
+  // someone open a link and land on the exact same score + eligibility the
+  // sender had, without needing an account or a backend to store it.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const sharedScore = params.get("score");
+    const sharedPrograms = params.get("programs");
+    const sharedCategories = params.get("categories");
+    if (!sharedScore && !sharedPrograms && !sharedCategories) return;
+
+    if (sharedScore && /^\d+$/.test(sharedScore)) setRaw(sharedScore);
+    if (sharedPrograms !== null || sharedCategories !== null) {
+      setElig((e) => ({
+        programs: sharedPrograms ? (sharedPrograms.split(",") as Program[]) : e.programs,
+        categories: sharedCategories ? sharedCategories.split(",") : e.categories,
+      }));
+    }
+    // Clean the URL so it doesn't keep re-seeding on every refresh once the
+    // visitor starts changing things themselves.
+    window.history.replaceState(null, "", window.location.pathname);
+    // Intentionally runs once on mount only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const copyShareLink = async () => {
+    const params = new URLSearchParams();
+    if (score !== null) params.set("score", String(score));
+    if (elig.programs.length) params.set("programs", elig.programs.join(","));
+    if (elig.categories.length) params.set("categories", elig.categories.join(","));
+    const query = params.toString();
+    const url = `${window.location.origin}/${query ? `?${query}` : ""}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setLinkCopied(true);
+      window.setTimeout(() => setLinkCopied(false), 2000);
+    } catch {
+      /* clipboard access denied — silently do nothing rather than error */
+    }
+  };
+
+  const relevantAmongFetched = data?.filter((d) => isRelevantDraw(d, elig)) ?? [];
+  const latestRelevant = relevantAmongFetched[0];
+  const previousRelevant = relevantAmongFetched[1];
   const latestFallback = data?.[0];
   const latest = latestRelevant ?? latestFallback;
-  const isRelevantLatest = latestRelevant !== undefined && latestRelevant === latest;
+  const isRelevantLatest = latestRelevant !== undefined;
+  // Filter is active, but none of the recently-fetched draws match it — the
+  // figure below is about to show a cutoff that has nothing to do with the
+  // user's selections. Say so explicitly instead of a quiet kicker change.
+  const noRecentRelevantMatch = hasEligibility && !isRelevantLatest && latest !== undefined;
+  const cutoffDelta =
+    latestRelevant && previousRelevant
+      ? latestRelevant.cutoff_score - previousRelevant.cutoff_score
+      : null;
 
   const generalOnlySelected = elig.programs.length === 0;
   const allCategoriesSelected = elig.categories.length === 0;
@@ -276,6 +328,11 @@ function Index() {
                     ? "Latest relevant cutoff"
                     : "Latest cutoff in this view"}
                 </p>
+                {noRecentRelevantMatch && (
+                  <p className="mt-1 text-xs leading-snug text-muted-foreground">
+                    No relevant round recently — showing the latest draw overall instead.
+                  </p>
+                )}
                 <div className="figure mt-2 text-[2.75rem] leading-none text-ink sm:text-[3.25rem]">
                   {latest.cutoff_score}
                 </div>
@@ -283,6 +340,13 @@ function Index() {
                   <RoundBadge draw={latest} />
                 </div>
                 <p className="mt-2 text-sm text-muted-foreground">{formatDate(latest.draw_date)}</p>
+                {cutoffDelta !== null && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {cutoffDelta === 0
+                      ? "No change from the previous relevant round"
+                      : `${cutoffDelta > 0 ? "▲" : "▼"} ${Math.abs(cutoffDelta)} from the previous relevant round`}
+                  </p>
+                )}
               </div>
 
               {/* User score */}
@@ -325,11 +389,16 @@ function Index() {
               </p>
             )}
 
-            {/* Actions — three consistent pill controls. */}
+            <PoolContext score={score} />
+
+            {/* Actions — four consistent pill controls. */}
             <div className="mt-6 flex flex-wrap gap-2 border-t border-[color-mix(in_srgb,var(--brand)_18%,transparent)] pt-5">
               <ActionPill onClick={scrollToDetails}>More details</ActionPill>
               <ActionPill to="/history">Check IRCC history</ActionPill>
               <ActionPill to="/plan">Plan your score</ActionPill>
+              <ActionPill onClick={copyShareLink} muted>
+                {linkCopied ? "Link copied ✓" : "Copy link to this view"}
+              </ActionPill>
             </div>
           </>
         )}

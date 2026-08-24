@@ -54,18 +54,48 @@ export const lastUpdatedQuery = () =>
     staleTime: 5 * 60 * 1000,
   });
 
-export const poolSnapshotDateQuery = () =>
+export interface PoolBand {
+  bandLow: number;
+  bandHigh: number;
+  candidateCount: number;
+}
+
+export interface PoolSnapshot {
+  asOfDate: string;
+  bands: PoolBand[];
+}
+
+/** Candidate pool distribution by CRS band, as of the most recent snapshot.
+    Public anon-readable table already (see sql/002_rls_policies.sql) — this
+    was ingested daily from day one but never read by the UI until now. */
+export const poolSnapshotQuery = () =>
   queryOptions({
-    queryKey: ["pool_snapshot_date"],
-    queryFn: async (): Promise<string | null> => {
+    queryKey: ["pool_snapshot"],
+    queryFn: async (): Promise<PoolSnapshot | null> => {
       if (!isSupabaseConfigured) return null;
-      const { data, error } = await supabase
+      const { data: latest, error: dateError } = await supabase
         .from("pool_snapshots")
         .select("as_of_date")
         .order("as_of_date", { ascending: false })
         .limit(1);
-      if (error) return null;
-      return (data?.[0]?.as_of_date as string | undefined) ?? null;
+      if (dateError || !latest?.[0]) return null;
+      const asOfDate = latest[0].as_of_date as string;
+
+      const { data, error } = await supabase
+        .from("pool_snapshots")
+        .select("band_low,band_high,candidate_count")
+        .eq("as_of_date", asOfDate)
+        .order("band_low", { ascending: true });
+      if (error || !data) return null;
+
+      return {
+        asOfDate,
+        bands: data.map((b) => ({
+          bandLow: b.band_low as number,
+          bandHigh: b.band_high as number,
+          candidateCount: b.candidate_count as number,
+        })),
+      };
     },
     staleTime: 30 * 60 * 1000,
   });
