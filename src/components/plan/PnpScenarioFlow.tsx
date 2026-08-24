@@ -107,6 +107,18 @@ export function PnpScenarioFlow({ baseScore, elig }: Props) {
                   See the official criteria →
                 </a>
               </p>
+              <p className="mt-4 text-xs text-muted-foreground">
+                Next step: nominations are applied for directly through the province or territory,
+                not IRCC.{" "}
+                <a
+                  href="https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/provincial-nominees.html"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="underline underline-offset-2"
+                >
+                  See IRCC&rsquo;s Provincial Nominee Program info →
+                </a>
+              </p>
             </div>
 
             <div className="md:border-l md:pl-10" style={DIVIDER_STYLE}>
