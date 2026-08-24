@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   calculateCanadianWorkExperienceScenario,
   calculateEnglishScenario,
+  calculateForeignWorkExperienceScenario,
   calculateFrenchScenario,
   calculatePnpScenario,
 } from "./engine";
@@ -10,6 +11,7 @@ import type {
   AbilityScores,
   CanadianWorkExperienceScenarioProfile,
   EnglishScenarioProfile,
+  ForeignWorkExperienceScenarioProfile,
   FrenchScenarioProfile,
 } from "./types";
 
@@ -383,6 +385,75 @@ describe("calculateCanadianWorkExperienceScenario", () => {
     const result = calculateCanadianWorkExperienceScenario(
       450,
       baseProfile({ currentCanadianWorkYears: 2, targetCanadianWorkYears: 2 }),
+    );
+    expect(result.delta).toBe(0);
+  });
+});
+
+describe("calculateForeignWorkExperienceScenario", () => {
+  function baseProfile(
+    overrides: Partial<ForeignWorkExperienceScenarioProfile> = {},
+  ): ForeignWorkExperienceScenarioProfile {
+    return {
+      firstLanguageClb: noResult,
+      canadianWorkYears: 0,
+      currentForeignWorkYears: 0,
+      targetForeignWorkYears: 0,
+      ...overrides,
+    };
+  }
+
+  it("has exactly one breakdown line — the single transferability group", () => {
+    const result = calculateForeignWorkExperienceScenario(
+      450,
+      baseProfile({ firstLanguageClb: nclc9, targetForeignWorkYears: 2 }),
+    );
+    expect(result.breakdown).toEqual([
+      { label: "Skill transferability — foreign work experience", before: 0, after: 25, delta: 25 },
+    ]);
+    expect(result.delta).toBe(25);
+  });
+
+  it("combines the language and Canadian-work sub-scores, capped at 50", () => {
+    const result = calculateForeignWorkExperienceScenario(
+      450,
+      baseProfile({ firstLanguageClb: nclc7, canadianWorkYears: 3, targetForeignWorkYears: 1 }),
+    );
+    // 1-2yr foreign x CLB7-8 = 13, 1-2yr foreign x 2+yr Canadian = 25 -> 38.
+    expect(result.breakdown[0]!.after).toBe(38);
+  });
+
+  it("caps the group at 50 — more foreign experience adds nothing once already saturated", () => {
+    // At 1 year foreign experience, CLB9+ and 5yr Canadian work experience
+    // already combine to the 50 cap (25 + 25). Going to 3+ years foreign
+    // experience raises both sub-scores to 50 each, but the group is still
+    // capped at 50 — no further CRS benefit.
+    const result = calculateForeignWorkExperienceScenario(
+      450,
+      baseProfile({
+        firstLanguageClb: nclc9,
+        canadianWorkYears: 5,
+        currentForeignWorkYears: 1,
+        targetForeignWorkYears: 3,
+      }),
+    );
+    expect(result.breakdown[0]!.before).toBe(50);
+    expect(result.breakdown[0]!.after).toBe(50);
+    expect(result.delta).toBe(0);
+  });
+
+  it("clamps the projected score at the 1200 maximum", () => {
+    const result = calculateForeignWorkExperienceScenario(
+      1180,
+      baseProfile({ firstLanguageClb: nclc9, targetForeignWorkYears: 2 }),
+    );
+    expect(result.projectedScore).toBe(1200);
+  });
+
+  it("delta is 0 when the target matches the current years", () => {
+    const result = calculateForeignWorkExperienceScenario(
+      450,
+      baseProfile({ currentForeignWorkYears: 1, targetForeignWorkYears: 1 }),
     );
     expect(result.delta).toBe(0);
   });

@@ -129,3 +129,21 @@ export interface CanadianWorkExperienceScenarioProfile {
   currentCanadianWorkYears: number;
   targetCanadianWorkYears: number;
 }
+
+/** Supporting profile inputs the foreign work experience scenario needs.
+    Foreign work experience never pairs with education anywhere in IRCC's
+    tables — only with language (s.23) and with Canadian work experience
+    (s.24), both capped together as one group — so unlike the Canadian
+    work experience scenario, this one doesn't need an education level at
+    all. It does need current language and Canadian work experience as
+    fixed context, for the same group-saturation reason as before.
+    Deliberately no hasSpouseOrPartner: none of IRCC's skill-
+    transferability tables (unlike Core points) vary by spouse status, and
+    foreign work experience earns no Core points of its own — so this
+    scenario has nothing spouse-dependent to compute, and doesn't ask. */
+export interface ForeignWorkExperienceScenarioProfile {
+  firstLanguageClb: AbilityScores;
+  canadianWorkYears: number;
+  currentForeignWorkYears: number;
+  targetForeignWorkYears: number;
+}

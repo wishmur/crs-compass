@@ -17,6 +17,7 @@ import type {
   BreakdownLine,
   CanadianWorkExperienceScenarioProfile,
   EnglishScenarioProfile,
+  ForeignWorkExperienceScenarioProfile,
   FrenchScenarioProfile,
   ScenarioResult,
 } from "./types";
@@ -257,6 +258,57 @@ export function calculateCanadianWorkExperienceScenario(
       before: beforeForeignGroup,
       after: afterForeignGroup,
       delta: afterForeignGroup - beforeForeignGroup,
+    },
+  ];
+
+  const delta = breakdown.reduce((total, line) => total + line.delta, 0);
+  const projectedScore = Math.max(0, Math.min(CRS_MAX, baseScore + delta));
+
+  return {
+    baseScore,
+    projectedScore,
+    delta: projectedScore - baseScore,
+    breakdown,
+    ruleset: RULESET_MINISTERIAL_INSTRUCTIONS,
+  };
+}
+
+// Foreign work experience never pairs with education anywhere in IRCC's
+// tables, and earns no Core points of its own — it only feeds one
+// transferability group: foreign x language plus foreign x Canadian work
+// experience, capped together at 50. That's this scenario's entire
+// effect, so there's exactly one breakdown line. No hasSpouseOrPartner:
+// nothing here varies by spouse status (see ForeignWorkExperienceScenarioProfile).
+export function calculateForeignWorkExperienceScenario(
+  baseScore: number,
+  profile: ForeignWorkExperienceScenarioProfile,
+): ScenarioResult {
+  const beforeLanguage = foreignWorkLanguageTransferability(
+    profile.currentForeignWorkYears,
+    profile.firstLanguageClb,
+  );
+  const afterLanguage = foreignWorkLanguageTransferability(
+    profile.targetForeignWorkYears,
+    profile.firstLanguageClb,
+  );
+  const beforeCanadianWork = foreignCanadianWorkTransferability(
+    profile.currentForeignWorkYears,
+    profile.canadianWorkYears,
+  );
+  const afterCanadianWork = foreignCanadianWorkTransferability(
+    profile.targetForeignWorkYears,
+    profile.canadianWorkYears,
+  );
+
+  const beforeGroup = Math.min(TRANSFERABILITY_GROUP_CAP, beforeLanguage + beforeCanadianWork);
+  const afterGroup = Math.min(TRANSFERABILITY_GROUP_CAP, afterLanguage + afterCanadianWork);
+
+  const breakdown: BreakdownLine[] = [
+    {
+      label: "Skill transferability — foreign work experience",
+      before: beforeGroup,
+      after: afterGroup,
+      delta: afterGroup - beforeGroup,
     },
   ];
 
