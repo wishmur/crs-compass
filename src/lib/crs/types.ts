@@ -110,3 +110,22 @@ export interface EnglishScenarioProfile {
   currentEnglishClb: AbilityScores;
   targetEnglishClb: AbilityScores;
 }
+
+/** Supporting profile inputs the Canadian work experience scenario needs.
+    Canadian work experience doesn't pair with language directly anywhere
+    in IRCC's tables (only with education and with foreign work
+    experience) — but firstLanguageClb is still required here, because the
+    education x language transferability group is capped together WITH
+    education x Canadian-work: if language points alone already saturate
+    that group, more Canadian work experience can't add anything, and
+    getting that right means knowing the (unchanging) language figure even
+    though this scenario never asks the user to change it. Same idea for
+    foreignWorkYears against the foreign-experience group. */
+export interface CanadianWorkExperienceScenarioProfile {
+  hasSpouseOrPartner: boolean;
+  educationLevel: EducationLevel;
+  firstLanguageClb: AbilityScores;
+  foreignWorkYears: number;
+  currentCanadianWorkYears: number;
+  targetCanadianWorkYears: number;
+}
