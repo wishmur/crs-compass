@@ -6,6 +6,7 @@ import { FilterChip } from "@/components/FilterChip";
 import { FrenchScenarioFlow } from "@/components/plan/FrenchScenarioFlow";
 import { PnpScenarioFlow } from "@/components/plan/PnpScenarioFlow";
 import { EnglishScenarioFlow } from "@/components/plan/EnglishScenarioFlow";
+import { CanadianWorkExperienceScenarioFlow } from "@/components/plan/CanadianWorkExperienceScenarioFlow";
 
 export const Route = createFileRoute("/plan")({
   head: () => ({
@@ -31,10 +32,11 @@ const GOAL_CHIPS: { value: Goal | "citizenship"; label: string; disabled?: boole
 const SCENARIO_CHIPS = [
   { key: "french", label: "Improve my French" },
   { key: "english", label: "Improve my English" },
+  { key: "canadianWork", label: "Canadian work experience" },
   { key: "pnp", label: "Provincial nomination" },
 ] as const;
 
-const MORE_SCENARIOS = "Canadian work experience · Foreign work experience · Education";
+const MORE_SCENARIOS = "Foreign work experience · Education";
 
 function Plan() {
   const { raw, setRaw, score } = useScore();
@@ -162,6 +164,9 @@ function Plan() {
       )}
       {score !== null && scenario === "english" && (
         <EnglishScenarioFlow baseScore={score} elig={elig} />
+      )}
+      {score !== null && scenario === "canadianWork" && (
+        <CanadianWorkExperienceScenarioFlow baseScore={score} elig={elig} />
       )}
       {score !== null && scenario === "pnp" && <PnpScenarioFlow baseScore={score} elig={elig} />}
     </div>

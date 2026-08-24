@@ -33,6 +33,19 @@ export const FIRST_LANGUAGE_BANDS: AbilityBand[] = [
   { value: 10, label: "10+" },
 ];
 
+// Skill-transferability tables only ever care about which of three tiers a
+// first-official-language result lands in (below CLB 7 / 7-8 / 9+) — never
+// the finer per-level bands above. When a scenario needs first-language
+// level only as fixed context (not something it's asking the user to
+// change), asking for this coarser read is honest rather than a
+// simplification that loses precision the math would have used: the tier
+// really is all that's used downstream.
+export const TRANSFERABILITY_LANGUAGE_BANDS: AbilityBand[] = [
+  { value: 6, label: "Below 7" },
+  { value: 7, label: "7–8" },
+  { value: 9, label: "9+" },
+];
+
 const ABILITY_LABELS: Record<(typeof ABILITIES)[number], string> = {
   speaking: "Speaking",
   listening: "Listening",

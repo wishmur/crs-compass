@@ -1,4 +1,5 @@
 import {
+  canadianWorkExperiencePoints,
   educationLanguageTransferability,
   educationWorkTransferability,
   firstLanguagePoints,
@@ -14,6 +15,7 @@ import {
 } from "./ruleset-2026-08";
 import type {
   BreakdownLine,
+  CanadianWorkExperienceScenarioProfile,
   EnglishScenarioProfile,
   FrenchScenarioProfile,
   ScenarioResult,
@@ -155,6 +157,103 @@ export function calculateEnglishScenario(
     },
     {
       label: "Skill transferability — foreign work experience × language",
+      before: beforeForeignGroup,
+      after: afterForeignGroup,
+      delta: afterForeignGroup - beforeForeignGroup,
+    },
+  ];
+
+  const delta = breakdown.reduce((total, line) => total + line.delta, 0);
+  const projectedScore = Math.max(0, Math.min(CRS_MAX, baseScore + delta));
+
+  return {
+    baseScore,
+    projectedScore,
+    delta: projectedScore - baseScore,
+    breakdown,
+    ruleset: RULESET_MINISTERIAL_INSTRUCTIONS,
+  };
+}
+
+// Canadian work experience never pairs with language directly in IRCC's
+// tables — only with education (s.22) and with foreign work experience
+// (s.24). But those two transferability GROUPS are each capped together
+// with a language-paired sub-score that doesn't change here (education x
+// language, foreign x language) — so if language points alone already
+// saturate a group, more Canadian work experience can't add anything to
+// it. Getting that right needs the candidate's current first-language
+// level and foreign work experience as fixed context, even though this
+// scenario never asks the user to change either.
+export function calculateCanadianWorkExperienceScenario(
+  baseScore: number,
+  profile: CanadianWorkExperienceScenarioProfile,
+): ScenarioResult {
+  const beforeCore = canadianWorkExperiencePoints(
+    profile.currentCanadianWorkYears,
+    profile.hasSpouseOrPartner,
+  );
+  const afterCore = canadianWorkExperiencePoints(
+    profile.targetCanadianWorkYears,
+    profile.hasSpouseOrPartner,
+  );
+
+  const educationLanguage = educationLanguageTransferability(
+    profile.educationLevel,
+    profile.firstLanguageClb,
+  );
+  const beforeEducationWork = educationWorkTransferability(
+    profile.educationLevel,
+    profile.currentCanadianWorkYears,
+  );
+  const afterEducationWork = educationWorkTransferability(
+    profile.educationLevel,
+    profile.targetCanadianWorkYears,
+  );
+  const beforeEducationGroup = Math.min(
+    TRANSFERABILITY_GROUP_CAP,
+    educationLanguage + beforeEducationWork,
+  );
+  const afterEducationGroup = Math.min(
+    TRANSFERABILITY_GROUP_CAP,
+    educationLanguage + afterEducationWork,
+  );
+
+  const foreignLanguage = foreignWorkLanguageTransferability(
+    profile.foreignWorkYears,
+    profile.firstLanguageClb,
+  );
+  const beforeForeignCanadianWork = foreignCanadianWorkTransferability(
+    profile.foreignWorkYears,
+    profile.currentCanadianWorkYears,
+  );
+  const afterForeignCanadianWork = foreignCanadianWorkTransferability(
+    profile.foreignWorkYears,
+    profile.targetCanadianWorkYears,
+  );
+  const beforeForeignGroup = Math.min(
+    TRANSFERABILITY_GROUP_CAP,
+    foreignLanguage + beforeForeignCanadianWork,
+  );
+  const afterForeignGroup = Math.min(
+    TRANSFERABILITY_GROUP_CAP,
+    foreignLanguage + afterForeignCanadianWork,
+  );
+
+  const breakdown: BreakdownLine[] = [
+    {
+      label: "Canadian work experience points",
+      before: beforeCore,
+      after: afterCore,
+      delta: afterCore - beforeCore,
+    },
+    {
+      label: "Skill transferability — education × Canadian work experience",
+      before: beforeEducationGroup,
+      after: afterEducationGroup,
+      delta: afterEducationGroup - beforeEducationGroup,
+    },
+    {
+      label: "Skill transferability — foreign × Canadian work experience",
       before: beforeForeignGroup,
       after: afterForeignGroup,
       delta: afterForeignGroup - beforeForeignGroup,

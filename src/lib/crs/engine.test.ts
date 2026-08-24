@@ -1,7 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { calculateEnglishScenario, calculateFrenchScenario, calculatePnpScenario } from "./engine";
+import {
+  calculateCanadianWorkExperienceScenario,
+  calculateEnglishScenario,
+  calculateFrenchScenario,
+  calculatePnpScenario,
+} from "./engine";
 import { frenchBonusPoints, secondLanguageAbilityPoints, secondLanguagePoints } from "./language";
-import type { AbilityScores, EnglishScenarioProfile, FrenchScenarioProfile } from "./types";
+import type {
+  AbilityScores,
+  CanadianWorkExperienceScenarioProfile,
+  EnglishScenarioProfile,
+  FrenchScenarioProfile,
+} from "./types";
 
 const abilities = (
   speaking: number,
@@ -267,6 +277,112 @@ describe("calculateEnglishScenario", () => {
     const result = calculateEnglishScenario(
       450,
       baseEnglishProfile({ currentEnglishClb: nclc7, targetEnglishClb: nclc7 }),
+    );
+    expect(result.delta).toBe(0);
+  });
+});
+
+describe("calculateCanadianWorkExperienceScenario", () => {
+  function baseProfile(
+    overrides: Partial<CanadianWorkExperienceScenarioProfile> = {},
+  ): CanadianWorkExperienceScenarioProfile {
+    return {
+      hasSpouseOrPartner: false,
+      educationLevel: "none",
+      firstLanguageClb: noResult,
+      foreignWorkYears: 0,
+      currentCanadianWorkYears: 0,
+      targetCanadianWorkYears: 0,
+      ...overrides,
+    };
+  }
+
+  it("moves only Core points when education and foreign experience don't qualify for transferability", () => {
+    const result = calculateCanadianWorkExperienceScenario(
+      450,
+      baseProfile({ targetCanadianWorkYears: 3 }),
+    );
+    expect(result.breakdown).toEqual([
+      { label: "Canadian work experience points", before: 0, after: 64, delta: 64 },
+      {
+        label: "Skill transferability — education × Canadian work experience",
+        before: 0,
+        after: 0,
+        delta: 0,
+      },
+      {
+        label: "Skill transferability — foreign × Canadian work experience",
+        before: 0,
+        after: 0,
+        delta: 0,
+      },
+    ]);
+    expect(result.delta).toBe(64);
+  });
+
+  it("moves education transferability alongside Core points when education and language qualify", () => {
+    const result = calculateCanadianWorkExperienceScenario(
+      450,
+      baseProfile({
+        educationLevel: "three-year",
+        firstLanguageClb: nclc9,
+        targetCanadianWorkYears: 2,
+      }),
+    );
+    const eduLine = result.breakdown[1]!;
+    expect(eduLine.before).toBe(25); // education x language alone, no Canadian work experience yet
+    expect(eduLine.after).toBe(50); // +25 from 2 years Canadian work experience
+    expect(result.breakdown[0]!.delta).toBe(53); // Core points for 2 years Canadian work experience
+    expect(result.delta).toBe(53 + 25);
+  });
+
+  it("caps the education group at 50 even when language alone already maxes it", () => {
+    // doctoral + CLB9+ = 50 (education x language) on its own -> more Canadian
+    // work experience can't push the group past 50, even though it's the
+    // thing this scenario is actually asking about.
+    const result = calculateCanadianWorkExperienceScenario(
+      450,
+      baseProfile({
+        educationLevel: "doctoral",
+        firstLanguageClb: nclc9,
+        targetCanadianWorkYears: 5,
+      }),
+    );
+    const eduLine = result.breakdown[1]!;
+    expect(eduLine.before).toBe(50);
+    expect(eduLine.after).toBe(50);
+    expect(eduLine.delta).toBe(0);
+    // Core points still move normally.
+    expect(result.breakdown[0]!.delta).toBe(80);
+  });
+
+  it("moves the foreign-experience group when foreign work experience and language qualify", () => {
+    const result = calculateCanadianWorkExperienceScenario(
+      450,
+      baseProfile({ foreignWorkYears: 3, firstLanguageClb: nclc7, targetCanadianWorkYears: 2 }),
+    );
+    const foreignLine = result.breakdown[2]!;
+    expect(foreignLine.before).toBe(25); // foreign x language alone
+    expect(foreignLine.after).toBe(50); // +25 from 2 years Canadian work experience, capped at 50
+  });
+
+  it("clamps the projected score at the 1200 maximum", () => {
+    const result = calculateCanadianWorkExperienceScenario(
+      1150,
+      baseProfile({
+        educationLevel: "doctoral",
+        firstLanguageClb: nclc9,
+        foreignWorkYears: 5,
+        targetCanadianWorkYears: 5,
+      }),
+    );
+    expect(result.projectedScore).toBe(1200);
+  });
+
+  it("delta is 0 when the target matches the current years", () => {
+    const result = calculateCanadianWorkExperienceScenario(
+      450,
+      baseProfile({ currentCanadianWorkYears: 2, targetCanadianWorkYears: 2 }),
     );
     expect(result.delta).toBe(0);
   });
